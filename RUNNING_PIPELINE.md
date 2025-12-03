@@ -10,6 +10,9 @@ python run_pipeline.py
 
 # Or set a specific metro via environment variable
 METRO=dallas python run_pipeline.py
+
+# Run pipeline for all metros sequentially
+python run_pipeline.py --all
 ```
 
 ## Available Metro Areas
@@ -60,15 +63,18 @@ Get a free API key at: https://api.census.gov/data/key_signup.html
 The pipeline executes 8 main steps:
 
 ### 1. Fetch CBSA Boundary
+
 - Downloads metro area boundary polygon from Census TIGER
 - Used for spatial filtering of ZCTAs
 
 ### 2. Load ZCTA and Tract Geometries
+
 - Downloads ZCTA (ZIP code) polygons for the state
 - Downloads census tract polygons for metro counties
 - Filters ZCTAs to those within the metro area
 
 ### 3. Fetch ACS Data (Tracts)
+
 - Fetches ACS 5-year data at census tract level
 - Variables include:
   - **B25064**: Median gross rent
@@ -83,17 +89,20 @@ The pipeline executes 8 main steps:
   - `vehicle_access`: Percentage households with 1+ vehicles
 
 ### 4. Fetch Demographics (Tracts)
+
 - **B01001**: Total population by age/sex
 - **B03002**: Hispanic/Latino origin and race
 - Computes race/ethnicity percentages
 - Creates income segments (low/medium/high)
 
 ### 5. Map Tracts to ZCTAs
+
 - Uses centroid-based spatial join
 - Each tract mapped to the ZCTA containing its centroid
 - Handles edge cases and multiple tracts per ZCTA
 
 ### 6. Aggregate to ZCTA Level
+
 - Population-weighted aggregation from tracts to ZCTAs
 - Computes population density (persons per km²) using UTM projection
 - Aggregation strategy:
@@ -102,11 +111,13 @@ The pipeline executes 8 main steps:
   - **Median**: Median income (population-weighted)
 
 ### 7. Fetch Zillow ZORI Data
+
 - Downloads Zillow Observed Rent Index (ZORI) by ZIP code
 - Filters to metro-specific ZIP code prefixes
 - Uses latest available month
 
 ### 8. Compute Transit Stop Density
+
 - Queries OpenStreetMap Overpass API for transit stops
 - Filters: `public_transport=platform|stop|station` or `highway=bus_stop`
 - Computes `stops_per_km2` for each ZCTA
@@ -115,7 +126,7 @@ The pipeline executes 8 main steps:
 
 The pipeline generates a CSV file in `data/final/`:
 
-```
+```text
 data/final/final_zcta_dataset_{metro}.csv
 ```
 
@@ -153,16 +164,25 @@ data/final/final_zcta_dataset_{metro}.csv
 | `pct_other` | % other race/ethnicity | ACS B03002 |
 | `median_income` | Median household income ($) | ACS B19013 |
 | `income_segment` | Income tercile (low/medium/high) | Derived |
-| `stops_per_km2` | Transit stops per km² | OpenStreetMap |
-| `period` | ACS data period (e.g., 2021) | ACS metadata |
 
 ## Running All Metros
 
-To rebuild datasets for all four metros:
+To rebuild datasets for all four metros, use the `--all` flag:
+
+```bash
+python run_pipeline.py --all
+```
+
+This will sequentially process all four metros (phoenix, memphis, los_angeles, dallas) and provide a summary of successes and failures at the end.
+
+Alternatively, you can use a loop with environment variables:
 
 ```bash
 for metro in phoenix memphis los_angeles dallas; do
     echo "Building $metro..."
+    METRO=$metro python run_pipeline.py
+done
+``` echo "Building $metro..."
     METRO=$metro python run_pipeline.py
 done
 ```
@@ -179,6 +199,7 @@ done
 - python-dotenv >= 1.0.0
 
 Install:
+
 ```bash
 pip install -r requirements.txt
 # Or
@@ -197,7 +218,7 @@ uv sync
 
 The pipeline logs progress to console with INFO level messages:
 
-```
+```bash
 INFO - ============================================================
 INFO - STEP 1: Fetch CBSA boundary
 INFO - Fetching CBSA polygon for code: 38060
@@ -205,7 +226,6 @@ INFO - CBSA boundary loaded: Phoenix-Mesa-Chandler, AZ
 INFO - ============================================================
 INFO - STEP 2: Load ZCTA and tract geometries
 INFO - Fetching ZCTAs for state: 04
-...
 ```
 
 ## Performance
@@ -218,6 +238,7 @@ Expected runtime per metro (with warm caches):
 - **Dallas**: ~5-6 minutes (190 ZCTAs, 4 counties)
 
 Factors affecting runtime:
+
 - Number of census tracts
 - Number of ZCTAs
 - OpenStreetMap query complexity
@@ -226,10 +247,12 @@ Factors affecting runtime:
 ## Caching
 
 The pipeline uses `.cache/` directory for intermediate results:
+
 - Census geometries
 - API responses (where applicable)
 
 To force fresh data:
+
 ```bash
 rm -rf .cache
 python run_pipeline.py
@@ -238,6 +261,7 @@ python run_pipeline.py
 ## Troubleshooting
 
 ### "Census API key not found"
+
 ```bash
 # Set your API key
 export CENSUS_API_KEY=your_key_here
@@ -247,21 +271,25 @@ echo "CENSUS_API_KEY=your_key_here" >> .env
 ```
 
 ### "No data returned from Census API"
+
 - Check that your API key is valid
 - Verify county FIPS codes in `config.py` are correct
 - Some counties may have limited ACS coverage
 
 ### "OpenStreetMap Overpass query timeout"
+
 - Large metros (LA) may timeout on Overpass API
 - Pipeline will retry with fallback query
 - Consider reducing query complexity in `config.py`
 
 ### "ZCTA count lower than expected"
+
 - Some ZCTAs filtered out due to being outside CBSA boundary
 - Check ZIP_PREFIXES in `config.py` include all relevant prefixes
 - Verify CBSA_CODE is correct for the metro
 
 ### Import errors
+
 - Ensure running from project root: `python run_pipeline.py`
 - Verify all dependencies installed: `pip install -r requirements.txt`
 - Check that `src/pipelines/` directory exists with all modules
@@ -296,6 +324,7 @@ python -c "import pandas as pd; df = pd.read_csv('data/final/final_zcta_dataset_
 ```
 
 Expected outputs:
+
 - **Phoenix**: 150 ZCTAs × 32 columns
 - **Memphis**: ~100 ZCTAs × 32 columns
 - **Los Angeles**: ~450 ZCTAs × 32 columns
