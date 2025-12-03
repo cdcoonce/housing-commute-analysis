@@ -1,6 +1,6 @@
 # Housing Affordability and Commute Tradeoffs
 
-**DAT490 Capstone Project**
+## DAT490 Capstone Project
 
 ## Project Overview
 
@@ -27,10 +27,13 @@ Quantify the relationship between housing costs, commute time, and public transi
 
 ```text
 DAT490/
-├── run_pipeline.py           # Main pipeline entry point
+├── run_pipeline.py           # Data pipeline entry point
+├── run_analysis.py           # Analysis entry point
 ├── requirements.txt          # Python dependencies
+├── pyproject.toml           # Project configuration
 ├── .env.example             # Environment variables template
-├── PIPELINE_README.md       # Detailed pipeline documentation
+├── RUNNING_PIPELINE.md      # Pipeline documentation
+├── RUNNING_ANALYSIS.md      # Analysis documentation
 ├── data/
 │   ├── raw/                 # Raw data from sources
 │   ├── processed/           # Cleaned and transformed data
@@ -47,8 +50,16 @@ DAT490/
 │   │   ├── osm.py           # OpenStreetMap transit data
 │   │   ├── spatial.py       # Spatial operations & joins
 │   │   └── utils.py         # HTTP utilities & helpers
-│   ├── models/              # ML models (regression, clustering)
-│   ├── dashboard/           # Interactive dashboard
+│   ├── models/              # Analysis modules
+│   │   ├── data_loader.py   # Data loading & validation
+│   │   ├── models.py        # Statistical modeling functions
+│   │   ├── preprocessing.py # Data preprocessing
+│   │   ├── reporting.py     # Report generation
+│   │   ├── visualization.py # Plotting utilities
+│   │   ├── rq1_housing_commute_tradeoff.py
+│   │   ├── rq2_equity_analysis.py
+│   │   └── rq3_aci_analysis.py
+│   ├── dashboard/           # Interactive dashboard (WIP)
 │   └── utils/               # Shared utilities
 ├── notebooks/               # Jupyter notebooks for EDA
 ├── docker/                  # Docker configuration
@@ -58,6 +69,7 @@ DAT490/
 ## Getting Started
 
 ### Prerequisites
+
 - Python 3.9+
 - Git
 - Census API Key (free, recommended for pipeline)
@@ -98,6 +110,9 @@ python run_pipeline.py
 METRO=dallas python run_pipeline.py
 METRO=memphis python run_pipeline.py
 METRO=los_angeles python run_pipeline.py
+
+# Run for all metros sequentially
+python run_pipeline.py --all
 ```
 
 ### Available Metro Areas
@@ -126,18 +141,34 @@ Each dataset includes:
 
 **Processing time:** ~5-15 minutes per metro area
 
-For detailed pipeline documentation, see [PIPELINE_README.md](PIPELINE_README.md)
+For detailed pipeline documentation, see [RUNNING_PIPELINE.md](RUNNING_PIPELINE.md)
 
-## Additional Usage
+## Running the Analysis
+
+After running the pipeline, analyze the data for housing-commute tradeoffs:
 
 ```bash
-# Train models (coming soon)
-python -m src.models.regression
-python -m src.models.clustering
+# Run analysis for a specific metro
+python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed --fig-dir figures
 
-# Launch dashboard (coming soon)
-python -m src.dashboard.app
+# Available metro codes: PHX, LA, DFW, MEM
+python run_analysis.py --metro LA --raw-dir data/final --out-dir data/processed --fig-dir figures
+
+# Run analysis for all metros
+for metro in PHX LA DFW MEM; do
+    python run_analysis.py --metro $metro --raw-dir data/final --out-dir data/processed --fig-dir figures
+done
 ```
+
+### Analysis Output
+
+For each metro, the analysis generates:
+
+- Cleaned datasets in `data/processed/{METRO}/`
+- Statistical models and reports
+- Diagnostic plots in `figures/{METRO}/`
+
+For detailed analysis documentation, see [RUNNING_ANALYSIS.md](RUNNING_ANALYSIS.md)
 
 ## 🐳 Docker Deployment
 
