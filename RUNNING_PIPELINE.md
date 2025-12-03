@@ -6,10 +6,10 @@ The data pipeline builds ZCTA-level datasets for each metro area by fetching Cen
 
 ```bash
 # Run pipeline for default metro (Phoenix)
-python -m src.pipelines
+python run_pipeline.py
 
 # Or set a specific metro via environment variable
-METRO=dallas python -m src.pipelines
+METRO=dallas python run_pipeline.py
 ```
 
 ## Available Metro Areas
@@ -38,7 +38,7 @@ Or use environment variable:
 
 ```bash
 export METRO=dallas
-python -m src.pipelines
+python run_pipeline.py
 ```
 
 ### Census API Key
@@ -163,7 +163,7 @@ To rebuild datasets for all four metros:
 ```bash
 for metro in phoenix memphis los_angeles dallas; do
     echo "Building $metro..."
-    METRO=$metro python -m src.pipelines
+    METRO=$metro python run_pipeline.py
 done
 ```
 
@@ -232,7 +232,7 @@ The pipeline uses `.cache/` directory for intermediate results:
 To force fresh data:
 ```bash
 rm -rf .cache
-python -m src.pipelines
+python run_pipeline.py
 ```
 
 ## Troubleshooting
@@ -262,9 +262,9 @@ echo "CENSUS_API_KEY=your_key_here" >> .env
 - Verify CBSA_CODE is correct for the metro
 
 ### Import errors
-- Ensure running from project root: `python -m src.pipelines`
-- Check `src/pipelines/__init__.py` exists
+- Ensure running from project root: `python run_pipeline.py`
 - Verify all dependencies installed: `pip install -r requirements.txt`
+- Check that `src/pipelines/` directory exists with all modules
 
 ## Module Structure
 
