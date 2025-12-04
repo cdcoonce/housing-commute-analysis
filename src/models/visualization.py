@@ -1,4 +1,3 @@
-"""
 """Visualization utilities for DAT490 analysis.
 
 This module provides functions for creating diagnostic plots,

@@ -18,14 +18,24 @@ METRO_FILES = {
     'PHX': 'final_zcta_dataset_phoenix.csv',
     'LA': 'final_zcta_dataset_los_angeles.csv',
     'DFW': 'final_zcta_dataset_dallas.csv',
-    'MEM': 'final_zcta_dataset_memphis.csv'
+    'MEM': 'final_zcta_dataset_memphis.csv',
+    'DEN': 'final_zcta_dataset_denver.csv',
+    'ATL': 'final_zcta_dataset_atlanta.csv',
+    'CHI': 'final_zcta_dataset_chicago.csv',
+    'SEA': 'final_zcta_dataset_seattle.csv',
+    'MIA': 'final_zcta_dataset_miami.csv'
 }
 
 METRO_NAMES = {
     'PHX': 'Phoenix',
     'LA': 'Los Angeles',
     'DFW': 'Dallas-Fort Worth',
-    'MEM': 'Memphis'
+    'MEM': 'Memphis',
+    'DEN': 'Denver',
+    'ATL': 'Atlanta',
+    'CHI': 'Chicago',
+    'SEA': 'Seattle',
+    'MIA': 'Miami'
 }
 
 
@@ -45,7 +55,7 @@ def load_and_validate_data(
     csv_path : Path
         Path to the CSV file containing ZCTA-level data.
     metro : str
-        Metro code identifier, must be one of: PHX, LA, DFW, MEM.
+        Metro code identifier, must be one of: PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA.
     
     Returns
     -------

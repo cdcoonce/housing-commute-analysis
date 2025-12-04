@@ -18,9 +18,9 @@ import polars as pl
 from scipy.stats import f_oneway
 from sklearn.cluster import KMeans
 
-from models import fit_ols_robust
-from preprocessing import compute_majority_race
-from reporting import save_markdown_table
+from .models import fit_ols_robust
+from .preprocessing import compute_majority_race
+from .reporting import save_markdown_table
 
 logger = logging.getLogger(__name__)
 

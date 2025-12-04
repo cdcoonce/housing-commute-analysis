@@ -19,10 +19,10 @@ import polars as pl
 import statsmodels.api as sm
 from statsmodels.regression.quantile_regression import QuantReg
 
-from data_loader import METRO_NAMES
-from models import cv_rmse, fit_ols_robust
-from preprocessing import compute_majority_race
-from reporting import save_markdown_table
+from .data_loader import METRO_NAMES
+from .models import cv_rmse, fit_ols_robust
+from .preprocessing import compute_majority_race
+from .reporting import save_markdown_table
 
 logger = logging.getLogger(__name__)
 

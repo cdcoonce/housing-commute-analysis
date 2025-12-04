@@ -5,11 +5,16 @@ within each ZCTA and computes density metrics for transit accessibility analysis
 """
 from __future__ import annotations
 
+import logging
+
 import geopandas as gpd
 import osmnx as ox
 import pandas as pd
 
 from .config import CACHE_DIR
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 # Configure OSMnx to use our centralized cache directory
 ox.settings.cache_folder = str(CACHE_DIR / "osm")

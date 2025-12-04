@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 DAT490 Capstone Analysis: The Housing-Commute Trade-Off
-Main orchestration script for ZCTA-level analysis across four metros.
+Main orchestration script for ZCTA-level analysis across nine metros.
 
 This script provides the CLI interface and coordinates the analysis workflow
 by calling specialized functions from modular analysis modules.
@@ -33,9 +33,6 @@ except ImportError:
     run_rq3 = None  # Explicitly set to None to prevent unbound errors
     HAS_RQ3 = False
 
-# Note: Removed matplotlib style (seaborn) per clean-code instructions:
-# "Avoid seaborn unless explicitly requested"
-
 # Logging configuration - INFO level for progress tracking
 logging.basicConfig(
     level=logging.INFO,
@@ -55,8 +52,8 @@ def main() -> None:
         '--metro',
         type=str,
         required=True,
-        choices=['PHX', 'LA', 'DFW', 'MEM'],
-        help='Metro area code (PHX, LA, DFW, MEM)'
+        choices=['PHX', 'LA', 'DFW', 'MEM', 'DEN', 'ATL', 'CHI', 'SEA', 'MIA'],
+        help='Metro area code (PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA)'
     )
     
     parser.add_argument(

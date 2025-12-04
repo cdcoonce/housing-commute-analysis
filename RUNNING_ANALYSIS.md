@@ -15,6 +15,11 @@ python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed
 - `LA` - Los Angeles-Long Beach-Anaheim, CA
 - `DFW` - Dallas-Fort Worth-Arlington, TX
 - `MEM` - Memphis, TN-MS-AR
+- `DEN` - Denver-Aurora-Lakewood, CO
+- `ATL` - Atlanta-Sandy Springs-Alpharetta, GA
+- `CHI` - Chicago-Naperville-Elgin, IL-IN-WI
+- `SEA` - Seattle-Tacoma-Bellevue, WA
+- `MIA` - Miami-Fort Lauderdale-Pompano Beach, FL
 
 ## Command Options
 
@@ -23,7 +28,7 @@ python run_analysis.py --help
 ```
 
 Options:
-- `--metro` (required): Metro area code (PHX, LA, DFW, MEM)
+- `--metro` (required): Metro area code (PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA)
 - `--raw-dir`: Directory containing input CSV files (default: `data/raw`)
 - `--out-dir`: Output directory for results (default: `data/processed`)
 - `--fig-dir`: Output directory for figures (default: `figures`)
@@ -38,7 +43,7 @@ python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed
 
 ### Run All Metros
 ```bash
-for metro in PHX LA DFW MEM; do
+for metro in PHX LA DFW MEM DEN ATL CHI SEA MIA; do
     python run_analysis.py --metro $metro --raw-dir data/final --out-dir data/processed --fig-dir figures
 done
 ```

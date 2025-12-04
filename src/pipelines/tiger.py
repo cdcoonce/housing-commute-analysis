@@ -6,11 +6,16 @@ Census Bureau's TIGER/Line web services.
 """
 from __future__ import annotations
 
+import logging
+
 import geopandas as gpd
 import pandas as pd
 
 from .config import ZIP_PREFIXES
 from .utils import esri_geojson_to_gdf
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 # Census TIGER/Line REST API endpoints
 TIGER_CBSA_URL = (

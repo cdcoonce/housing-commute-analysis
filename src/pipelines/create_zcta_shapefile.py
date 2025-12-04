@@ -1,10 +1,11 @@
 """
-Create ZCTA shapefiles for each metro area.
+"""Create ZCTA shapefiles for each metro area.
 
 This script fetches ZCTA geometries for each configured metro area and saves them
 as shapefiles for use in spatial analysis and choropleth mapping.
 """
 
+import logging
 import sys
 from pathlib import Path
 
@@ -14,6 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import METRO_CONFIGS, PROJECT_ROOT, CBSA_CODE, SELECTED_METRO, METRO_NAME
 from tiger import get_cbsa_polygon, get_state_zctas
 from spatial import filter_zctas_in_cbsa
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 def create_zcta_shapefile(metro_key: str = None) -> str:

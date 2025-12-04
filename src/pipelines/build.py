@@ -6,20 +6,13 @@ produce a final ZCTA-level dataset with housing, commute, and transit metrics.
 """
 from __future__ import annotations
 
+import importlib
 import logging
+
 import geopandas as gpd
 import pandas as pd
 
 from .acs import compute_acs_features, fetch_acs_for_county
-from .config import (
-    CBSA_CODE,
-    COUNTIES,
-    FINAL_ZCTA_OUT,
-    METRO_NAME,
-    UTM_ZONE,
-    ZIP_PREFIXES,
-    ZORI_ZIP_CSV_URL,
-)
 from .demographics import (
     aggregate_demographics_to_zcta,
     compute_demographic_percentages,
@@ -37,6 +30,10 @@ logger = logging.getLogger(__name__)
 
 def build_final_dataset() -> str:
     """Execute the full data pipeline to build ZCTA-level housing dataset.
+    
+    Reloads config module to pick up any environment variable changes (e.g., METRO).
+    This allows the --all flag to work correctly by processing each metro in sequence.
+    Execute the full data pipeline to build ZCTA-level housing dataset.
     
     This function orchestrates a multi-step ETL pipeline that:
     1. Fetches CBSA (metro area) boundary for spatial filtering
@@ -65,6 +62,20 @@ def build_final_dataset() -> str:
         ttw_total, total_pop, pct_hispanic, pct_white, pct_black, pct_asian, 
         pct_other, median_income, income_segment, period, zori, stops_per_km2
     """
+    # Reload config module to pick up METRO environment variable changes
+    # This is critical for --all flag to process different metros sequentially
+    from . import config
+    importlib.reload(config)
+    
+    # Extract config values after reload
+    CBSA_CODE = config.CBSA_CODE
+    COUNTIES = config.COUNTIES
+    FINAL_ZCTA_OUT = config.FINAL_ZCTA_OUT
+    METRO_NAME = config.METRO_NAME
+    UTM_ZONE = config.UTM_ZONE
+    ZIP_PREFIXES = config.ZIP_PREFIXES
+    ZORI_ZIP_CSV_URL = config.ZORI_ZIP_CSV_URL
+    
     logger.info("=" * 60)
     logger.info(f"Building dataset for: {METRO_NAME}")
     logger.info("=" * 60)
