@@ -53,14 +53,14 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
     logger.info(f"  ✓ CBSA boundary retrieved")
     
     # Step 2: Fetch ZCTAs by ZIP prefix
-    print(f"\nFetching ZCTAs with prefixes: {zip_prefixes}...")
+    logger.info(f"\nFetching ZCTAs with prefixes: {zip_prefixes}...")
     zctas_all = get_state_zctas(zip_prefixes)
-    print(f"  ✓ Retrieved {len(zctas_all)} total ZCTAs")
+    logger.info(f"  ✓ Retrieved {len(zctas_all)} total ZCTAs")
     
     # Step 3: Filter ZCTAs to those within CBSA boundary
-    print(f"\nFiltering ZCTAs to {metro_name} metro area...")
+    logger.info(f"\nFiltering ZCTAs to {metro_name} metro area...")
     zctas_in_metro = filter_zctas_in_cbsa(zctas_all, cbsa_boundary)
-    print(f"  ✓ Filtered to {len(zctas_in_metro)} ZCTAs within CBSA")
+    logger.info(f"  ✓ Filtered to {len(zctas_in_metro)} ZCTAs within CBSA")
     
     # Step 4: Create output directory
     output_dir = PROJECT_ROOT / "data" / "shapefiles"
@@ -80,36 +80,36 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
     for file in shapefile_path.parent.glob(f"{shapefile_path.stem}.*"):
         logger.info(f"    - {file.name}")
     logger.info(f"\nColumns in shapefile:")
-    print(f"  {', '.join(zctas_in_metro.columns.tolist())}")
-    print(f"\nCRS: {zctas_in_metro.crs}")
-    print()
+    logger.info(f"  {', '.join(zctas_in_metro.columns.tolist())}")
+    logger.info(f"\nCRS: {zctas_in_metro.crs}")
+    logger.info("")
     
     return str(shapefile_path)
 
 
 def create_all_zcta_shapefiles():
     """Create ZCTA shapefiles for all configured metro areas."""
-    print(f"\n{'='*80}")
-    print(f"Creating ZCTA Shapefiles for All Metro Areas")
-    print(f"{'='*80}\n")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"Creating ZCTA Shapefiles for All Metro Areas")
+    logger.info(f"{'='*80}\n")
     
     results = {}
     for metro_key in METRO_CONFIGS.keys():
         try:
             shapefile_path = create_zcta_shapefile(metro_key)
             results[metro_key] = shapefile_path
-            print()
+            logger.info("")
         except Exception as e:
-            print(f"ERROR: Failed to create shapefile for {metro_key}: {e}\n")
+            logger.error(f"ERROR: Failed to create shapefile for {metro_key}: {e}\n")
             results[metro_key] = None
     
-    print(f"\n{'='*80}")
-    print(f"Summary")
-    print(f"{'='*80}")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"Summary")
+    logger.info(f"{'='*80}")
     for metro_key, path in results.items():
         status = "✓" if path else "✗"
-        print(f"  {status} {metro_key}: {path if path else 'Failed'}")
-    print()
+        logger.info(f"  {status} {metro_key}: {path if path else 'Failed'}")
+    logger.info("")
     
     return results
 

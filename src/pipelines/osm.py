@@ -70,8 +70,9 @@ def zcta_transit_density(
                 )
         except AttributeError:
             # OSMnx API not found - skip transit data for this ZCTA
-            print(f"  Warning: OSMnx API function not available for ZCTA "
-                  f"{zcta_row['ZCTA5CE']}")
+            logger.warning(
+                f"OSMnx API function not available for ZCTA {zcta_row['ZCTA5CE']}"
+            )
             transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
         except Exception as e:
             # No data or other errors - handle based on exception type
@@ -81,13 +82,15 @@ def zcta_transit_density(
                 transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
             elif isinstance(e, (ConnectionError, TimeoutError)):
                 # Network connectivity issues - log and continue with zero stops
-                print(f"  Warning: Network error querying OSM for ZCTA "
-                      f"{zcta_row['ZCTA5CE']}: {e}")
+                logger.warning(
+                    f"Network error querying OSM for ZCTA {zcta_row['ZCTA5CE']}: {e}"
+                )
                 transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
             else:
                 # Other unexpected errors - log but continue
-                print(f"  Warning: Error querying OSM for ZCTA "
-                      f"{zcta_row['ZCTA5CE']}: {error_type}: {e}")
+                logger.warning(
+                    f"Error querying OSM for ZCTA {zcta_row['ZCTA5CE']}: {error_type}: {e}"
+                )
                 transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
         
         # Fallback: query for bus stops if no public_transport features found

@@ -118,8 +118,9 @@ def get_state_zctas(
                         break
                     
                     zcta_chunks.append(chunk)
-                    print(f"Fetched {len(chunk)} ZCTAs for prefix '{prefix}' "
-                          f"(offset {offset})")
+                    logger.info(
+                        f"Fetched {len(chunk)} ZCTAs for prefix '{prefix}' (offset {offset})"
+                    )
                     
                     # Stop if we got fewer records than requested (last page)
                     if len(chunk) < max_records:
@@ -128,20 +129,26 @@ def get_state_zctas(
                     offset += max_records
                     
                 except ConnectionError as e:
-                    print(f"Network error fetching ZCTAs for prefix '{prefix}' "
-                          f"at offset {offset}: {e}")
+                    logger.warning(
+                        f"Network error fetching ZCTAs for prefix '{prefix}' at offset {offset}: {e}"
+                    )
                     break
                 except TimeoutError:
-                    print(f"Timeout fetching ZCTAs for prefix '{prefix}' "
-                          f"at offset {offset}. Try reducing max_records or checking network.")
+                    logger.warning(
+                        f"Timeout fetching ZCTAs for prefix '{prefix}' at offset {offset}. "
+                        "Try reducing max_records or checking network."
+                    )
                     break
                 except ValueError as e:
-                    print(f"Invalid response data for prefix '{prefix}' "
-                          f"at offset {offset}: {e}")
+                    logger.warning(
+                        f"Invalid response data for prefix '{prefix}' at offset {offset}: {e}"
+                    )
                     break
                 except Exception as e:
-                    print(f"Unexpected error fetching ZCTAs for prefix '{prefix}' "
-                          f"at offset {offset}: {type(e).__name__}: {e}")
+                    logger.warning(
+                        f"Unexpected error fetching ZCTAs for prefix '{prefix}' at offset {offset}: "
+                        f"{type(e).__name__}: {e}"
+                    )
                     break
         
         # Combine all fetched chunks
@@ -258,7 +265,7 @@ def get_tracts_for_counties(
         gdf = esri_geojson_to_gdf(TIGER_TRACTS_URL, params)
         if not gdf.empty:
             tract_gdfs.append(gdf)
-            print(f"  Fetched {len(gdf)} tracts for state {state_fips}, county {county_fips}")
+            logger.info(f"  Fetched {len(gdf)} tracts for state {state_fips}, county {county_fips}")
     
     if tract_gdfs:
         return pd.concat(tract_gdfs, ignore_index=True)
