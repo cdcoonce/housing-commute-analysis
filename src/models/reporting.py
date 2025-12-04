@@ -29,7 +29,8 @@ def save_markdown_table(
         All lists must have the same length.
     path : Path
         Output markdown file path. File is created if it doesn't exist,
-        or appended to if it exists.
+        or appended to if it exists. Path is validated to prevent directory
+        traversal attacks.
     title : str
         Table section title (rendered as ### heading).
     
@@ -41,13 +42,19 @@ def save_markdown_table(
     Raises
     ------
     ValueError
-        If data dictionary is empty or if column lists have inconsistent lengths.
+        If data dictionary is empty, if column lists have inconsistent lengths,
+        or if path is invalid/unsafe (e.g., contains '../' traversal).
     
     Notes
     -----
     - Uses pipe-separated GitHub-flavored markdown table syntax
     - All values are converted to strings via str()
     - File is opened in append mode ('a'), preserving existing content
+    - Path resolution with strict=False allows non-existent files but validates structure
+    
+    Security:
+        Path validation prevents directory traversal attacks by resolving the path
+        and checking for OS errors before file operations.
     """
     # Validate data structure before generating table
     if not data:

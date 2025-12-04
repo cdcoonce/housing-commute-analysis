@@ -41,16 +41,16 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
         cbsa_code = config["cbsa_code"]
         metro_name = config["name"]
     
-    zip_prefixes = config["zip_prefixes"]
+    zip_prefixes = config['zip_prefixes']
     
-    print(f"\n{'='*80}")
-    print(f"Creating ZCTA Shapefile for {metro_name}")
-    print(f"{'='*80}\n")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"Creating ZCTA Shapefile for {metro_name}")
+    logger.info(f"{'='*80}\n")
     
     # Step 1: Fetch CBSA boundary
-    print(f"Fetching CBSA boundary (code: {cbsa_code})...")
+    logger.info(f"Fetching CBSA boundary (code: {cbsa_code})...")
     cbsa_boundary = get_cbsa_polygon(cbsa_code)
-    print(f"  ✓ CBSA boundary retrieved")
+    logger.info(f"  ✓ CBSA boundary retrieved")
     
     # Step 2: Fetch ZCTAs by ZIP prefix
     print(f"\nFetching ZCTAs with prefixes: {zip_prefixes}...")
@@ -68,18 +68,18 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
     
     # Step 5: Save as shapefile
     shapefile_path = output_dir / f"zcta_{metro_key}"
-    zctas_in_metro.to_file(shapefile_path, driver="ESRI Shapefile")
+    zctas_in_metro.to_file(shapefile_path)
     
-    print(f"\n{'='*80}")
-    print(f"SUCCESS: ZCTA shapefile created")
-    print(f"{'='*80}")
-    print(f"  Metro: {metro_name}")
-    print(f"  ZCTAs: {len(zctas_in_metro)}")
-    print(f"  Output: {shapefile_path}")
-    print(f"  Files:")
-    for file in shapefile_path.parent.glob(f"zcta_{metro_key}.*"):
-        print(f"    - {file.name}")
-    print(f"\nColumns in shapefile:")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"SUCCESS: ZCTA shapefile created")
+    logger.info(f"{'='*80}")
+    logger.info(f"  Metro: {metro_name}")
+    logger.info(f"  ZCTAs: {len(zctas_in_metro)}")
+    logger.info(f"  Output: {shapefile_path}")
+    logger.info(f"  Files:")
+    for file in shapefile_path.parent.glob(f"{shapefile_path.stem}.*"):
+        logger.info(f"    - {file.name}")
+    logger.info(f"\nColumns in shapefile:")
     print(f"  {', '.join(zctas_in_metro.columns.tolist())}")
     print(f"\nCRS: {zctas_in_metro.crs}")
     print()

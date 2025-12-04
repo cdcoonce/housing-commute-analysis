@@ -205,6 +205,10 @@ def calculate_vif(X: np.ndarray, feature_names: Optional[List[str]] = None) -> p
     X_const = sm.add_constant(X, has_constant='add')
     
     # Calculate VIF for each feature (skip constant at index 0)
+    # Rationale: VIF measures variance inflation due to collinearity with OTHER
+    # predictors. The constant (all 1s) is perfectly collinear with itself,
+    # making its VIF undefined. We start at index 1 to compute VIF only for
+    # actual features.
     vif_data = []
     for i in range(1, X_const.shape[1]):  # Start at 1 to skip constant
         vif_value = vif_calc(X_const, i)

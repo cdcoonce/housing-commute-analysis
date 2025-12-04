@@ -14,8 +14,6 @@ import argparse
 import logging
 from pathlib import Path
 
-import matplotlib as mpl
-
 # Import from src.models analysis modules
 from src.models.data_loader import METRO_FILES, METRO_NAMES, load_and_validate_data
 from src.models.rq1_housing_commute_tradeoff import run_rq1
@@ -25,16 +23,18 @@ try:
     from src.models.rq2_equity_analysis import run_rq2
     HAS_RQ2 = True
 except ImportError:
+    run_rq2 = None  # Explicitly set to None to prevent unbound errors
     HAS_RQ2 = False
 
 try:
     from src.models.rq3_aci_analysis import run_rq3
     HAS_RQ3 = True
 except ImportError:
+    run_rq3 = None  # Explicitly set to None to prevent unbound errors
     HAS_RQ3 = False
 
-# Set matplotlib style for publication-quality plots
-mpl.style.use('seaborn-v0_8-darkgrid')
+# Note: Removed matplotlib style (seaborn) per clean-code instructions:
+# "Avoid seaborn unless explicitly requested"
 
 # Logging configuration - INFO level for progress tracking
 logging.basicConfig(
@@ -130,7 +130,7 @@ def main() -> None:
         run_rq1(df, out_dir, fig_dir, args.metro)
         
         # RQ2: Equity Analysis (if implemented)
-        if HAS_RQ2:
+        if HAS_RQ2 and run_rq2 is not None:
             logger.info("\n" + "=" * 70)
             logger.info("Running RQ2: Equity Analysis")
             logger.info("=" * 70)
@@ -139,7 +139,7 @@ def main() -> None:
             logger.info("\nRQ2: Equity Analysis - SKIPPED (module not implemented)")
         
         # RQ3: ACI Analysis (if implemented)
-        if HAS_RQ3:
+        if HAS_RQ3 and run_rq3 is not None:
             # Auto-detect shapefile if not provided
             if args.zcta_shp:
                 zcta_shp = Path(args.zcta_shp)

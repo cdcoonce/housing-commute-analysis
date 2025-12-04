@@ -1,5 +1,5 @@
 """
-Visualization utilities for DAT490 analysis.
+"""Visualization utilities for DAT490 analysis.
 
 This module provides functions for creating diagnostic plots,
 scatter plots, boxplots, and other visualizations.
@@ -7,7 +7,7 @@ scatter plots, boxplots, and other visualizations.
 
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,8 +25,8 @@ def plot_diagnostics(
     x_label: str,
     out_dir: Path,
     prefix: str,
-    model_results=None,
-    X_matrix: np.ndarray = None
+    model_results: Optional[sm.regression.linear_model.RegressionResultsWrapper] = None,
+    X_matrix: Optional[np.ndarray] = None
 ) -> None:
     """
     Create four diagnostic plots for OLS regression model evaluation.

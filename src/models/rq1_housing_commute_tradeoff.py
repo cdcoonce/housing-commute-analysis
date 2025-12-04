@@ -115,29 +115,40 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     
     logger.info(f"Analysis sample: {len(df_clean)} ZCTAs")
     
-    # Extract dependent variable
-    y = df_clean['rent_to_income'].to_numpy()
+    # Extract dependent variable (rent burden ratio)
+    rent_to_income = df_clean['rent_to_income'].to_numpy()
     
     # ==================================================================================
     # STEP 2: Prepare feature matrices for linear and quadratic models
     # ==================================================================================
     # Primary predictor: commute time (minutes)
-    commute = df_clean['commute_min_proxy'].to_numpy()
+    commute_time_min = df_clean['commute_min_proxy'].to_numpy()
     
     # Control variables
-    renter_share = df_clean['renter_share'].to_numpy()
-    vehicle_access = df_clean['vehicle_access'].to_numpy()
-    pop_density = df_clean['pop_density'].to_numpy()
+    renter_share_pct = df_clean['renter_share'].to_numpy()
+    vehicle_access_pct = df_clean['vehicle_access'].to_numpy()
+    pop_density_per_km2 = df_clean['pop_density'].to_numpy()
     
     # Model 1: Linear specification
     # rent_to_income = β₀ + β₁(commute) + β₂(renter_share) + β₃(vehicle_access) + β₄(pop_density) + ε
-    X_linear = np.column_stack([commute, renter_share, vehicle_access, pop_density])
+    feature_matrix_linear = np.column_stack([
+        commute_time_min,
+        renter_share_pct,
+        vehicle_access_pct,
+        pop_density_per_km2
+    ])
     feature_names_linear = ['commute_min_proxy', 'renter_share', 'vehicle_access', 'pop_density']
     
     # Model 2: Quadratic specification
     # rent_to_income = β₀ + β₁(commute) + β₂(commute²) + β₃(renter_share) + β₄(vehicle_access) + β₅(pop_density) + ε
-    commute_squared = commute ** 2
-    X_quad = np.column_stack([commute, commute_squared, renter_share, vehicle_access, pop_density])
+    commute_squared = commute_time_min ** 2
+    feature_matrix_quad = np.column_stack([
+        commute_time_min,
+        commute_squared,
+        renter_share_pct,
+        vehicle_access_pct,
+        pop_density_per_km2
+    ])
     feature_names_quad = ['commute_min_proxy', 'commute_min_proxy²', 'renter_share', 'vehicle_access', 'pop_density']
 
     
@@ -146,13 +157,13 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     # ==================================================================================
     logger.info("Checking for multicollinearity (VIF)...")
     
-    vif_linear = calculate_vif(X_linear, feature_names_linear)
+    vif_linear = calculate_vif(feature_matrix_linear, feature_names_linear)
     logger.info("VIF for linear model:")
     for _, row in vif_linear.iterrows():
         vif_warning = "HIGH" if row['VIF'] > 10 else "OK" if row['VIF'] < 5 else "MODERATE"
         logger.info(f"  {row['Feature']}: {row['VIF']:.2f}{vif_warning}")
     
-    vif_quad = calculate_vif(X_quad, feature_names_quad)
+    vif_quad = calculate_vif(feature_matrix_quad, feature_names_quad)
     logger.info("VIF for quadratic model:")
     for _, row in vif_quad.iterrows():
         vif_warning = "HIGH" if row['VIF'] > 10 else "OK" if row['VIF'] < 5 else "MODERATE"
@@ -162,10 +173,10 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     # STEP 4: Fit linear model
     # ==================================================================================
     logger.info("Fitting linear model...")
-    model_linear = fit_ols_robust(y, X_linear, feature_names_linear)
+    model_linear = fit_ols_robust(rent_to_income, feature_matrix_linear, feature_names_linear)
     
     # 3-fold cross-validation for linear model
-    cv_rmse_linear, cv_folds_linear = cv_rmse(X_linear, y, k=3)
+    cv_rmse_linear, cv_folds_linear = cv_rmse(feature_matrix_linear, rent_to_income, k=3)
     
     logger.info(f"Linear Model Results:")
     logger.info(f"  Adj R²: {model_linear['adj_r2']:.4f}")
@@ -176,10 +187,10 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     # STEP 5: Fit quadratic model
     # ==================================================================================
     logger.info("Fitting quadratic model...")
-    model_quad = fit_ols_robust(y, X_quad, feature_names_quad)
+    model_quad = fit_ols_robust(rent_to_income, feature_matrix_quad, feature_names_quad)
     
     # 3-fold cross-validation for quadratic model
-    cv_rmse_quad, cv_folds_quad = cv_rmse(X_quad, y, k=3)
+    cv_rmse_quad, cv_folds_quad = cv_rmse(feature_matrix_quad, rent_to_income, k=3)
     
     logger.info(f"Quadratic Model Results:")
     logger.info(f"  Adj R²: {model_quad['adj_r2']:.4f}")
@@ -192,14 +203,14 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     if model_linear['aic'] < model_quad['aic']:
         best_model = model_linear
         best_model_name = 'Linear'
-        best_X = X_linear
+        best_feature_matrix = feature_matrix_linear
         best_features = feature_names_linear
         best_cv_rmse = cv_rmse_linear
         best_vif = vif_linear
     else:
         best_model = model_quad
         best_model_name = 'Quadratic'
-        best_X = X_quad
+        best_feature_matrix = feature_matrix_quad
         best_features = feature_names_quad
         best_cv_rmse = cv_rmse_quad
         best_vif = vif_quad
@@ -214,23 +225,23 @@ def run_rq1(df: pl.DataFrame, out_dir: Path, fig_dir: Path, metro: str) -> None:
     # ==================================================================================
     # STEP 7: Generate predictions and residuals for diagnostics
     # ==================================================================================
-    X_const = sm.add_constant(best_X)
-    y_pred = best_model['results'].predict(X_const)
+    feature_matrix_with_const = sm.add_constant(best_feature_matrix)
+    y_pred = best_model['results'].predict(feature_matrix_with_const)
     resid = best_model['results'].resid
     
     # ==================================================================================
     # STEP 8: Create diagnostic plots
     # ==================================================================================
     plot_diagnostics(
-        y_true=y,
+        y_true=rent_to_income,
         y_pred=y_pred,
         resid=resid,
-        x_var=commute,  # Always plot against commute time for interpretability
+        x_var=commute_time_min,  # Always plot against commute time for interpretability
         x_label='Commute Time (minutes)',
         out_dir=fig_dir,
         prefix=f"rq1_{metro.lower()}",
         model_results=best_model['results'],  # Pass model for smooth curve generation
-        X_matrix=best_X  # Pass feature matrix for grid predictions
+        X_matrix=best_feature_matrix  # Pass feature matrix for grid predictions
     )
     
     # Save results to markdown with metro-specific filename

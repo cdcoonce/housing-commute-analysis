@@ -1,12 +1,12 @@
 """
-Data preprocessing and feature engineering utilities.
+"""Data preprocessing and feature engineering utilities.
 
 This module handles standardization, feature transformations,
 and data preparation for modeling.
 """
 
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import polars as pl
 
@@ -167,18 +167,22 @@ def create_income_segments(
         return df
     
     # Calculate tercile boundaries using standard thresholds
+    # Terciles divide data into 3 equal-sized groups (33.3%, 66.7% cutoffs)
     # Use drop_nulls() instead of filter() because Polars Series don't have filter method
     # (filter is a DataFrame method; drop_nulls works on both Series and DataFrame)
     income_data = df[income_col].drop_nulls()
-    q33 = income_data.quantile(TERCILE_LOW_QUANTILE)
-    q67 = income_data.quantile(TERCILE_HIGH_QUANTILE)
+    lower_tercile_boundary = income_data.quantile(TERCILE_LOW_QUANTILE)
+    upper_tercile_boundary = income_data.quantile(TERCILE_HIGH_QUANTILE)
     
-    logger.info(f"Income tercile boundaries: Low ≤ ${q33:,.0f}, Medium ≤ ${q67:,.0f}, High > ${q67:,.0f}")
+    logger.info(
+        f"Income tercile boundaries: Low ≤ ${lower_tercile_boundary:,.0f}, "
+        f"Medium ≤ ${upper_tercile_boundary:,.0f}, High > ${upper_tercile_boundary:,.0f}"
+    )
     
     # Create categorical segments
     df = df.with_columns(
-        pl.when(pl.col(income_col) <= q33).then(pl.lit('Low'))
-        .when(pl.col(income_col) <= q67).then(pl.lit('Medium'))
+        pl.when(pl.col(income_col) <= lower_tercile_boundary).then(pl.lit('Low'))
+        .when(pl.col(income_col) <= upper_tercile_boundary).then(pl.lit('Medium'))
         .otherwise(pl.lit('High'))
         .alias(segment_col)
     )

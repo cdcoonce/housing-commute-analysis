@@ -61,6 +61,74 @@ METRO_CONFIGS = {
         ],
         "zip_prefixes": ["75", "76"],  # Dallas and Fort Worth areas
         "utm_zone": 32614  # UTM Zone 14N
+    },
+    "denver": {
+        "name": "Denver-Aurora-Lakewood, CO",
+        "cbsa_code": "19740",
+        "counties": [
+            ("08", "001"),  # CO - Adams
+            ("08", "005"),  # CO - Arapahoe
+            ("08", "013"),  # CO - Boulder
+            ("08", "014"),  # CO - Broomfield
+            ("08", "031"),  # CO - Denver
+            ("08", "035"),  # CO - Douglas
+            ("08", "039"),  # CO - Elbert
+            ("08", "059"),  # CO - Jefferson
+        ],
+        "zip_prefixes": ["80", "81"],
+        "utm_zone": 32613  # UTM Zone 13N
+    },
+    "atlanta": {
+        "name": "Atlanta-Sandy Springs-Alpharetta, GA",
+        "cbsa_code": "12060",
+        "counties": [
+            ("13", "121"),  # GA - Fulton
+            ("13", "089"),  # GA - DeKalb
+            ("13", "067"),  # GA - Cobb
+            ("13", "063"),  # GA - Clayton
+            ("13", "045"),  # GA - Cherokee
+            ("13", "135"),  # GA - Gwinnett
+            ("13", "151"),  # GA - Henry
+            ("13", "057"),  # GA - Cherokee
+        ],
+        "zip_prefixes": ["30"],
+        "utm_zone": 32616  # UTM Zone 16N
+    },
+    "chicago": {
+        "name": "Chicago-Naperville-Elgin, IL-IN-WI",
+        "cbsa_code": "16980",
+        "counties": [
+            ("17", "031"),  # IL - Cook
+            ("17", "043"),  # IL - DuPage
+            ("17", "089"),  # IL - Kane
+            ("17", "097"),  # IL - Lake
+            ("17", "111"),  # IL - McHenry
+            ("17", "197"),  # IL - Will
+        ],
+        "zip_prefixes": ["60", "61", "62"],
+        "utm_zone": 32616  # UTM Zone 16N
+    },
+    "seattle": {
+        "name": "Seattle-Tacoma-Bellevue, WA",
+        "cbsa_code": "42660",
+        "counties": [
+            ("53", "033"),  # WA - King
+            ("53", "053"),  # WA - Pierce
+            ("53", "061"),  # WA - Snohomish
+        ],
+        "zip_prefixes": ["98"],
+        "utm_zone": 32610  # UTM Zone 10N
+    },
+    "miami": {
+        "name": "Miami-Fort Lauderdale-Pompano Beach, FL",
+        "cbsa_code": "33100",
+        "counties": [
+            ("12", "086"),  # FL - Miami-Dade
+            ("12", "011"),  # FL - Broward
+            ("12", "099"),  # FL - Palm Beach
+        ],
+        "zip_prefixes": ["33"],
+        "utm_zone": 32617  # UTM Zone 17N
     }
 }
 

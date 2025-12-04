@@ -6,6 +6,7 @@ produce a final ZCTA-level dataset with housing, commute, and transit metrics.
 """
 from __future__ import annotations
 
+import logging
 import geopandas as gpd
 import pandas as pd
 
@@ -29,6 +30,9 @@ from .osm import zcta_transit_density
 from .spatial import filter_zctas_in_cbsa, tract_to_zcta_centroid_map
 from .tiger import get_cbsa_polygon, get_tracts_for_counties, get_state_zctas
 from .zori import fetch_zori_latest
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 def build_final_dataset() -> str:
@@ -61,46 +65,53 @@ def build_final_dataset() -> str:
         ttw_total, total_pop, pct_hispanic, pct_white, pct_black, pct_asian, 
         pct_other, median_income, income_segment, period, zori, stops_per_km2
     """
-    print(f"Building dataset for: {METRO_NAME}")
+    logger.info("=" * 60)
+    logger.info(f"Building dataset for: {METRO_NAME}")
+    logger.info("=" * 60)
     
     # Step 1: Fetch CBSA (metro area) boundary polygon for spatial filtering
+    logger.info("STEP 1: Fetching CBSA boundary...")
     cbsa_boundary = get_cbsa_polygon(CBSA_CODE)
-    print("Fetched CBSA boundary")
+    logger.info(f"Fetched CBSA boundary for: {METRO_NAME}")
 
     # Step 2: Fetch ZCTA and tract geometries for the region
+    logger.info("STEP 2: Loading ZCTA and tract geometries...")
     zctas_all = get_state_zctas(ZIP_PREFIXES)
-    print(f"Fetching census tracts for {len(COUNTIES)} counties across {len(set(s for s, _ in COUNTIES))} state(s)...")
+    logger.info(f"Fetching census tracts for {len(COUNTIES)} counties across {len(set(s for s, _ in COUNTIES))} state(s)...")
     tracts_all = get_tracts_for_counties(COUNTIES)
-    print(f"Fetched {len(zctas_all)} ZCTAs and {len(tracts_all)} tracts")
+    logger.info(f"Fetched {len(zctas_all)} ZCTAs and {len(tracts_all)} tracts")
 
     # Filter ZCTAs to only those within the CBSA (centroid-based)
     zctas_in_metro = filter_zctas_in_cbsa(zctas_all, cbsa_boundary)
     tracts_in_counties = tracts_all
 
     # Step 3: Fetch ACS commute data for each county (grouped by state)
-    print(f"Fetching ACS commute data for {len(COUNTIES)} counties...")
+    logger.info("STEP 3: Fetching ACS commute data...")
+    logger.info(f"Fetching ACS commute data for {len(COUNTIES)} counties...")
     acs_data_by_county = []
     for state_fips, county_fips in COUNTIES:
         acs_data = fetch_acs_for_county(state_fips, county_fips)
         acs_data_by_county.append(acs_data)
     acs_raw = pd.concat(acs_data_by_county, ignore_index=True)
     acs_features = compute_acs_features(acs_raw)
-    print(f"Processed ACS commute data for {len(acs_raw)} tracts")
+    logger.info(f"Processed ACS commute data for {len(acs_raw)} tracts")
     
     # Step 3b: Fetch ACS demographic data (race, ethnicity, income) for each county
-    print(f"Fetching ACS demographic data for {len(COUNTIES)} counties...")
+    logger.info("STEP 3b: Fetching ACS demographic data...")
+    logger.info(f"Fetching demographic data for {len(COUNTIES)} counties...")
     demo_data_by_county = []
     for state_fips, county_fips in COUNTIES:
         demo_data = fetch_demographics_for_county(state_fips, county_fips)
         demo_data_by_county.append(demo_data)
     demo_raw = pd.concat(demo_data_by_county, ignore_index=True)
     demo_with_pct = compute_demographic_percentages(demo_raw)
-    print(f"Processed demographic data for {len(demo_raw)} tracts")
+    logger.info(f"Processed demographic data for {len(demo_raw)} tracts")
 
     # Step 4: Map census tracts to ZCTAs using centroid-based spatial join
     # Centroid method assigns each tract to the ZCTA containing its geographic center,
     # avoiding many-to-many relationships that occur with boundary overlaps
-    print(f"Mapping {len(tracts_in_counties)} tracts to {len(zctas_in_metro)} ZCTAs...")
+    logger.info("STEP 4: Mapping tracts to ZCTAs...")
+    logger.info(f"Mapping {len(tracts_in_counties)} tracts to {len(zctas_in_metro)} ZCTAs...")
     tract_to_zcta_map = tract_to_zcta_centroid_map(tracts_in_counties, zctas_in_metro)
 
     # DEBUG: Export mapping for validation (check for unmapped tracts or unexpected assignments)
@@ -135,23 +146,24 @@ def build_final_dataset() -> str:
         "renter_share": "mean",  # Average % of units that are renter-occupied
         "vehicle_access": "mean",  # Average % of households with 1+ vehicles
     })
-    print(f"Aggregated commute data to {len(zcta_aggregated)} ZCTAs")
+    logger.info(f"Aggregated commute data to {len(zcta_aggregated)} ZCTAs")
     
     # Aggregate demographic data to ZCTA level (population-weighted)
     zcta_demographics = aggregate_demographics_to_zcta(demo_with_pct, tract_to_zcta_map)
-    print(f"Aggregated demographic data to {len(zcta_demographics)} ZCTAs")
+    logger.info(f"Aggregated demographic data to {len(zcta_demographics)} ZCTAs")
 
     # Step 5: Fetch Zillow Observed Rent Index (ZORI) for rental prices
-    print("Fetching Zillow rent data...")
+    logger.info("STEP 5: Fetching Zillow rent data...")
     zori_data = fetch_zori_latest(ZORI_ZIP_CSV_URL)
     zori_data = zori_data.rename(columns={"zip": "ZCTA5CE"})
     zori_data["ZCTA5CE"] = zori_data["ZCTA5CE"].astype(str).str.zfill(5)
-    print(f"Fetched ZORI data for {len(zori_data)} ZIP codes")
+    logger.info(f"Fetched ZORI data for {len(zori_data)} ZIP codes")
 
     # Step 6: Compute transit stop density from OpenStreetMap for each ZCTA
     # Empty filter strings use default OSM transit tags defined in config.py
     # (transit_filter and fallback_filter allow custom filtering if needed in future)
-    print(f"Computing transit density for {len(zctas_in_metro)} ZCTAs (may take several minutes)...")
+    logger.info("STEP 6: Computing transit density...")
+    logger.info(f"Computing transit density for {len(zctas_in_metro)} ZCTAs (may take several minutes)...")
     # Create clean GeoDataFrame with only ZCTA ID and geometry to reduce memory footprint
     zctas_for_transit = gpd.GeoDataFrame(
         zctas_in_metro[["ZCTA5CE"]],
@@ -163,10 +175,10 @@ def build_final_dataset() -> str:
         transit_filter="",  # Use default OSM public_transport tags
         fallback_filter=""  # Use default highway=bus_stop fallback
     )
-    print(f"Computed transit density for {len(transit_density)} ZCTAs")
+    logger.info(f"Computed transit density for {len(transit_density)} ZCTAs")
 
     # Step 6b: Calculate population density (people per square km)
-    print("Computing population density for ZCTAs...")
+    logger.info("Computing population density for ZCTAs...")
     zctas_area = zctas_in_metro.to_crs(UTM_ZONE).copy()
     zctas_area["area_km2"] = zctas_area.geometry.area / 1_000_000  # Convert m² to km²
     zcta_area_df = zctas_area[["ZCTA5CE", "area_km2"]].copy()
@@ -202,7 +214,7 @@ def build_final_dataset() -> str:
     
     # Step 8: Create income segments based on median income quartiles
     final_dataset = create_income_segments(final_dataset)
-    print(f"Created income segments (Low/Medium/High) based on quartiles")
+    logger.info("Created income segments (Low/Medium/High) based on quartiles")
 
     # Step 9: Reorder columns for consistent output
     column_order = [
@@ -245,7 +257,9 @@ def build_final_dataset() -> str:
     FINAL_ZCTA_OUT.parent.mkdir(parents=True, exist_ok=True)
     final_dataset.to_csv(FINAL_ZCTA_OUT, index=False)
     
-    print(f"\nSUCCESS: Wrote {len(final_dataset)} ZCTAs to {FINAL_ZCTA_OUT.name}")
-    print(f"   Output: {FINAL_ZCTA_OUT}")
+    logger.info("=" * 60)
+    logger.info(f"SUCCESS: Wrote {len(final_dataset)} ZCTAs to {FINAL_ZCTA_OUT.name}")
+    logger.info(f"Output: {FINAL_ZCTA_OUT}")
+    logger.info("=" * 60)
     
     return str(FINAL_ZCTA_OUT)
