@@ -5,9 +5,15 @@ This module provides functions for fitting OLS models with robust
 standard errors, cross-validation, and model evaluation.
 """
 
-import logging
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
 
+import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from .results import ANOVAResult
+
+import polars as pl
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -220,6 +226,56 @@ def calculate_vif(X: np.ndarray, feature_names: Optional[List[str]] = None) -> p
     vif_df = vif_df.sort_values('VIF', ascending=False).reset_index(drop=True)
     
     return vif_df
+
+
+def anova_by_group(
+    df: pl.DataFrame,
+    target_col: str,
+    group_col: str,
+    group_values: list[str],
+) -> "ANOVAResult":
+    """Perform one-way ANOVA for a target variable grouped by a categorical column.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Input data.
+    target_col : str
+        Column to test (continuous variable).
+    group_col : str
+        Column defining groups (categorical variable).
+    group_values : list[str]
+        Ordered list of group labels to include.
+
+    Returns
+    -------
+    ANOVAResult
+        Result with f_stat and p_value, or None values if insufficient data.
+    """
+    from scipy.stats import f_oneway as _f_oneway
+
+    from .results import ANOVAResult
+
+    groups = []
+    for label in group_values:
+        arr = (
+            df.filter(pl.col(group_col) == label)[target_col]
+            .drop_nulls()
+            .to_numpy()
+        )
+        groups.append(arr)
+
+    # Require at least 2 groups with data for ANOVA
+    nonempty = [g for g in groups if len(g) > 0]
+    if len(nonempty) < 2:
+        logger.warning(
+            f"Insufficient groups for ANOVA on {target_col} by {group_col}"
+        )
+        return ANOVAResult(variable=target_col)
+
+    f_stat, p_val = _f_oneway(*nonempty)
+    logger.info(f"ANOVA — {target_col} by {group_col}: F={f_stat:.3f}, p={p_val:.4f}")
+    return ANOVAResult(variable=target_col, f_stat=f_stat, p_value=p_val)
 
 
 def fit_quantile_regression(

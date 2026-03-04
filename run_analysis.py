@@ -144,9 +144,14 @@ def main() -> None:
                 # Try to auto-detect based on metro code
                 metro_shp_map = {
                     'PHX': 'phoenix',
-                    'LA': 'los_angeles', 
+                    'LA': 'los_angeles',
                     'DFW': 'dallas',
-                    'MEM': 'memphis'
+                    'MEM': 'memphis',
+                    'DEN': 'denver',
+                    'ATL': 'atlanta',
+                    'CHI': 'chicago',
+                    'SEA': 'seattle',
+                    'MIA': 'miami',
                 }
                 
                 shp_name = metro_shp_map.get(args.metro)

@@ -5,6 +5,7 @@ This module handles markdown table generation and results reporting.
 """
 
 import logging
+from datetime import date
 from pathlib import Path
 from typing import Dict, List
 
@@ -137,7 +138,7 @@ def create_analysis_summary_header(
     
     with open(resolved_path, 'w', encoding='utf-8') as f:
         f.write(f"# DAT490 Analysis Summary: {metro_name}\n\n")
-        f.write("Analysis Date: November 9, 2025\n\n")
+        f.write(f"Analysis Date: {date.today().strftime('%B %d, %Y')}\n\n")
         f.write(f"Sample Size: {sample_size} ZCTAs\n\n")
         f.write("---\n\n")
     

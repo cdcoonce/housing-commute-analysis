@@ -1,1 +1,1 @@
-# DAT490 Housing Affordability Analysis Package
+"""DAT490 Housing Affordability Analysis Package."""
