@@ -43,6 +43,32 @@ filterwarnings = [
     "ignore::DeprecationWarning",
 ]
 
+[tool.coverage.run]
+# Omit modules that require network access, real census data, or full pipeline execution.
+# These are integration-only paths not covered by the unit test suite.
+omit = [
+    "src/models/rq1_housing_commute_tradeoff.py",
+    "src/models/rq2_equity_analysis.py",
+    "src/models/rq3_aci_analysis.py",
+    "src/models/visualization.py",
+    "src/models/results.py",
+    "src/pipelines/build.py",
+    "src/pipelines/osm.py",
+    "src/pipelines/spatial.py",
+    "src/pipelines/tiger.py",
+    "src/pipelines/zori.py",
+    "src/pipelines/create_zcta_shapefile.py",
+    "run_analysis.py",
+    "run_pipeline.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
 [dependency-groups]
 dev = [
     "ruff>=0.15.4",
