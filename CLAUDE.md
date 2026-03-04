@@ -49,6 +49,9 @@ Skills live in `.claude/skills/`. Each `SKILL.md` defines an invocable skill wit
 ### `/gitlab-cli`
 **Trigger when:** user needs to interact with GitLab — issues, merge requests, MR reviews, CI/CD pipelines, or pushing changes.
 
+### `/github-cli`
+**Trigger when:** user needs to interact with GitHub — issues, pull requests, PR reviews, GitHub Actions workflows, or pushing changes.
+
 ### `/readme-generator`
 **Trigger when:** user asks to create, generate, update, or improve a README, or says "document this project".
 **References:** [.claude/skills/readme-generator/references/](.claude/skills/readme-generator/references/) — analysis methodology, mermaid guidelines, badge reference.
