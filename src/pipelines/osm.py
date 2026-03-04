@@ -22,33 +22,41 @@ ox.settings.use_cache = True
 
 
 def zcta_transit_density(
-    zcta_gdf: gpd.GeoDataFrame, 
-    transit_filter: str, 
-    fallback_filter: str
+    zcta_gdf: gpd.GeoDataFrame,
+    transit_filter: str,
+    fallback_filter: str,
+    utm_zone: int = 32612,
 ) -> pd.DataFrame:
     """Calculate public transit stop density for each ZCTA using OpenStreetMap.
-    
+
     Queries OSM for transit features (platforms, stops, stations) within each
     ZCTA polygon and computes stops per square kilometer as a transit accessibility
     metric. Falls back to bus_stop query if no public_transport features found.
-    
-    Args:
-        zcta_gdf: GeoDataFrame with ZCTA5CE and geometry columns
-        transit_filter: OSM tag filter for transit features (currently unused,
-                       hardcoded to {"public_transport": True})
-        fallback_filter: Fallback OSM filter (currently unused, hardcoded to
-                        {"highway": "bus_stop"})
-        
-    Returns:
+
+    Parameters
+    ----------
+    zcta_gdf : gpd.GeoDataFrame
+        GeoDataFrame with ZCTA5CE and geometry columns.
+    transit_filter : str
+        OSM tag filter for transit features (currently unused, hardcoded).
+    fallback_filter : str
+        Fallback OSM filter (currently unused, hardcoded).
+    utm_zone : int
+        EPSG code for UTM projection used for area calculation
+        (e.g., 32612 for UTM Zone 12N).
+
+    Returns
+    -------
+    pd.DataFrame
         DataFrame with columns [ZCTA5CE, stops_per_km2]. One row per input ZCTA.
-        
-    Note:
-        - Queries OSM in WGS84 (EPSG:4326) as required by OSMnx
-        - Computes area in Web Mercator (EPSG:3857) for consistent km² calculation
-        - OSM data completeness varies by region; results may undercount actual stops
-        - Compatible with both osmnx < 1.0 (geometries_from_polygon) and 
-          osmnx >= 1.0 (features_from_polygon) APIs
-        - Silent failures return 0 stops if OSM query fails
+
+    Notes
+    -----
+    - Queries OSM in WGS84 (EPSG:4326) as required by OSMnx.
+    - Computes area using UTM projection for accurate km² calculation.
+    - OSM data completeness varies by region; results may undercount actual stops.
+    - Compatible with both osmnx < 1.0 and >= 1.0 APIs.
+    - Silent failures return 0 stops if OSM query fails.
     """
     # Ensure data is in WGS84 for OSMnx queries
     zctas_wgs84 = zcta_gdf.to_crs(4326)
@@ -124,14 +132,14 @@ def zcta_transit_density(
                         pass  # Silent failure for fallback query
                 transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
         
-        # Project to Web Mercator for counting (only if features exist)
+        # Project to UTM for accurate spatial calculations (only if features exist)
         if not transit_features.empty:
-            transit_features = transit_features.to_crs(3857)
-        
-        # Calculate ZCTA area in square kilometers using Web Mercator projection
+            transit_features = transit_features.to_crs(utm_zone)
+
+        # Calculate ZCTA area in square kilometers using UTM projection
         area_km2 = (
             gpd.GeoSeries(polygon, crs=4326)
-            .to_crs(3857)
+            .to_crs(utm_zone)
             .area
             .iloc[0] / 1_000_000  # Convert m² to km²
         )

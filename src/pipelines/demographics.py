@@ -82,7 +82,7 @@ def fetch_demographics_for_county(
     # Build query parameters
     params = {
         "get": ",".join(variables),
-        "for": f"tract:*",
+        "for": "tract:*",
         "in": f"state:{state_fips} county:{county_fips}",
     }
     
@@ -226,35 +226,42 @@ def aggregate_demographics_to_zcta(
 
 
 def create_income_segments(zcta_df: pd.DataFrame) -> pd.DataFrame:
-    """Add income_segment categorical variable based on quartiles.
-    
-    Segments ZCTAs into three income categories using quartile cutoffs:
-    - "Low": Bottom 25% (below 25th percentile)
-    - "Medium": Middle 50% (25th to 75th percentile)
-    - "High": Top 25% (above 75th percentile)
-    
-    Args:
-        zcta_df: DataFrame with median_income column
-        
-    Returns:
-        DataFrame with added income_segment column (categorical)
-        
-    Note:
-        ZCTAs with null median_income values will have null income_segment
+    """Add income_segment categorical variable based on terciles.
+
+    Segments ZCTAs into three roughly equal income categories using tercile cutoffs:
+    - "Low": Bottom third (below 33rd percentile)
+    - "Medium": Middle third (33rd to 67th percentile)
+    - "High": Top third (above 67th percentile)
+
+    Parameters
+    ----------
+    zcta_df : pd.DataFrame
+        DataFrame with median_income column.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with added income_segment column (categorical).
+
+    Notes
+    -----
+    ZCTAs with null median_income values will have null income_segment.
+    Tercile boundaries match ``src/models/preprocessing.py`` constants
+    (TERCILE_LOW_QUANTILE=0.333, TERCILE_HIGH_QUANTILE=0.667).
     """
     result = zcta_df.copy()
-    
-    # Calculate quartiles (excluding null values)
-    q25 = result["median_income"].quantile(0.25)
-    q75 = result["median_income"].quantile(0.75)
-    
+
+    # Calculate terciles (excluding null values)
+    q33 = result["median_income"].quantile(0.333)
+    q67 = result["median_income"].quantile(0.667)
+
     # Create categorical segments
     def assign_segment(income):
         if pd.isna(income):
             return None
-        elif income < q25:
+        elif income < q33:
             return "Low"
-        elif income <= q75:
+        elif income <= q67:
             return "Medium"
         else:
             return "High"

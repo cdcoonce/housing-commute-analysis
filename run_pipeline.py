@@ -46,7 +46,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv()
 
 # Import after path setup and environment loading
-from src.pipelines.build import build_final_dataset
+from src.pipelines.build import build_final_dataset  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -58,42 +58,28 @@ logger = logging.getLogger(__name__)
 
 
 def run_single_metro(metro: str) -> tuple[bool, str]:
-    """
-    Run the pipeline for a single metro area.
-    
+    """Run the pipeline for a single metro area.
+
     Parameters
     ----------
     metro : str
-        Metro area code (phoenix, memphis, los_angeles, dallas)
-    
+        Metro area key (e.g., 'phoenix', 'dallas', 'atlanta').
+
     Returns
     -------
     tuple[bool, str]
         (success, output_path or error_message)
     """
-    # Temporarily set METRO environment variable
-    original_metro = os.getenv("METRO")
-    os.environ["METRO"] = metro
-    
     try:
-        output_path = build_final_dataset()
+        output_path = build_final_dataset(metro_key=metro)
         return True, str(output_path)
     except (ValueError, KeyError) as e:
-        # Handle data validation errors (missing columns, invalid metro codes)
         return False, f"Data validation error: {type(e).__name__}: {e}"
     except (FileNotFoundError, IOError, OSError) as e:
-        # Handle file system errors (missing files, permission issues)
         return False, f"File system error: {type(e).__name__}: {e}"
     except Exception as e:
-        # Catch unexpected errors with full type information
         logger.error(f"Unexpected error in {metro}: {type(e).__name__}: {e}", exc_info=True)
         return False, f"Unexpected error: {type(e).__name__}: {e}"
-    finally:
-        # Restore original METRO value
-        if original_metro is not None:
-            os.environ["METRO"] = original_metro
-        elif "METRO" in os.environ:
-            del os.environ["METRO"]
 
 
 def main():
@@ -168,7 +154,7 @@ def main():
     
     try:
         # Run the pipeline
-        output_path = build_final_dataset()
+        output_path = build_final_dataset(metro_key=metro)
         
         logger.info("\n" + "=" * 70)
         logger.info("Pipeline completed successfully!")

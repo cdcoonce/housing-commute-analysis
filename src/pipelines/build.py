@@ -6,13 +6,13 @@ produce a final ZCTA-level dataset with housing, commute, and transit metrics.
 """
 from __future__ import annotations
 
-import importlib
 import logging
 
 import geopandas as gpd
 import pandas as pd
 
 from .acs import compute_acs_features, fetch_acs_for_county
+from .config import DATA_FINAL, METRO_CONFIGS, PROJECT_ROOT, ZORI_ZIP_CSV_URL
 from .demographics import (
     aggregate_demographics_to_zcta,
     compute_demographic_percentages,
@@ -28,13 +28,9 @@ from .zori import fetch_zori_latest
 logger = logging.getLogger(__name__)
 
 
-def build_final_dataset() -> str:
+def build_final_dataset(metro_key: str = "phoenix") -> str:
     """Execute the full data pipeline to build ZCTA-level housing dataset.
-    
-    Reloads config module to pick up any environment variable changes (e.g., METRO).
-    This allows the --all flag to work correctly by processing each metro in sequence.
-    Execute the full data pipeline to build ZCTA-level housing dataset.
-    
+
     This function orchestrates a multi-step ETL pipeline that:
     1. Fetches CBSA (metro area) boundary for spatial filtering
     2. Retrieves ZCTA (ZIP code) and census tract geometries
@@ -44,37 +40,34 @@ def build_final_dataset() -> str:
     6. Fetches Zillow rent index (ZORI) by ZIP code
     7. Computes OpenStreetMap transit stop density by ZCTA
     8. Merges all data sources into final dataset
-    
-    Returns:
-        String path to the output CSV file
-        
-    Raises:
-        requests.HTTPError: If any API request fails
-        ValueError: If no ZCTAs or tracts are found for the metro area
-        
-    Side Effects:
-        - Creates output directory if it doesn't exist
-        - Writes CSV file to path specified in FINAL_ZCTA_OUT config
-        - Prints progress messages to console
-        
-    Output Schema:
-        ZCTA5CE, rent_to_income, long45_share, long60_share, commute_min_proxy,
-        ttw_total, total_pop, pct_hispanic, pct_white, pct_black, pct_asian, 
-        pct_other, median_income, income_segment, period, zori, stops_per_km2
+
+    Parameters
+    ----------
+    metro_key : str
+        Key into METRO_CONFIGS (e.g., 'phoenix', 'dallas', 'atlanta').
+        Defaults to 'phoenix'.
+
+    Returns
+    -------
+    str
+        Path to the output CSV file.
+
+    Raises
+    ------
+    requests.HTTPError
+        If any API request fails.
+    KeyError
+        If metro_key is not found in METRO_CONFIGS.
+    ValueError
+        If no ZCTAs or tracts are found for the metro area.
     """
-    # Reload config module to pick up METRO environment variable changes
-    # This is critical for --all flag to process different metros sequentially
-    from . import config
-    importlib.reload(config)
-    
-    # Extract config values after reload
-    CBSA_CODE = config.CBSA_CODE
-    COUNTIES = config.COUNTIES
-    FINAL_ZCTA_OUT = config.FINAL_ZCTA_OUT
-    METRO_NAME = config.METRO_NAME
-    UTM_ZONE = config.UTM_ZONE
-    ZIP_PREFIXES = config.ZIP_PREFIXES
-    ZORI_ZIP_CSV_URL = config.ZORI_ZIP_CSV_URL
+    metro_config = METRO_CONFIGS[metro_key]
+    CBSA_CODE = metro_config["cbsa_code"]
+    COUNTIES = metro_config["counties"]
+    METRO_NAME = metro_config["name"]
+    UTM_ZONE = metro_config["utm_zone"]
+    ZIP_PREFIXES = metro_config["zip_prefixes"]
+    FINAL_ZCTA_OUT = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
     
     logger.info("=" * 60)
     logger.info(f"Building dataset for: {METRO_NAME}")
@@ -93,7 +86,7 @@ def build_final_dataset() -> str:
     logger.info(f"Fetched {len(zctas_all)} ZCTAs and {len(tracts_all)} tracts")
 
     # Filter ZCTAs to only those within the CBSA (centroid-based)
-    zctas_in_metro = filter_zctas_in_cbsa(zctas_all, cbsa_boundary)
+    zctas_in_metro = filter_zctas_in_cbsa(zctas_all, cbsa_boundary, utm_zone=UTM_ZONE)
     tracts_in_counties = tracts_all
 
     # Step 3: Fetch ACS commute data for each county (grouped by state)
@@ -123,10 +116,12 @@ def build_final_dataset() -> str:
     # avoiding many-to-many relationships that occur with boundary overlaps
     logger.info("STEP 4: Mapping tracts to ZCTAs...")
     logger.info(f"Mapping {len(tracts_in_counties)} tracts to {len(zctas_in_metro)} ZCTAs...")
-    tract_to_zcta_map = tract_to_zcta_centroid_map(tracts_in_counties, zctas_in_metro)
+    tract_to_zcta_map = tract_to_zcta_centroid_map(tracts_in_counties, zctas_in_metro, utm_zone=UTM_ZONE)
 
-    # DEBUG: Export mapping for validation (check for unmapped tracts or unexpected assignments)
-    tract_to_zcta_map.to_csv("data/test/debug_tract_to_zcta_map.csv", index=False)
+    if logger.isEnabledFor(logging.DEBUG):
+        debug_path = PROJECT_ROOT / "data" / "test" / "debug_tract_to_zcta_map.csv"
+        tract_to_zcta_map.to_csv(debug_path, index=False)
+        logger.debug("Wrote debug tract-to-ZCTA map to %s", debug_path)
 
     # Join ACS commute features with tract-to-ZCTA mapping
     acs_with_zcta = acs_features.merge(tract_to_zcta_map, on="GEOID", how="inner")
@@ -184,7 +179,8 @@ def build_final_dataset() -> str:
     transit_density = zcta_transit_density(
         zctas_for_transit,
         transit_filter="",  # Use default OSM public_transport tags
-        fallback_filter=""  # Use default highway=bus_stop fallback
+        fallback_filter="",  # Use default highway=bus_stop fallback
+        utm_zone=UTM_ZONE,
     )
     logger.info(f"Computed transit density for {len(transit_density)} ZCTAs")
 
@@ -225,7 +221,7 @@ def build_final_dataset() -> str:
     
     # Step 8: Create income segments based on median income quartiles
     final_dataset = create_income_segments(final_dataset)
-    logger.info("Created income segments (Low/Medium/High) based on quartiles")
+    logger.info("Created income segments (Low/Medium/High) based on terciles")
 
     # Step 9: Reorder columns for consistent output
     column_order = [

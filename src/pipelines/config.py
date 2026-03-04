@@ -86,10 +86,9 @@ METRO_CONFIGS = {
             ("13", "089"),  # GA - DeKalb
             ("13", "067"),  # GA - Cobb
             ("13", "063"),  # GA - Clayton
-            ("13", "045"),  # GA - Cherokee
+            ("13", "057"),  # GA - Cherokee
             ("13", "135"),  # GA - Gwinnett
             ("13", "151"),  # GA - Henry
-            ("13", "057"),  # GA - Cherokee
         ],
         "zip_prefixes": ["30"],
         "utm_zone": 32616  # UTM Zone 16N

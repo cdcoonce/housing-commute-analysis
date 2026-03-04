@@ -9,28 +9,34 @@ from __future__ import annotations
 import geopandas as gpd
 import pandas as pd
 
-from .config import UTM_ZONE
-
 
 def filter_zctas_in_cbsa(
-    zcta_gdf: gpd.GeoDataFrame, 
-    cbsa_gdf: gpd.GeoDataFrame
+    zcta_gdf: gpd.GeoDataFrame,
+    cbsa_gdf: gpd.GeoDataFrame,
+    utm_zone: int = 32612,
 ) -> gpd.GeoDataFrame:
     """Filter ZCTAs to only those whose centroids fall within a CBSA boundary.
-    
+
     Uses centroid-based filtering rather than intersection to avoid edge cases
     where a ZCTA partially overlaps the boundary. Projects to appropriate UTM
     zone for accurate centroid calculation before testing containment.
-    
-    Args:
-        zcta_gdf: GeoDataFrame of ZIP Code Tabulation Areas
-        cbsa_gdf: GeoDataFrame containing one CBSA (Core-Based Statistical Area) polygon
-        
-    Returns:
-        Subset of zcta_gdf where ZCTA centroids are within the CBSA boundary
+
+    Parameters
+    ----------
+    zcta_gdf : gpd.GeoDataFrame
+        GeoDataFrame of ZIP Code Tabulation Areas.
+    cbsa_gdf : gpd.GeoDataFrame
+        GeoDataFrame containing one CBSA (Core-Based Statistical Area) polygon.
+    utm_zone : int
+        EPSG code for UTM projection (e.g., 32612 for UTM Zone 12N).
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        Subset of zcta_gdf where ZCTA centroids are within the CBSA boundary.
     """
     # Project to UTM for accurate centroid calculation (meters, not degrees)
-    zcta_projected = zcta_gdf.to_crs(UTM_ZONE)
+    zcta_projected = zcta_gdf.to_crs(utm_zone)
     zcta_with_centroids = zcta_projected.copy()
     zcta_with_centroids["centroid"] = zcta_with_centroids.geometry.centroid
     
@@ -46,30 +52,39 @@ def filter_zctas_in_cbsa(
 
 
 def tract_to_zcta_centroid_map(
-    tracts_gdf: gpd.GeoDataFrame, 
-    zctas_gdf: gpd.GeoDataFrame
+    tracts_gdf: gpd.GeoDataFrame,
+    zctas_gdf: gpd.GeoDataFrame,
+    utm_zone: int = 32612,
 ) -> pd.DataFrame:
     """Map census tracts to ZCTAs using centroid-based spatial join.
-    
+
     Assigns each census tract to a ZCTA by testing which ZCTA polygon contains
     the tract's centroid. This provides a deterministic one-to-one mapping.
-    
-    Args:
-        tracts_gdf: GeoDataFrame of census tracts with GEOID column
-        zctas_gdf: GeoDataFrame of ZCTAs with ZCTA5CE column
-        
-    Returns:
+
+    Parameters
+    ----------
+    tracts_gdf : gpd.GeoDataFrame
+        GeoDataFrame of census tracts with GEOID column.
+    zctas_gdf : gpd.GeoDataFrame
+        GeoDataFrame of ZCTAs with ZCTA5CE column.
+    utm_zone : int
+        EPSG code for UTM projection (e.g., 32612 for UTM Zone 12N).
+
+    Returns
+    -------
+    pd.DataFrame
         DataFrame with columns [GEOID, ZCTA5CE] mapping tract IDs to ZIP codes.
         Duplicates are removed (should not occur with proper tract data).
-        
-    Note:
-        Uses UTM projection for accurate centroid calculation. Some tracts may
-        not be assigned if their centroids fall outside all ZCTA polygons.
+
+    Notes
+    -----
+    Uses UTM projection for accurate centroid calculation. Some tracts may
+    not be assigned if their centroids fall outside all ZCTA polygons.
     """
     # Project to UTM for accurate centroid calculation
-    tracts_projected = tracts_gdf.to_crs(UTM_ZONE).copy()
+    tracts_projected = tracts_gdf.to_crs(utm_zone).copy()
     tracts_projected["centroid"] = tracts_projected.geometry.centroid
-    tracts_projected = tracts_projected.set_geometry("centroid", crs=UTM_ZONE)
+    tracts_projected = tracts_projected.set_geometry("centroid", crs=utm_zone)
     
     # Project back to WGS84 for spatial join with ZCTAs
     tracts_with_centroids = tracts_projected.to_crs(4326)

@@ -6,9 +6,13 @@ ZIP codes, capturing rental prices trends.
 """
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 
 from .utils import http_csv_to_df
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
@@ -59,8 +63,11 @@ def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
         value_name="zori"
     )
 
-    # DEBUG: Save intermediate tidy data for inspection
-    zori_tidy.to_csv("data/test/debug_zori_tidy.csv", index=False)
+    if logger.isEnabledFor(logging.DEBUG):
+        from pathlib import Path as _Path
+        debug_path = _Path("data/test/debug_zori_tidy.csv")
+        zori_tidy.to_csv(debug_path, index=False)
+        logger.debug("Wrote debug ZORI tidy data to %s", debug_path)
     
     # Remove rows with missing ZORI values
     zori_tidy = zori_tidy.dropna(subset=["zori"])

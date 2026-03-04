@@ -1,4 +1,3 @@
-"""
 """Create ZCTA shapefiles for each metro area.
 
 This script fetches ZCTA geometries for each configured metro area and saves them
@@ -6,15 +5,10 @@ as shapefiles for use in spatial analysis and choropleth mapping.
 """
 
 import logging
-import sys
-from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent))
-
-from config import METRO_CONFIGS, PROJECT_ROOT, CBSA_CODE, SELECTED_METRO, METRO_NAME
-from tiger import get_cbsa_polygon, get_state_zctas
-from spatial import filter_zctas_in_cbsa
+from .config import METRO_CONFIGS, PROJECT_ROOT, CBSA_CODE, SELECTED_METRO, METRO_NAME
+from .tiger import get_cbsa_polygon, get_state_zctas
+from .spatial import filter_zctas_in_cbsa
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -54,7 +48,7 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
     # Step 1: Fetch CBSA boundary
     logger.info(f"Fetching CBSA boundary (code: {cbsa_code})...")
     cbsa_boundary = get_cbsa_polygon(cbsa_code)
-    logger.info(f"  ✓ CBSA boundary retrieved")
+    logger.info("  ✓ CBSA boundary retrieved")
     
     # Step 2: Fetch ZCTAs by ZIP prefix
     logger.info(f"\nFetching ZCTAs with prefixes: {zip_prefixes}...")
@@ -75,15 +69,15 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
     zctas_in_metro.to_file(shapefile_path)
     
     logger.info(f"\n{'='*80}")
-    logger.info(f"SUCCESS: ZCTA shapefile created")
+    logger.info("SUCCESS: ZCTA shapefile created")
     logger.info(f"{'='*80}")
     logger.info(f"  Metro: {metro_name}")
     logger.info(f"  ZCTAs: {len(zctas_in_metro)}")
     logger.info(f"  Output: {shapefile_path}")
-    logger.info(f"  Files:")
+    logger.info("  Files:")
     for file in shapefile_path.parent.glob(f"{shapefile_path.stem}.*"):
         logger.info(f"    - {file.name}")
-    logger.info(f"\nColumns in shapefile:")
+    logger.info("\nColumns in shapefile:")
     logger.info(f"  {', '.join(zctas_in_metro.columns.tolist())}")
     logger.info(f"\nCRS: {zctas_in_metro.crs}")
     logger.info("")
@@ -94,7 +88,7 @@ def create_zcta_shapefile(metro_key: str = None) -> str:
 def create_all_zcta_shapefiles():
     """Create ZCTA shapefiles for all configured metro areas."""
     logger.info(f"\n{'='*80}")
-    logger.info(f"Creating ZCTA Shapefiles for All Metro Areas")
+    logger.info("Creating ZCTA Shapefiles for All Metro Areas")
     logger.info(f"{'='*80}\n")
     
     results = {}
@@ -108,7 +102,7 @@ def create_all_zcta_shapefiles():
             results[metro_key] = None
     
     logger.info(f"\n{'='*80}")
-    logger.info(f"Summary")
+    logger.info("Summary")
     logger.info(f"{'='*80}")
     for metro_key, path in results.items():
         status = "✓" if path else "✗"
@@ -119,8 +113,8 @@ def create_all_zcta_shapefiles():
 
 
 if __name__ == "__main__":
-    import sys
-    
+    import sys  # noqa: E402 — only needed for __main__ CLI
+
     # Check if user wants to create all shapefiles
     if len(sys.argv) > 1 and sys.argv[1] == "--all":
         create_all_zcta_shapefiles()

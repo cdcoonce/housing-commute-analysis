@@ -8,9 +8,9 @@ from __future__ import annotations
 from typing import Optional
 
 import pandas as pd
-import requests
 
 from .config import CENSUS_API_KEY
+from .utils import _get_session
 
 # Census API configuration - default to latest available
 DEFAULT_ACS_YEAR = 2021  # Latest with full API support
@@ -61,6 +61,20 @@ ACS_VARS = {
     "vehicles_1": "B08201_003E",  # 1 vehicle available
     "vehicles_2_plus": "B08201_007E",  # 2 or more vehicles available (sum of B08201_007-013)
 }
+
+# Numeric ACS columns requiring type conversion (derived from ACS_VARS keys)
+NUMERIC_ACS_COLS: list[str] = [
+    "median_rent", "median_income", "ttw_total",
+    "ttw_lt5", "ttw_5_9", "ttw_10_14", "ttw_15_19", "ttw_20_24",
+    "ttw_25_29", "ttw_30_34", "ttw_35_39", "ttw_40_44",
+    "ttw_45_59", "ttw_60_89", "ttw_90_plus",
+    "mode_total", "mode_car_alone", "mode_carpool", "mode_transit",
+    "mode_walk", "mode_other", "mode_wfh",
+    "rent_burden_total", "rent_burden_30_34", "rent_burden_35_39",
+    "rent_burden_40_49", "rent_burden_50_plus",
+    "tenure_total", "tenure_owner", "tenure_renter",
+    "vehicles_total", "vehicles_none", "vehicles_1", "vehicles_2_plus",
+]
 
 
 def fetch_acs_for_county(
@@ -114,7 +128,7 @@ def fetch_acs_for_county(
         params["key"] = api_key
     
     # Fetch data from Census API (120s timeout for large counties)
-    response = requests.get(url, params=params, timeout=120)
+    response = _get_session().get(url, params=params, timeout=120)
     response.raise_for_status()
     
     # Parse JSON response: first row is header, rest are data
@@ -138,24 +152,14 @@ def fetch_acs_for_county(
     
     # Convert numeric columns, handling Census null codes (negative values like -666666666)
     # errors="coerce" converts invalid/null values to NaN for downstream handling
-    numeric_cols = ["median_rent", "median_income", "ttw_total", 
-                    "ttw_lt5", "ttw_5_9", "ttw_10_14", "ttw_15_19", "ttw_20_24",
-                    "ttw_25_29", "ttw_30_34", "ttw_35_39", "ttw_40_44",
-                    "ttw_45_59", "ttw_60_89", "ttw_90_plus",
-                    "mode_total", "mode_car_alone", "mode_carpool", "mode_transit",
-                    "mode_walk", "mode_other", "mode_wfh",
-                    "rent_burden_total", "rent_burden_30_34", "rent_burden_35_39",
-                    "rent_burden_40_49", "rent_burden_50_plus",
-                    "tenure_total", "tenure_owner", "tenure_renter",
-                    "vehicles_total", "vehicles_none", "vehicles_1", "vehicles_2_plus"]
-    for col in numeric_cols:
+    for col in NUMERIC_ACS_COLS:
         acs_data[col] = pd.to_numeric(acs_data[col], errors="coerce")
-    
+
     # Add year column for panel data tracking
     acs_data["year"] = year
-    
+
     # Select and return final columns as DataFrame
-    result_cols = ["GEOID", "year"] + numeric_cols
+    result_cols = ["GEOID", "year"] + NUMERIC_ACS_COLS
     return acs_data[result_cols].copy()
 
 def compute_acs_features(acs_df: pd.DataFrame) -> pd.DataFrame:
@@ -195,17 +199,7 @@ def compute_acs_features(acs_df: pd.DataFrame) -> pd.DataFrame:
     features = acs_df.copy()
     
     # Replace Census null codes (negative values) with NA
-    numeric_cols = ["median_rent", "median_income", "ttw_total",
-                    "ttw_lt5", "ttw_5_9", "ttw_10_14", "ttw_15_19", "ttw_20_24",
-                    "ttw_25_29", "ttw_30_34", "ttw_35_39", "ttw_40_44",
-                    "ttw_45_59", "ttw_60_89", "ttw_90_plus",
-                    "mode_total", "mode_car_alone", "mode_carpool", "mode_transit",
-                    "mode_walk", "mode_other", "mode_wfh",
-                    "rent_burden_total", "rent_burden_30_34", "rent_burden_35_39",
-                    "rent_burden_40_49", "rent_burden_50_plus",
-                    "tenure_total", "tenure_owner", "tenure_renter",
-                    "vehicles_total", "vehicles_none", "vehicles_1", "vehicles_2_plus"]
-    for col in numeric_cols:
+    for col in NUMERIC_ACS_COLS:
         features.loc[features[col] < 0, col] = pd.NA
     
     # Compute rent-to-income ratio (monthly rent / monthly income)
