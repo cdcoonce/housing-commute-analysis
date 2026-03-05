@@ -1,6 +1,6 @@
 # Housing Affordability & Commute Trade-Off Analysis
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![Polars](https://img.shields.io/badge/DataFrames-Polars-CD792C) ![statsmodels](https://img.shields.io/badge/Stats-statsmodels-4C72B0) ![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E) ![GeoPandas](https://img.shields.io/badge/Spatial-GeoPandas-139C5A) ![uv](https://img.shields.io/badge/Packages-uv-DE5FE9)
+![CI](https://github.com/cdcoonce/housing-commute-analysis/actions/workflows/ci.yml/badge.svg) ![Python](https://img.shields.io/badge/Python-3.11+-blue) ![Polars](https://img.shields.io/badge/DataFrames-Polars-CD792C) ![statsmodels](https://img.shields.io/badge/Stats-statsmodels-4C72B0) ![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E) ![GeoPandas](https://img.shields.io/badge/Spatial-GeoPandas-139C5A) ![uv](https://img.shields.io/badge/Packages-uv-DE5FE9)
 
 A **data engineering and statistical analysis pipeline** that quantifies the relationship between housing costs, commute time, and public transit accessibility across nine U.S. metropolitan areas. Ingests data from Census ACS, Zillow, and OpenStreetMap, then applies OLS regression, equity analysis, and a composite Affordability-Commute Index (ACI) to identify affordability zones and inform policy decisions.
 
@@ -30,6 +30,7 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
   - [RQ1: Housing-Commute Trade-Off](#rq1-housing-commute-trade-off)
   - [RQ2: Equity Analysis](#rq2-equity-analysis)
   - [RQ3: Affordability-Commute Index](#rq3-affordability-commute-index)
+- [Continuous Integration](#continuous-integration)
 - [Troubleshooting](#troubleshooting)
 - [Contact](#contact)
 
@@ -405,6 +406,29 @@ For each metro area, the analysis generates:
   - Tier summary and quantile regression coefficients
 
 **Summary report:** `data/processed/{METRO}/analysis_summary_{metro}.md`
+
+---
+
+## Continuous Integration
+
+Every pull request to `main` runs a GitHub Actions pipeline with two jobs:
+
+```mermaid
+flowchart LR
+    PR["Pull Request"] --> L["Lint<br/>ruff check src/ tests/"]
+    PR --> T1["Test — Python 3.11<br/>pytest + coverage"]
+    PR --> T2["Test — Python 3.12<br/>pytest + coverage"]
+    T1 --> COV["Coverage ≥ 40%<br/>required to pass"]
+```
+
+| Job | What it does |
+|-----|-------------|
+| **Lint** | Runs `ruff check` on all source and test files |
+| **Test (3.11, 3.12)** | Runs `pytest -m "not network"` with coverage. Fails if testable-module coverage drops below 40%. |
+
+Network-dependent tests (Census API, OpenStreetMap) are skipped in CI — no secrets required.
+
+Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 ---
 
