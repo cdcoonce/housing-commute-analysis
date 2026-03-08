@@ -29,17 +29,20 @@ Validate these diagram types:
 ### Syntax Errors (Severity: ERROR)
 
 1. **Missing diagram type declaration**
+
    ```mermaid
    A --> B  <!-- Missing: flowchart TD -->
    ```
 
 2. **Invalid node/edge syntax**
+
    ```mermaid
    flowchart TD
    A -> B  <!-- Should be --> or --- -->
    ```
 
 3. **Unclosed brackets or quotes**
+
    ```mermaid
    flowchart TD
    A[Unclosed node
@@ -50,6 +53,7 @@ Validate these diagram types:
 5. **Special characters in node labels causing parse errors**
 
    Parentheses `()` inside node labels are interpreted as Mermaid node shape syntax, causing parse errors:
+
    ```mermaid
    flowchart TD
    A[Local (PT) time]  <!-- ERROR: (PT) parsed as node shape -->
@@ -72,6 +76,7 @@ Validate these diagram types:
 6. **Greater-than/less-than symbols causing blockquote interpretation**
 
    When `>` or `>=` appears at the start of a node label (especially in diamond/decision nodes), markdown parsers may interpret it as a blockquote:
+
    ```mermaid
    flowchart TD
    A{>= COD?}  <!-- ERROR: >= interpreted as markdown blockquote -->
@@ -91,6 +96,7 @@ Validate these diagram types:
 7. **Newlines inside node labels**
 
    Raw newlines break node definitions:
+
    ```mermaid
    flowchart TD
    A[(Database
@@ -98,6 +104,7 @@ Validate these diagram types:
    ```
 
    **Fix:** Use `<br/>` for line breaks:
+
    ```mermaid
    flowchart TD
    A[(Database<br/>Name)]  <!-- Correct -->
@@ -106,6 +113,7 @@ Validate these diagram types:
 ### Structural Issues (Severity: WARNING)
 
 1. **Undefined nodes referenced**
+
    ```mermaid
    flowchart TD
    A --> B

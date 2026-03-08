@@ -5,9 +5,10 @@ description: AI-powered code quality analysis for Python, Markdown, and Mermaid 
 
 # Code Review Skill
 
-Analyze Python code, Markdown documentation, and Mermaid diagrams for quality issues. Combines external linters (ruff) with Claude's analysis to provide comprehensive code review with suggested fixes. 
+Analyze Python code, Markdown documentation, and Mermaid diagrams for quality issues. Combines external linters (ruff) with Claude's analysis to provide comprehensive code review with suggested fixes.
 Should not just be about running ruff and other linters, instead checks code for conformance with good software engineering practice (SOLID, DRY, YAGNI, simplicity not complexity); security vulnerabilities; and descriptive variable naming e.g.
 Don't do this:
+
 ```python
 pkb = p_key.private_bytes(
             encoding=serialization.Encoding.DER,
@@ -18,6 +19,7 @@ pkb = p_key.private_bytes(
 ```
 
 Instead do this:
+
 ```python
 private_key_bytes = p_key.private_bytes(
             encoding=serialization.Encoding.DER,
@@ -25,7 +27,7 @@ private_key_bytes = p_key.private_bytes(
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-``` 
+```
 
 ## Quick Start
 
@@ -77,30 +79,31 @@ For Mermaid validation, use Claude's understanding combined with web search for 
 
 ### Python (via ruff + Claude)
 
-| Category | Examples | Severity |
-|----------|----------|----------|
-| PEP8 | Line length, indentation, whitespace | WARNING/INFO |
-| Unused Code | Unused imports, variables, arguments | WARNING |
-| Type Hints | Missing annotations on functions | INFO |
-| Docstrings | Missing/malformed numpy-style docstrings | INFO |
-| Complexity | Functions with high cyclomatic complexity | INFO |
-| Runtime Errors | Undefined names, syntax errors | ERROR |
-| Imports | Unsorted imports, banned imports | INFO |
+| Category       | Examples                                  | Severity     |
+| -------------- | ----------------------------------------- | ------------ |
+| PEP8           | Line length, indentation, whitespace      | WARNING/INFO |
+| Unused Code    | Unused imports, variables, arguments      | WARNING      |
+| Type Hints     | Missing annotations on functions          | INFO         |
+| Docstrings     | Missing/malformed numpy-style docstrings  | INFO         |
+| Complexity     | Functions with high cyclomatic complexity | INFO         |
+| Runtime Errors | Undefined names, syntax errors            | ERROR        |
+| Imports        | Unsorted imports, banned imports          | INFO         |
 
 ### Markdown
 
-| Check | Description | Severity |
-|-------|-------------|----------|
-| Heading Structure | Proper h1→h2→h3 sequence | WARNING |
-| Broken Links | File links that don't exist | ERROR |
-| Missing Alt Text | Images without accessibility text | WARNING |
-| Formatting | Trailing whitespace, blank lines | INFO |
-| Code Blocks | Missing language identifier | INFO |
-| Encoding Corruption | UTF-8 chars appearing as Ã—, âœ", etc. | ERROR |
+| Check               | Description                            | Severity |
+| ------------------- | -------------------------------------- | -------- |
+| Heading Structure   | Proper h1→h2→h3 sequence               | WARNING  |
+| Broken Links        | File links that don't exist            | ERROR    |
+| Missing Alt Text    | Images without accessibility text      | WARNING  |
+| Formatting          | Trailing whitespace, blank lines       | INFO     |
+| Code Blocks         | Missing language identifier            | INFO     |
+| Encoding Corruption | UTF-8 chars appearing as Ã—, âœ", etc. | ERROR    |
 
 ### Mermaid
 
 Search web for latest Mermaid.js documentation before validating. Check:
+
 - Diagram type declaration
 - Node/edge syntax
 - Structural correctness
@@ -111,8 +114,9 @@ Search web for latest Mermaid.js documentation before validating. Check:
 ### Console (Interactive)
 
 Colorized output with severity indicators:
+
 - ✗ ERROR (red) - Must fix
-- ⚠ WARNING (yellow) - Should fix  
+- ⚠ WARNING (yellow) - Should fix
 - ℹ INFO (blue) - Consider fixing
 
 ### Markdown Report
@@ -120,6 +124,7 @@ Colorized output with severity indicators:
 Saved to `docs/code_reviews/{YYYY-MM-DD}_{file_name}.md`. For multi-file reviews, use a descriptive name (e.g., `2026-03-02_full_repo_review.md`).
 
 Structured report with:
+
 - Summary statistics
 - Status badge (Passed/Failed)
 - Issues table per file
@@ -129,6 +134,7 @@ Structured report with:
 ## Fix Application
 
 Fixes can be approved:
+
 - **All at once** - Apply all auto-fixable issues
 - **By category** - Apply all PEP8 fixes, skip docstrings
 - **By severity** - Fix errors first, then warnings
@@ -185,12 +191,12 @@ User: "Check these files before I commit"
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `models.py` | Data structures (Issue, Severity, AnalysisResult) |
-| `python_analyzer.py` | Python analysis with ruff |
-| `markdown_analyzer.py` | Markdown quality checks |
-| `report_generator.py` | Console and Markdown report generation |
+| Script                 | Purpose                                           |
+| ---------------------- | ------------------------------------------------- |
+| `models.py`            | Data structures (Issue, Severity, AnalysisResult) |
+| `python_analyzer.py`   | Python analysis with ruff                         |
+| `markdown_analyzer.py` | Markdown quality checks                           |
+| `report_generator.py`  | Console and Markdown report generation            |
 
 ## Requirements
 

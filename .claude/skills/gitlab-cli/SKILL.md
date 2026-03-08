@@ -153,20 +153,20 @@ glab ci lint                              # Validate .gitlab-ci.yml
 
 ## Common Flag Reference
 
-| Flag | Description |
-|------|-------------|
-| `-R, --repo OWNER/REPO` | Target different repository |
-| `-b, --target-branch` | Target branch for MR |
-| `-s, --source-branch` | Source branch for MR |
-| `-t, --title` | Title for issue/MR |
-| `-d, --description` | Description for issue/MR |
-| `-l, --label` | Labels (comma-separated) |
-| `-a, --assignee` | Assignee username |
-| `-m, --milestone` | Milestone name |
-| `--draft` | Create as draft MR |
-| `--fill` | Auto-fill from commit messages |
-| `--web` | Open in browser |
-| `-y, --yes` | Skip confirmation prompts |
+| Flag                    | Description                    |
+| ----------------------- | ------------------------------ |
+| `-R, --repo OWNER/REPO` | Target different repository    |
+| `-b, --target-branch`   | Target branch for MR           |
+| `-s, --source-branch`   | Source branch for MR           |
+| `-t, --title`           | Title for issue/MR             |
+| `-d, --description`     | Description for issue/MR       |
+| `-l, --label`           | Labels (comma-separated)       |
+| `-a, --assignee`        | Assignee username              |
+| `-m, --milestone`       | Milestone name                 |
+| `--draft`               | Create as draft MR             |
+| `--fill`                | Auto-fill from commit messages |
+| `--web`                 | Open in browser                |
+| `-y, --yes`             | Skip confirmation prompts      |
 
 ## Environment Variables
 
@@ -190,6 +190,7 @@ rm temp_description.txt
 ```
 
 This avoids issues with:
+
 - Backticks in code blocks conflicting with command substitution
 - Special characters being interpreted by the shell
 - Heredoc delimiter conflicts

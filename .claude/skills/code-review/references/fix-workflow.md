@@ -37,6 +37,7 @@ User: "Apply docstring fixes but skip type hint ones"
 ```
 
 Categories:
+
 - `pep8` - Style violations
 - `type_hint` - Type annotation issues
 - `docstring` - Documentation issues
@@ -105,9 +106,9 @@ Claude: I found 15 issues in your code:
         - 3 errors (must fix)
         - 8 warnings (should fix)
         - 4 info (consider fixing)
-        
+
         12 of these are auto-fixable. How would you like to proceed?
-        
+
         Options:
         1. Apply all auto-fixable issues
         2. Review by category
@@ -120,7 +121,7 @@ Claude: Applying 3 error fixes...
         ✓ Fixed undefined variable in utils.py:42
         ✓ Fixed syntax error in parser.py:15
         ✓ Fixed security issue in auth.py:88
-        
+
         Now for the 8 warnings. Would you like to:
         1. Apply all 8 warning fixes
         2. Review by category (3 unused imports, 3 PEP8, 2 type hints)

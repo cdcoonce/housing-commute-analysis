@@ -49,6 +49,7 @@ gh issue create
 ```
 
 **Flags:**
+
 - `-t, --title` - Issue title (required unless interactive)
 - `-b, --body` - Issue description
 - `-l, --label` - Labels (comma-separated)
@@ -172,6 +173,7 @@ gh pr create --web
 ```
 
 **Flags:**
+
 - `-t, --title` - PR title
 - `-b, --body` - PR description
 - `-B, --base` - Base branch (default: repo default)

@@ -163,20 +163,20 @@ gh run watch 12345                        # Watch specific run
 
 ## Common Flag Reference
 
-| Flag | Description |
-|------|-------------|
-| `-R, --repo OWNER/REPO` | Target different repository |
-| `-B, --base` | Base branch for PR |
-| `-H, --head` | Head branch for PR |
-| `-t, --title` | Title for issue/PR |
-| `-b, --body` | Body/description for issue/PR |
-| `-l, --label` | Labels (comma-separated) |
-| `-a, --assignee` | Assignee username |
-| `-m, --milestone` | Milestone name |
-| `--draft` | Create as draft PR |
-| `--fill` | Auto-fill from commit messages |
-| `--web` | Open in browser |
-| `-y, --yes` | Skip confirmation prompts |
+| Flag                    | Description                    |
+| ----------------------- | ------------------------------ |
+| `-R, --repo OWNER/REPO` | Target different repository    |
+| `-B, --base`            | Base branch for PR             |
+| `-H, --head`            | Head branch for PR             |
+| `-t, --title`           | Title for issue/PR             |
+| `-b, --body`            | Body/description for issue/PR  |
+| `-l, --label`           | Labels (comma-separated)       |
+| `-a, --assignee`        | Assignee username              |
+| `-m, --milestone`       | Milestone name                 |
+| `--draft`               | Create as draft PR             |
+| `--fill`                | Auto-fill from commit messages |
+| `--web`                 | Open in browser                |
+| `-y, --yes`             | Skip confirmation prompts      |
 
 ## Environment Variables
 
@@ -201,6 +201,7 @@ rm temp_description.txt
 ```
 
 This avoids issues with:
+
 - Backticks in code blocks conflicting with command substitution
 - Special characters being interpreted by the shell
 - Heredoc delimiter conflicts

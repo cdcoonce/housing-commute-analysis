@@ -12,12 +12,12 @@ Follow these four phases sequentially (unless scaling guidance says otherwise). 
 
 Tag every fact recorded during analysis. These tags propagate through the entire workflow — they determine which facts appear in the README verbatim, which require user confirmation, and which become clarifying questions.
 
-| Tag | Meaning | Source | Downstream effect |
-|---|---|---|---|
-| `[confirmed]` | Read directly from source code, config file, or existing documentation | Literal value in a file | Use in README without qualification |
-| `[inferred-high]` | Strong evidence from naming conventions, directory structure, or consistent patterns | Multiple corroborating signals | Use in README, but flag for user review in Step 2 |
-| `[inferred-low]` | Guess based on partial or ambiguous evidence | Single weak signal, naming alone | Becomes a **clarifying question** in Step 2 |
-| `[unknown]` | Cannot determine from codebase analysis alone | No evidence found | Becomes a **clarifying question** in Step 2 |
+| Tag               | Meaning                                                                              | Source                           | Downstream effect                                 |
+| ----------------- | ------------------------------------------------------------------------------------ | -------------------------------- | ------------------------------------------------- |
+| `[confirmed]`     | Read directly from source code, config file, or existing documentation               | Literal value in a file          | Use in README without qualification               |
+| `[inferred-high]` | Strong evidence from naming conventions, directory structure, or consistent patterns | Multiple corroborating signals   | Use in README, but flag for user review in Step 2 |
+| `[inferred-low]`  | Guess based on partial or ambiguous evidence                                         | Single weak signal, naming alone | Becomes a **clarifying question** in Step 2       |
+| `[unknown]`       | Cannot determine from codebase analysis alone                                        | No evidence found                | Becomes a **clarifying question** in Step 2       |
 
 Apply tags inline next to each recorded fact:
 
@@ -98,24 +98,24 @@ Apply tags inline next to each recorded fact:
 - Package manager — check for `uv.lock` (uv), `poetry.lock` (poetry), `Pipfile.lock` (pipenv), or bare `requirements.txt` (pip)
 - All dependencies — categorize as: **core**, **dev/test**, **optional**. For each major dependency, note its purpose:
 
-  | Dependency | Common purpose |
-  |---|---|
-  | `polars` | DataFrame operations (columnar, lazy evaluation) |
-  | `pandas` | DataFrame operations (row-oriented) |
-  | `streamlit` | Dashboard / web UI |
-  | `dagster` / `dagster-webserver` | Orchestration — asset-based data pipelines |
-  | `dbt-core` / `dbt-snowflake` | SQL transformation framework |
-  | `dlt` | Data loading / ingestion toolkit |
-  | `snowflake-connector-python` | Snowflake warehouse connectivity |
-  | `openpyxl` | Excel .xlsx/.xlsm read/write |
-  | `loguru` | Structured logging (replaces stdlib logging) |
-  | `msal` | Microsoft identity / Azure AD auth |
-  | `httpx` / `requests` | HTTP client |
-  | `pydantic` | Data validation / settings management |
-  | `pyyaml` | YAML config parsing |
-  | `ruff` | Linting + formatting |
-  | `pytest` | Test framework |
-  | `pytest-cov` | Coverage reporting |
+  | Dependency                      | Common purpose                                   |
+  | ------------------------------- | ------------------------------------------------ |
+  | `polars`                        | DataFrame operations (columnar, lazy evaluation) |
+  | `pandas`                        | DataFrame operations (row-oriented)              |
+  | `streamlit`                     | Dashboard / web UI                               |
+  | `dagster` / `dagster-webserver` | Orchestration — asset-based data pipelines       |
+  | `dbt-core` / `dbt-snowflake`    | SQL transformation framework                     |
+  | `dlt`                           | Data loading / ingestion toolkit                 |
+  | `snowflake-connector-python`    | Snowflake warehouse connectivity                 |
+  | `openpyxl`                      | Excel .xlsx/.xlsm read/write                     |
+  | `loguru`                        | Structured logging (replaces stdlib logging)     |
+  | `msal`                          | Microsoft identity / Azure AD auth               |
+  | `httpx` / `requests`            | HTTP client                                      |
+  | `pydantic`                      | Data validation / settings management            |
+  | `pyyaml`                        | YAML config parsing                              |
+  | `ruff`                          | Linting + formatting                             |
+  | `pytest`                        | Test framework                                   |
+  | `pytest-cov`                    | Coverage reporting                               |
 
 - Available scripts/commands — check `[project.scripts]` in pyproject.toml, Makefile targets, and common uv commands (`uv run`, `uv sync`)
 - Environment variables (from `.env.example` or equivalent) — classify each as **required** or **optional**
@@ -158,48 +158,54 @@ Apply tags inline next to each recorded fact:
 ```markdown
 ## Phase 1 Record — Project Metadata
 
-| Field | Value | Confidence |
-|---|---|---|
-| Project name | | |
-| Version | | |
-| Python version | | |
-| Package manager | | |
-| License | | |
+| Field           | Value | Confidence |
+| --------------- | ----- | ---------- |
+| Project name    |       |            |
+| Version         |       |            |
+| Python version  |       |            |
+| Package manager |       |            |
+| License         |       |            |
 
 ### Data Engineering Frameworks
-| Framework | Config file | Role in project |
-|---|---|---|
-| | dagster.yaml / dbt_project.yml / .dlt/ / etc. | orchestration / transformation / ingestion / etc. |
+
+| Framework | Config file                                   | Role in project                                   |
+| --------- | --------------------------------------------- | ------------------------------------------------- |
+|           | dagster.yaml / dbt_project.yml / .dlt/ / etc. | orchestration / transformation / ingestion / etc. |
 
 ### Dependencies
-| Dependency | Category | Purpose |
-|---|---|---|
-| | core / dev / optional | |
+
+| Dependency | Category              | Purpose |
+| ---------- | --------------------- | ------- |
+|            | core / dev / optional |         |
 
 ### Scripts & Commands
-| Command | What it does |
-|---|---|
-| `uv sync` | Install dependencies |
-| `uv run streamlit run app.py` | |
-| `uv run pytest` | |
-| | |
+
+| Command                       | What it does         |
+| ----------------------------- | -------------------- |
+| `uv sync`                     | Install dependencies |
+| `uv run streamlit run app.py` |                      |
+| `uv run pytest`               |                      |
+|                               |                      |
 
 ### Environment Variables
+
 | Variable | Required/Optional | Purpose |
-|---|---|---|
-| | | |
+| -------- | ----------------- | ------- |
+|          |                   |         |
 
 ### CI/CD Pipeline
+
 | Stage | Tools | What it does |
-|---|---|---|
-| | | |
+| ----- | ----- | ------------ |
+|       |       |              |
 
 ### Toolchain
-| Tool | Config file | Purpose |
-|---|---|---|
-| ruff | pyproject.toml | Linting + formatting |
-| pytest | pyproject.toml | Testing |
-| | | |
+
+| Tool   | Config file    | Purpose              |
+| ------ | -------------- | -------------------- |
+| ruff   | pyproject.toml | Linting + formatting |
+| pytest | pyproject.toml | Testing              |
+|        |                |                      |
 ```
 
 ---
@@ -232,12 +238,14 @@ if __name__
 ```
 
 Also check `pyproject.toml` for:
+
 - `[project.scripts]` — CLI entry points
 - `[project.gui-scripts]` — GUI entry points
 
 For Streamlit apps, look for the file passed to `streamlit run` (often `app.py`, `main.py`, or `streamlit_app.py`).
 
 For dagster projects, look for:
+
 - `Definitions` object (dagster 1.x+) in a `definitions.py` or `__init__.py`
 - `@repository` decorator (older dagster)
 - `workspace.yaml` pointing to code locations
@@ -268,16 +276,16 @@ For each source file:
 
 Check against these data/analytics engineering patterns:
 
-| Pattern | Indicators |
-|---|---|
+| Pattern                 | Indicators                                                                                                                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Data pipeline / ETL** | Modules named `*_transformer`, `*_loader`, `*_extractor`, `*_writer`, `*_client`; sequential data flow through stages; DataFrame-based processing (Polars/pandas); YAML config mapping data to output cells/rows |
-| **dagster asset graph** | `@asset`, `@multi_asset`, `@op`, `@job`, `@schedule`, `@sensor` decorators; `Definitions` object; `dagster.yaml` / `workspace.yaml`; IO managers; resource definitions |
-| **dbt project** | `models/` directory with `.sql` files; `dbt_project.yml`; `macros/`; `seeds/`; `snapshots/`; Jinja templating in SQL; `ref()` and `source()` functions |
-| **dlt pipeline** | `@dlt.source`, `@dlt.resource`, `@dlt.transformer` decorators; `pipeline()` calls; `.dlt/` config directory; incremental loading patterns |
-| **Streamlit dashboard** | `st.` calls throughout; sidebar/main layout; `st.cache_data`/`st.cache_resource`; session state; tab/column layout; HTML/CSS injection for styling |
-| **Report generator** | Template files (Excel `.xlsm`/`.xlsx`, HTML, PDF); mapping configs; data → template population workflow; download/upload output |
-| **CLI tool** | `click`, `typer`, or `argparse` usage; command/subcommand pattern; `@click.command()` / `@app.command()` decorators |
-| **Library / SDK** | `__init__.py` with public API re-exports; `py.typed` marker; no entry point; extensive type annotations |
+| **dagster asset graph** | `@asset`, `@multi_asset`, `@op`, `@job`, `@schedule`, `@sensor` decorators; `Definitions` object; `dagster.yaml` / `workspace.yaml`; IO managers; resource definitions                                           |
+| **dbt project**         | `models/` directory with `.sql` files; `dbt_project.yml`; `macros/`; `seeds/`; `snapshots/`; Jinja templating in SQL; `ref()` and `source()` functions                                                           |
+| **dlt pipeline**        | `@dlt.source`, `@dlt.resource`, `@dlt.transformer` decorators; `pipeline()` calls; `.dlt/` config directory; incremental loading patterns                                                                        |
+| **Streamlit dashboard** | `st.` calls throughout; sidebar/main layout; `st.cache_data`/`st.cache_resource`; session state; tab/column layout; HTML/CSS injection for styling                                                               |
+| **Report generator**    | Template files (Excel `.xlsm`/`.xlsx`, HTML, PDF); mapping configs; data → template population workflow; download/upload output                                                                                  |
+| **CLI tool**            | `click`, `typer`, or `argparse` usage; command/subcommand pattern; `@click.command()` / `@app.command()` decorators                                                                                              |
+| **Library / SDK**       | `__init__.py` with public API re-exports; `py.typed` marker; no entry point; extensive type annotations                                                                                                          |
 
 Record the matched pattern with confidence tag. Multiple patterns often apply (e.g., "Streamlit dashboard that orchestrates a data pipeline to generate reports").
 
@@ -312,12 +320,14 @@ Read any config files discovered (YAML, TOML, JSON) that define runtime behavior
 
 ### Directory Structure
 ```
+
 project-root/
-├── src/               # [purpose]
-├── config/            # [purpose]
-├── templates/         # [purpose]
-├── tests/             # [purpose]
+├── src/ # [purpose]
+├── config/ # [purpose]
+├── templates/ # [purpose]
+├── tests/ # [purpose]
 └── ...
+
 ```
 
 ### Entry Points
@@ -440,12 +450,15 @@ full import graph from Phase 2 — use it to understand how your modules connect
 the rest of the system.
 
 ### Import Graph
+
 [paste full import graph from Phase 2]
 
 ### Modules to Analyze
+
 [list of 2-4 module file paths]
 
 ### For Each Module, Extract:
+
 1. **Purpose** — one sentence
 2. **Key exports** — public classes/functions with signatures and one-line descriptions
 3. **Design notes** — non-obvious decisions, edge case handling, data conventions, aggregation modes
@@ -453,9 +466,11 @@ the rest of the system.
 5. **Data flow** — what data types (pl.DataFrame, dataclasses, etc.) enter and leave this module
 
 ### Output Format
+
 Return a filled Phase 3 Record Template for each module.
 
 ### Confidence Tags
+
 Tag every fact: [confirmed], [inferred-high], [inferred-low], [unknown]
 ```
 
@@ -470,19 +485,23 @@ Tag every fact: [confirmed], [inferred-high], [inferred-low], [unknown]
 **Role:** core / leaf / orchestrator / intermediate
 
 ### Key Exports
-| Name | Kind | Signature | Description |
-|---|---|---|---|
-| | class / function / constant / dataclass / asset / resource | | |
+
+| Name | Kind                                                       | Signature | Description |
+| ---- | ---------------------------------------------------------- | --------- | ----------- |
+|      | class / function / constant / dataclass / asset / resource |           |             |
 
 ### Design Notes
+
 - [note] [confidence]
 
 ### Internal Dependencies
+
 | Imports from | Names imported | Purpose |
-|---|---|---|
-| | | |
+| ------------ | -------------- | ------- |
+|              |                |         |
 
 ### Data Flow
+
 - **Input:** [what data types this module receives, e.g., pl.DataFrame, dict, Config]
 - **Output:** [what data types this module produces, e.g., pl.DataFrame, BytesIO, list[CellMapping]]
 ```
@@ -623,14 +642,14 @@ Extract the most common/important error messages. For each, determine:
 
 Common data engineering troubleshooting categories to look for:
 
-| Category | What to grep for |
-|---|---|
-| Connection failures | `ConnectionError`, `SnowflakeConnectionError`, `connect`, `authenticate` |
-| Query failures | `QueryError`, `ProgrammingError`, `execute` |
-| Data validation | `ValidationError`, `DataValidationError`, `validate`, `assert` |
-| Missing config | `KeyError`, `environ`, `getenv`, `required` |
-| Template/file errors | `FileNotFoundError`, `template`, `openpyxl` |
-| Auth failures | `AuthError`, `msal`, `token`, `credential` |
+| Category             | What to grep for                                                         |
+| -------------------- | ------------------------------------------------------------------------ |
+| Connection failures  | `ConnectionError`, `SnowflakeConnectionError`, `connect`, `authenticate` |
+| Query failures       | `QueryError`, `ProgrammingError`, `execute`                              |
+| Data validation      | `ValidationError`, `DataValidationError`, `validate`, `assert`           |
+| Missing config       | `KeyError`, `environ`, `getenv`, `required`                              |
+| Template/file errors | `FileNotFoundError`, `template`, `openpyxl`                              |
+| Auth failures        | `AuthError`, `msal`, `token`, `credential`                               |
 
 ### Phase 4 Record Template
 
@@ -638,11 +657,13 @@ Common data engineering troubleshooting categories to look for:
 ## Phase 4 Record — Supporting Infrastructure
 
 ### Test-to-Module Mapping
+
 | Test file | Module under test | Fixtures used | Markers |
-|---|---|---|---|
-| | | | |
+| --------- | ----------------- | ------------- | ------- |
+|           |                   |               |         |
 
 ### Test Coverage Summary
+
 - Total test files: [count]
 - Custom markers: [list with purpose of each]
 - conftest.py locations: [list]
@@ -650,11 +671,13 @@ Common data engineering troubleshooting categories to look for:
 
 ### Exception Hierarchy
 ```
+
 BaseError
-├── ConnectionError     — [trigger]
-├── QueryError          — [trigger]
-├── ValidationError     — [trigger]
+├── ConnectionError — [trigger]
+├── QueryError — [trigger]
+├── ValidationError — [trigger]
 └── ...
+
 ```
 
 ### Templates & Assets
@@ -704,10 +727,10 @@ BaseError
 
 ## Scaling Guidance
 
-| Codebase Size | Strategy |
-|---|---|
-| **Small** (1-7 source files) | Execute all four phases sequentially. Read every source file fully. No parallel dispatch needed. |
-| **Medium** (8-20 source files) | Phases 1-2 sequentially. Dispatch 2-3 parallel agents for Phase 3 (group modules by dependency cluster from the import graph). Phase 4 sequentially. |
-| **Large** (20+ source files) | Phases 1-2 sequentially. Dispatch 4-6 parallel agents for Phase 3 (one per directory or subsystem). Dispatch 2 parallel agents for Phase 4 (one for tests, one for docs/config/assets). Merge results and verify cross-references between agent outputs. |
+| Codebase Size                  | Strategy                                                                                                                                                                                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Small** (1-7 source files)   | Execute all four phases sequentially. Read every source file fully. No parallel dispatch needed.                                                                                                                                                         |
+| **Medium** (8-20 source files) | Phases 1-2 sequentially. Dispatch 2-3 parallel agents for Phase 3 (group modules by dependency cluster from the import graph). Phase 4 sequentially.                                                                                                     |
+| **Large** (20+ source files)   | Phases 1-2 sequentially. Dispatch 4-6 parallel agents for Phase 3 (one per directory or subsystem). Dispatch 2 parallel agents for Phase 4 (one for tests, one for docs/config/assets). Merge results and verify cross-references between agent outputs. |
 
 **When dispatching parallel agents, always include the import graph from Phase 2 in each agent's prompt.** Without it, agents cannot determine how their modules connect to the rest of the system.

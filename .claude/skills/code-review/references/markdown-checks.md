@@ -10,7 +10,8 @@ Headings should only increment by one level at a time.
 
 ```markdown
 # Title
-### Skipped h2  <!-- Issue: skipped from h1 to h3 -->
+
+### Skipped h2 <!-- Issue: skipped from h1 to h3 -->
 ```
 
 **Severity:** WARNING  
@@ -22,7 +23,8 @@ Documents should have only one h1 heading.
 
 ```markdown
 # First Title
-# Second Title  <!-- Issue: duplicate h1 -->
+
+# Second Title <!-- Issue: duplicate h1 -->
 ```
 
 **Severity:** WARNING  
@@ -33,7 +35,7 @@ Documents should have only one h1 heading.
 The first non-blank line should be a top-level heading.
 
 ```markdown
-## Not an h1  <!-- Issue: should start with h1 -->
+## Not an h1 <!-- Issue: should start with h1 -->
 ```
 
 **Severity:** WARNING  
@@ -53,7 +55,7 @@ Multiple headings with the same content should be avoided for clarity.
 Links should have non-empty URLs.
 
 ```markdown
-[Click here]()  <!-- Issue: empty URL -->
+[Click here]() <!-- Issue: empty URL -->
 ```
 
 **Severity:** ERROR  
@@ -64,8 +66,8 @@ Links should have non-empty URLs.
 Links and images should have descriptive text.
 
 ```markdown
-[](https://example.com)  <!-- Issue: empty text -->
-![](image.png)           <!-- Issue: missing alt text -->
+[](https://example.com) <!-- Issue: empty text -->
+![](image.png) <!-- Issue: missing alt text -->
 ```
 
 **Severity:** WARNING  
@@ -76,7 +78,7 @@ Links and images should have descriptive text.
 Relative links should point to existing files.
 
 ```markdown
-[Docs](nonexistent.md)  <!-- Issue: file not found -->
+[Docs](nonexistent.md) <!-- Issue: file not found -->
 ```
 
 **Severity:** ERROR  
@@ -87,7 +89,7 @@ Relative links should point to existing files.
 Image paths should point to existing files.
 
 ```markdown
-![Logo](missing-logo.png)  <!-- Issue: file not found -->
+![Logo](missing-logo.png) <!-- Issue: file not found -->
 ```
 
 **Severity:** ERROR  
@@ -109,8 +111,8 @@ No more than one consecutive blank line.
 ```markdown
 Some text
 
-
 <!-- Issue: multiple blank lines -->
+
 More text
 ```
 
@@ -123,7 +125,8 @@ Headings should be surrounded by blank lines.
 
 ```markdown
 # Title
-No blank line after heading  <!-- Issue -->
+
+No blank line after heading <!-- Issue -->
 ```
 
 **Severity:** INFO  
@@ -151,8 +154,8 @@ print("hello")  <!-- Issue: no language specified -->
 Images should include descriptive alt text for screen readers and accessibility compliance.
 
 ```markdown
-![Descriptive alt text](image.png)  <!-- Good -->
-![](image.png)                       <!-- Bad: missing alt text -->
+![Descriptive alt text](image.png) <!-- Good -->
+![](image.png) <!-- Bad: missing alt text -->
 ```
 
 **Severity:** WARNING  
@@ -175,29 +178,31 @@ UTF-8 encoding corruption occurs when text is saved or transmitted with incorrec
 
 ### Common Corruption Patterns
 
-| Corrupted | Correct | Description |
-|-----------|---------|-------------|
-| Ã— | × | Multiplication sign |
-| Ã· | ÷ | Division sign |
-| â€" | — | Em dash |
-| â€" | – | En dash |
-| â€¢ | • | Bullet point |
-| âœ" | ✓ | Checkmark |
-| â† | ← | Left arrow |
-| â†' | → | Right arrow |
-| Â© | © | Copyright |
-| Â® | ® | Registered |
-| â„¢ | ™ | Trademark |
-| â"Œâ"€â"€â"˜ | ┌──┘ | Box drawing |
+| Corrupted    | Correct | Description         |
+| ------------ | ------- | ------------------- |
+| Ã—           | ×       | Multiplication sign |
+| Ã·           | ÷       | Division sign       |
+| â€"          | —       | Em dash             |
+| â€"          | –       | En dash             |
+| â€¢          | •       | Bullet point        |
+| âœ"          | ✓       | Checkmark           |
+| â†           | ←       | Left arrow          |
+| â†'          | →       | Right arrow         |
+| Â©          | ©      | Copyright           |
+| Â®          | ®      | Registered          |
+| â„¢          | ™      | Trademark           |
+| â"Œâ"€â"€â"˜ | ┌──┘    | Box drawing         |
 
 ### Example
 
 **Corrupted:**
+
 ```markdown
 Revenue = Generation Ã— Price
 ```
 
 **Fixed:**
+
 ```markdown
 Revenue = Generation × Price
 ```
@@ -208,6 +213,7 @@ Revenue = Generation × Price
 ### How It Happens
 
 This typically occurs when:
+
 1. A UTF-8 file is opened as Latin-1/Windows-1252
 2. Text is copy-pasted between systems with different encodings
 3. Database or API doesn't properly handle UTF-8
@@ -232,27 +238,32 @@ Mermaid diagrams embedded in code blocks should have valid syntax.
 Node labels containing unescaped parentheses cause parse errors because Mermaid interprets them as special shape syntax.
 
 **Bad:**
-```markdown
+
+````markdown
 ```mermaid
 flowchart TD
     A[Function (deprecated)]
 ```
-```
+````
+
+````
 
 **Good:**
 ```markdown
 ```mermaid
 flowchart TD
     A[Function - deprecated]
-```
-```
+````
+
+````
 
 Alternative: Use quotes to escape special characters:
 ```markdown
 ```mermaid
 flowchart TD
     A["Function (deprecated)"]
-```
+````
+
 ```
 
 **Severity:** ERROR
@@ -265,3 +276,4 @@ flowchart TD
 | `Expecting 'SQE', 'PE'...` | Unescaped parentheses in node label | Replace `(text)` with `- text` or `["text (with parens)"]` |
 | `Parse error on line X` | Invalid syntax | Check node definitions and arrow syntax |
 | `Undefined` node reference | Typo in node ID | Ensure node IDs match exactly |
+```

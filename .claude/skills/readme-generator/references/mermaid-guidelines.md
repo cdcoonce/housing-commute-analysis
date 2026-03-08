@@ -31,6 +31,7 @@ A typical comprehensive README should have **3-6 mermaid diagrams**. Complex pro
 ## Choosing Diagrams by Project Type
 
 ### Data pipeline project — aim for 4-6 diagrams:
+
 1. Architecture diagram — overall system with data sources, processing, and outputs
 2. Data flow diagram — how data moves from raw sources through transformations to final output
 3. Sequence diagram — what happens when a pipeline run is triggered
@@ -39,12 +40,14 @@ A typical comprehensive README should have **3-6 mermaid diagrams**. Complex pro
 6. Scheduling / orchestration diagram
 
 ### Web application — aim for 3-5 diagrams:
+
 1. Architecture diagram — frontend, backend, database, external services
 2. Request flow — what happens when a user performs a key action
 3. CI/CD diagram — build and deployment pipeline
 4. Dashboard/UI layout — how sections of the interface relate
 
 ### CLI tool — aim for 2-4 diagrams:
+
 1. Architecture diagram — how the CLI interacts with external systems
 2. Command flow — what happens when key commands are run
 3. Configuration resolution — how config is loaded from files, env vars, and defaults

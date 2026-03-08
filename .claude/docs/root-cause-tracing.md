@@ -14,17 +14,21 @@ Bugs often manifest deep in the call stack (file created in wrong location, data
 ## The Tracing Process
 
 ### 1. Observe the Symptom
+
 ```
 Error: FileNotFoundError in /path/to/output/data.parquet
 ```
 
 ### 2. Find Immediate Cause
+
 **What code directly causes this?**
+
 ```python
 df.write_parquet(output_path)  # output_path is wrong
 ```
 
 ### 3. Ask: What Called This?
+
 ```python
 DataExporter.export(output_path)
   → called by Pipeline.run()
@@ -33,13 +37,17 @@ DataExporter.export(output_path)
 ```
 
 ### 4. Keep Tracing Up
+
 **What value was passed?**
+
 - `output_path = ''` (empty string!)
 - Empty string resolves to current directory
 - That's the source code directory!
 
 ### 5. Find Original Trigger
+
 **Where did empty string come from?**
+
 ```python
 config = load_config()  # Returns {'output_dir': ''}
 Pipeline(output_dir=config['output_dir'])  # Bug: missing config!
@@ -66,6 +74,7 @@ def write_output(output_path: str, df):
 ```
 
 **Run and capture:**
+
 ```bash
 # Show all output during test run
 uv run pytest -s tests/test_pipeline.py 2>&1 | grep 'DEBUG write_output'
@@ -79,6 +88,7 @@ uv run pytest -vvs tests/test_pipeline.py
 If something appears during tests but you don't know which test:
 
 ### Option 1: Bisect with pytest
+
 ```bash
 uv run pytest --collect-only -q | head -20  # See test list
 uv run pytest tests/test_a.py  # Run subset, check for artifact
@@ -86,6 +96,7 @@ uv run pytest tests/test_b.py  # Narrow down
 ```
 
 ### Option 2: Custom bisection
+
 ```python
 #!/usr/bin/env python3
 # find_polluter.py
@@ -143,6 +154,7 @@ def safe_output_dir(temp_workspace):
 **Symptom:** Data written to `src/` instead of `output/`
 
 **Trace chain:**
+
 1. `df.write_parquet('')` ← empty path
 2. Pipeline called with empty output_dir
 3. Config loaded before environment setup
@@ -166,6 +178,7 @@ class TestPipeline:
 ```
 
 **Defense in depth:**
+
 ```python
 # Layer 1: Validate on init
 def __init__(self, output_dir: str):
