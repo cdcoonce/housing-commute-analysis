@@ -24,6 +24,73 @@ from .spatial import filter_zctas_in_cbsa, tract_to_zcta_centroid_map
 from .tiger import get_cbsa_polygon, get_tracts_for_counties, get_state_zctas
 from .zori import fetch_zori_latest
 
+from prefect import flow, task  # noqa: F401 — flow used starting Task 2.3
+from prefect.cache_policies import INPUTS
+
+from .prefect_config import CACHE_TTL, NETWORK_RETRIES  # importing prefect_config sets PREFECT_RESULTS_LOCAL_STORAGE_PATH
+
+# NOTE: do NOT set result_storage here — an unsaved LocalFileSystem block raises
+# TypeError at decorator time in Prefect 3.x. Persistence location comes from the
+# PREFECT_RESULTS_LOCAL_STORAGE_PATH env var (set in prefect_config on import).
+_CACHE = {
+    "cache_policy": INPUTS,
+    "cache_expiration": CACHE_TTL,
+    "persist_result": True,
+}
+
+
+# --- Cacheable network tasks (hashable inputs) ---
+@task(name="fetch_cbsa_boundary", **NETWORK_RETRIES, **_CACHE)
+def fetch_cbsa_boundary_task(cbsa_code: str):
+    return get_cbsa_polygon(cbsa_code)
+
+
+@task(name="fetch_state_zctas", **NETWORK_RETRIES, **_CACHE)
+def fetch_state_zctas_task(zip_prefixes):
+    return get_state_zctas(zip_prefixes)
+
+
+@task(name="fetch_tracts", **NETWORK_RETRIES, **_CACHE)
+def fetch_tracts_task(counties):
+    return get_tracts_for_counties(counties)
+
+
+@task(name="fetch_acs", **NETWORK_RETRIES, **_CACHE)
+def fetch_acs_task(counties):
+    frames = [fetch_acs_for_county(s, c) for s, c in counties]
+    return compute_acs_features(pd.concat(frames, ignore_index=True))
+
+
+@task(name="fetch_demographics", **NETWORK_RETRIES, **_CACHE)
+def fetch_demographics_task(counties):
+    frames = [fetch_demographics_for_county(s, c) for s, c in counties]
+    return compute_demographic_percentages(pd.concat(frames, ignore_index=True))
+
+
+@task(name="fetch_zori", **NETWORK_RETRIES, **_CACHE)
+def fetch_zori_task(url: str):
+    return fetch_zori_latest(url)
+
+
+# --- Retry-only network task (GeoDataFrame input; OSM caches internally) ---
+@task(name="transit_density", **NETWORK_RETRIES)
+def transit_density_task(zctas_for_transit, utm_zone: int):
+    return zcta_transit_density(
+        zctas_for_transit, transit_filter="", fallback_filter="", utm_zone=utm_zone
+    )
+
+
+# --- Plain CPU tasks ---
+@task(name="filter_zctas")
+def filter_zctas_task(zctas_all, cbsa_boundary, utm_zone: int):
+    return filter_zctas_in_cbsa(zctas_all, cbsa_boundary, utm_zone=utm_zone)
+
+
+@task(name="map_tracts_to_zctas")
+def map_tracts_task(tracts, zctas_in_metro, utm_zone: int):
+    return tract_to_zcta_centroid_map(tracts, zctas_in_metro, utm_zone=utm_zone)
+
+
 # Configure logger for this module
 logger = logging.getLogger(__name__)
 
