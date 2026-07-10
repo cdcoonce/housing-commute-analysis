@@ -24,7 +24,7 @@ from .spatial import filter_zctas_in_cbsa, tract_to_zcta_centroid_map
 from .tiger import get_cbsa_polygon, get_tracts_for_counties, get_state_zctas
 from .zori import fetch_zori_latest
 
-from prefect import flow, task  # noqa: F401 — flow used starting Task 2.3
+from prefect import flow, task
 from prefect.cache_policies import INPUTS
 
 from .prefect_config import CACHE_TTL, NETWORK_RETRIES  # importing prefect_config sets PREFECT_RESULTS_LOCAL_STORAGE_PATH
@@ -95,7 +95,8 @@ def map_tracts_task(tracts, zctas_in_metro, utm_zone: int):
 logger = logging.getLogger(__name__)
 
 
-def build_final_dataset(metro_key: str = "phoenix") -> str:
+@flow(name="build-metro", log_prints=True)
+def build_metro_flow(metro_key: str = "phoenix") -> str:
     """Execute the full data pipeline to build ZCTA-level housing dataset.
 
     This function orchestrates a multi-step ETL pipeline that:
@@ -142,48 +143,38 @@ def build_final_dataset(metro_key: str = "phoenix") -> str:
     
     # Step 1: Fetch CBSA (metro area) boundary polygon for spatial filtering
     logger.info("STEP 1: Fetching CBSA boundary...")
-    cbsa_boundary = get_cbsa_polygon(CBSA_CODE)
+    cbsa_boundary = fetch_cbsa_boundary_task(CBSA_CODE)
     logger.info(f"Fetched CBSA boundary for: {METRO_NAME}")
 
     # Step 2: Fetch ZCTA and tract geometries for the region
     logger.info("STEP 2: Loading ZCTA and tract geometries...")
-    zctas_all = get_state_zctas(ZIP_PREFIXES)
+    zctas_all = fetch_state_zctas_task(ZIP_PREFIXES)
     logger.info(f"Fetching census tracts for {len(COUNTIES)} counties across {len(set(s for s, _ in COUNTIES))} state(s)...")
-    tracts_all = get_tracts_for_counties(COUNTIES)
+    tracts_all = fetch_tracts_task(COUNTIES)
     logger.info(f"Fetched {len(zctas_all)} ZCTAs and {len(tracts_all)} tracts")
 
     # Filter ZCTAs to only those within the CBSA (centroid-based)
-    zctas_in_metro = filter_zctas_in_cbsa(zctas_all, cbsa_boundary, utm_zone=UTM_ZONE)
+    zctas_in_metro = filter_zctas_task(zctas_all, cbsa_boundary, UTM_ZONE)
     tracts_in_counties = tracts_all
 
     # Step 3: Fetch ACS commute data for each county (grouped by state)
     logger.info("STEP 3: Fetching ACS commute data...")
     logger.info(f"Fetching ACS commute data for {len(COUNTIES)} counties...")
-    acs_data_by_county = []
-    for state_fips, county_fips in COUNTIES:
-        acs_data = fetch_acs_for_county(state_fips, county_fips)
-        acs_data_by_county.append(acs_data)
-    acs_raw = pd.concat(acs_data_by_county, ignore_index=True)
-    acs_features = compute_acs_features(acs_raw)
-    logger.info(f"Processed ACS commute data for {len(acs_raw)} tracts")
+    acs_features = fetch_acs_task(COUNTIES)
+    logger.info(f"Processed ACS commute data for {len(acs_features)} tracts")
     
     # Step 3b: Fetch ACS demographic data (race, ethnicity, income) for each county
     logger.info("STEP 3b: Fetching ACS demographic data...")
     logger.info(f"Fetching demographic data for {len(COUNTIES)} counties...")
-    demo_data_by_county = []
-    for state_fips, county_fips in COUNTIES:
-        demo_data = fetch_demographics_for_county(state_fips, county_fips)
-        demo_data_by_county.append(demo_data)
-    demo_raw = pd.concat(demo_data_by_county, ignore_index=True)
-    demo_with_pct = compute_demographic_percentages(demo_raw)
-    logger.info(f"Processed demographic data for {len(demo_raw)} tracts")
+    demo_with_pct = fetch_demographics_task(COUNTIES)
+    logger.info(f"Processed demographic data for {len(demo_with_pct)} tracts")
 
     # Step 4: Map census tracts to ZCTAs using centroid-based spatial join
     # Centroid method assigns each tract to the ZCTA containing its geographic center,
     # avoiding many-to-many relationships that occur with boundary overlaps
     logger.info("STEP 4: Mapping tracts to ZCTAs...")
     logger.info(f"Mapping {len(tracts_in_counties)} tracts to {len(zctas_in_metro)} ZCTAs...")
-    tract_to_zcta_map = tract_to_zcta_centroid_map(tracts_in_counties, zctas_in_metro, utm_zone=UTM_ZONE)
+    tract_to_zcta_map = map_tracts_task(tracts_in_counties, zctas_in_metro, UTM_ZONE)
 
     if logger.isEnabledFor(logging.DEBUG):
         debug_path = PROJECT_ROOT / "data" / "test" / "debug_tract_to_zcta_map.csv"
@@ -227,7 +218,7 @@ def build_final_dataset(metro_key: str = "phoenix") -> str:
 
     # Step 5: Fetch Zillow Observed Rent Index (ZORI) for rental prices
     logger.info("STEP 5: Fetching Zillow rent data...")
-    zori_data = fetch_zori_latest(ZORI_ZIP_CSV_URL)
+    zori_data = fetch_zori_task(ZORI_ZIP_CSV_URL)
     zori_data = zori_data.rename(columns={"zip": "ZCTA5CE"})
     zori_data["ZCTA5CE"] = zori_data["ZCTA5CE"].astype(str).str.zfill(5)
     logger.info(f"Fetched ZORI data for {len(zori_data)} ZIP codes")
@@ -243,12 +234,7 @@ def build_final_dataset(metro_key: str = "phoenix") -> str:
         geometry=zctas_in_metro.geometry,
         crs=zctas_in_metro.crs
     )
-    transit_density = zcta_transit_density(
-        zctas_for_transit,
-        transit_filter="",  # Use default OSM public_transport tags
-        fallback_filter="",  # Use default highway=bus_stop fallback
-        utm_zone=UTM_ZONE,
-    )
+    transit_density = transit_density_task(zctas_for_transit, UTM_ZONE)
     logger.info(f"Computed transit density for {len(transit_density)} ZCTAs")
 
     # Step 6b: Calculate population density (people per square km)
@@ -335,5 +321,10 @@ def build_final_dataset(metro_key: str = "phoenix") -> str:
     logger.info(f"SUCCESS: Wrote {len(final_dataset)} ZCTAs to {FINAL_ZCTA_OUT.name}")
     logger.info(f"Output: {FINAL_ZCTA_OUT}")
     logger.info("=" * 60)
-    
+
     return str(FINAL_ZCTA_OUT)
+
+
+def build_final_dataset(metro_key: str = "phoenix") -> str:
+    """Public entry point — delegates to the Prefect flow. Signature preserved."""
+    return build_metro_flow(metro_key)
