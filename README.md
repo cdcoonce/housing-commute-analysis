@@ -418,13 +418,13 @@ flowchart LR
     PR["Pull Request"] --> L["Lint<br/>ruff check src/ tests/"]
     PR --> T1["Test — Python 3.11<br/>pytest + coverage"]
     PR --> T2["Test — Python 3.12<br/>pytest + coverage"]
-    T1 --> COV["Coverage ≥ 40%<br/>required to pass"]
+    T1 --> COV["Coverage ≥ 70%<br/>required to pass"]
 ```
 
 | Job | What it does |
 |-----|-------------|
 | **Lint** | Runs `ruff check` on all source and test files |
-| **Test (3.11, 3.12)** | Runs `pytest -m "not network"` with coverage. Fails if testable-module coverage drops below 40%. |
+| **Test (3.11, 3.12)** | Runs `pytest -m "not network"` with coverage. Fails if testable-module coverage drops below 70%. |
 
 Network-dependent tests (Census API, OpenStreetMap) are skipped in CI — no secrets required.
 
