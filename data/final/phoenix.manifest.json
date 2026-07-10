@@ -1,0 +1,149 @@
+{
+  "metro_key": "phoenix",
+  "git_commit": "60d4769743a6dd13f8d62602d21d7d306546ec00",
+  "run_timestamp_utc": "2026-07-10T15:22:16.351532+00:00",
+  "acs_commute_year": 2021,
+  "acs_demographics_year": 2023,
+  "source_urls": {
+    "acs": "https://api.census.gov/data/2021/acs/acs5",
+    "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
+    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv",
+    "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
+    "osm": "https://overpass-api.de (via OSMnx)"
+  },
+  "zori_period": "2025-10-31",
+  "output_csv": "final_zcta_dataset_phoenix.csv",
+  "row_count": 150,
+  "columns": [
+    {
+      "name": "ZCTA5CE",
+      "dtype": "Int64"
+    },
+    {
+      "name": "rent_to_income",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_rent_burden_30",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_rent_burden_50",
+      "dtype": "Float64"
+    },
+    {
+      "name": "zori",
+      "dtype": "Float64"
+    },
+    {
+      "name": "commute_min_proxy",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_lt10",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_10_19",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_20_29",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_30_44",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_45_59",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_commute_60_plus",
+      "dtype": "Float64"
+    },
+    {
+      "name": "ttw_total",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_drive_alone",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_carpool",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_car",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_transit",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_walk",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_wfh",
+      "dtype": "Float64"
+    },
+    {
+      "name": "renter_share",
+      "dtype": "Float64"
+    },
+    {
+      "name": "vehicle_access",
+      "dtype": "Float64"
+    },
+    {
+      "name": "total_pop",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pop_density",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_white",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_black",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_asian",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_hispanic",
+      "dtype": "Float64"
+    },
+    {
+      "name": "pct_other",
+      "dtype": "Float64"
+    },
+    {
+      "name": "median_income",
+      "dtype": "Float64"
+    },
+    {
+      "name": "income_segment",
+      "dtype": "String"
+    },
+    {
+      "name": "stops_per_km2",
+      "dtype": "Float64"
+    },
+    {
+      "name": "period",
+      "dtype": "String"
+    }
+  ],
+  "sha256": "d2b51a4e0e6f7f7ae730bbecda3a0aed58c401ed6f2937975427200fec827697",
+  "steps": []
+}
