@@ -1,6 +1,10 @@
 """Shared test fixtures for housing-commute-analysis."""
 from __future__ import annotations
 
+import matplotlib
+
+matplotlib.use("Agg")  # headless backend so report/figure tests run without a display
+
 from pathlib import Path
 
 import numpy as np
