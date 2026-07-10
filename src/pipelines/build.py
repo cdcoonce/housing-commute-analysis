@@ -10,6 +10,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+import polars as pl
 
 from .acs import compute_acs_features, fetch_acs_for_county
 from .config import DATA_FINAL, METRO_CONFIGS, PROJECT_ROOT, ZORI_ZIP_CSV_URL
@@ -313,6 +314,10 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     ]
     final_dataset = final_dataset[column_order]
     
+    # Validate the final dataset against the shared schema contract before writing
+    from .schema import validate_final_dataset
+    validate_final_dataset(pl.from_pandas(final_dataset))
+
     # Write output CSV file
     FINAL_ZCTA_OUT.parent.mkdir(parents=True, exist_ok=True)
     final_dataset.to_csv(FINAL_ZCTA_OUT, index=False)
