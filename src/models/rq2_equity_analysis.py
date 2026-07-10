@@ -14,6 +14,8 @@ import numpy as np
 import polars as pl
 from sklearn.cluster import KMeans
 
+from src.pipelines.config import RANDOM_STATE
+
 from .models import anova_by_group, fit_ols_robust
 from .preprocessing import compute_majority_race
 from .reporting import save_markdown_table
@@ -169,7 +171,7 @@ def analyze_rq2(df: pl.DataFrame) -> RQ2Results:
             x_cluster = np.column_stack([rent_z, commute_z])
 
             try:
-                kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+                kmeans = KMeans(n_clusters=4, random_state=RANDOM_STATE, n_init=10)
                 cluster_labels = kmeans.fit_predict(x_cluster)
 
                 df_cluster = df_cluster.with_columns(

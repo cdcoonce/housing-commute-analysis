@@ -10,6 +10,10 @@ CACHE_DIR.mkdir(exist_ok=True, parents=True)
 
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY", None)
 
+# Seed for all stochastic analysis steps (KFold, KMeans, ...). Override via
+# the RANDOM_STATE env var to test seed sensitivity without editing code.
+RANDOM_STATE = int(os.getenv("RANDOM_STATE", "42"))
+
 # Metro Area Configurations
 # Format: "metro_key": {
 #   "name": Full metro name,
