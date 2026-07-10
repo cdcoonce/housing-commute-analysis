@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -704,7 +704,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "plotly", specifier = ">=5.18.0" },
     { name = "polars", specifier = ">=0.19.0" },
-    { name = "prefect", specifier = ">=2.14.0" },
+    { name = "prefect", specifier = ">=3.0" },
     { name = "pyproj", specifier = ">=3.6.0" },
     { name = "pytest", specifier = ">=7.4.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },

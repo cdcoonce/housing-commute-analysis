@@ -78,6 +78,10 @@ mlruns/
 cache/
 .cache/
 
+# Prefect (local-only orchestration)
+.prefect/
+.prefect_cache/
+
 # Misc
 *.bak
 *.tmp

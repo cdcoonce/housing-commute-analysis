@@ -21,7 +21,7 @@ dependencies = [
     "osmnx==2.0.6",
     "requests>=2.31.0",
     "ydata-profiling>=4.0.0",
-    "prefect>=2.14.0",
+    "prefect>=3.0",
     "pytest>=7.4.0",
     "python-dotenv>=1.0.0",
 ]
