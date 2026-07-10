@@ -24,6 +24,7 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
 - [Usage](#usage)
   - [Running the Data Pipeline](#running-the-data-pipeline)
   - [Running the Analysis](#running-the-analysis)
+  - [Reproducibility](#reproducibility)
 - [Available Metro Areas](#available-metro-areas)
 - [Pipeline Output Schema](#pipeline-output-schema)
 - [Analysis Output](#analysis-output)
@@ -316,9 +317,10 @@ After pipeline data is available, run the statistical analysis:
 uv run python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed --fig-dir figures
 
 # Run analysis for all metros
-for metro in PHX LA DFW MEM DEN ATL CHI SEA MIA; do
-    uv run python run_analysis.py --metro $metro --raw-dir data/final --out-dir data/processed --fig-dir figures
-done
+uv run python run_analysis.py --all
+
+# Equivalent shortcut
+make analyze
 ```
 
 **CLI Options:**
@@ -332,6 +334,17 @@ done
 | `--zcta-shp` | Path to ZCTA shapefile for choropleth maps (optional) | Auto-detected |
 
 For detailed analysis documentation, see [RUNNING_ANALYSIS.md](RUNNING_ANALYSIS.md).
+
+### Reproducibility
+
+```bash
+# One command: install deps, build all nine metro datasets, run all analyses
+make all
+```
+
+- Every pipeline run writes a **provenance manifest** alongside its dataset — `data/final/*.manifest.json` — recording a sha256 checksum, source vintages, and the output schema.
+- `make verify-data` (`uv run python run_pipeline.py --verify`) re-checks every manifest offline against its CSV, with no network access. This is the same check CI runs on every pull request.
+- The pipeline is a Prefect flow with a **7-day result cache**: re-running `run_pipeline.py` (or `make pipeline`) resumes from cached steps instead of re-fetching data that hasn't gone stale, so repeated runs are fast and idempotent.
 
 ---
 
