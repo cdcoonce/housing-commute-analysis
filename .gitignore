@@ -43,6 +43,8 @@ ENV/
 
 # Data
 data/final/*
+!data/final/final_zcta_dataset_*.csv
+!data/final/*.manifest.json
 data/raw/*
 data/processed/*
 data/models/*
