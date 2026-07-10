@@ -7,6 +7,7 @@ produce a final ZCTA-level dataset with housing, commute, and transit metrics.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 import geopandas as gpd
 import pandas as pd
@@ -130,6 +131,7 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     ValueError
         If no ZCTAs or tracts are found for the metro area.
     """
+    _t0 = datetime.now(timezone.utc)
     metro_config = METRO_CONFIGS[metro_key]
     CBSA_CODE = metro_config["cbsa_code"]
     COUNTIES = metro_config["counties"]
@@ -321,7 +323,22 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     # Write output CSV file
     FINAL_ZCTA_OUT.parent.mkdir(parents=True, exist_ok=True)
     final_dataset.to_csv(FINAL_ZCTA_OUT, index=False)
-    
+
+    # Emit provenance manifest (sha256 + schema + source vintages) for this run
+    from .manifest import build_manifest, get_git_commit, write_manifest
+    zori_period = None
+    if "period" in final_dataset.columns and final_dataset["period"].notna().any():
+        zori_period = str(final_dataset["period"].dropna().max())
+    manifest = build_manifest(
+        metro_key,
+        FINAL_ZCTA_OUT,
+        git_commit=get_git_commit(),
+        timestamp_utc=_t0.isoformat(),
+        zori_period=zori_period,
+        steps=[],  # per-step timing can be threaded later; empty list is valid
+    )
+    write_manifest(manifest, DATA_FINAL / f"{metro_key}.manifest.json")
+
     logger.info("=" * 60)
     logger.info(f"SUCCESS: Wrote {len(final_dataset)} ZCTAs to {FINAL_ZCTA_OUT.name}")
     logger.info(f"Output: {FINAL_ZCTA_OUT}")
