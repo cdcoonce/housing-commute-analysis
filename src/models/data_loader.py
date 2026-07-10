@@ -111,7 +111,10 @@ def load_and_validate_data(
     dropped = initial_count - df.shape[0]
     if dropped > 0:
         logger.warning(f"Dropped {dropped} rows with critical nulls")
-    
+
     logger.info(f"Final shape after validation: {df.shape}")
-    
+
+    from src.pipelines.schema import validate_final_dataset
+    validate_final_dataset(df, require_all_columns=False)
+
     return df

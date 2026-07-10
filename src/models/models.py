@@ -22,6 +22,8 @@ from sklearn.model_selection import KFold
 from statsmodels.regression.quantile_regression import QuantReg
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif_calc
 
+from src.pipelines.config import RANDOM_STATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -135,8 +137,9 @@ def cv_rmse(X: np.ndarray, y: np.ndarray, k: int = 3) -> Tuple[float, List[float
     
     Notes
     -----
-    Uses random_state=42 for reproducibility. Constant term is force-added
-    to each fold to handle standardized data where constant detection may fail.
+    Uses RANDOM_STATE (config.RANDOM_STATE) for reproducibility. Constant term
+    is force-added to each fold to handle standardized data where constant
+    detection may fail.
     """
     # Validate cross-validation parameters to fail fast
     if k < 2:
@@ -154,7 +157,7 @@ def cv_rmse(X: np.ndarray, y: np.ndarray, k: int = 3) -> Tuple[float, List[float
             f"Sample size ({X.shape[0]}) is smaller than number of folds (k={k}). "
             f"Reduce k to at most {X.shape[0]} or provide more data."
         )
-    kf = KFold(n_splits=k, shuffle=True, random_state=42)
+    kf = KFold(n_splits=k, shuffle=True, random_state=RANDOM_STATE)
     rmses = []
     
     for train_idx, test_idx in kf.split(X):

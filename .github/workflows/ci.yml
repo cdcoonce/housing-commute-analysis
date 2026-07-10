@@ -55,8 +55,15 @@ jobs:
             --cov=src \
             --cov-report=term-missing \
             --cov-report=xml \
-            --cov-fail-under=40 \
+            --cov-fail-under=70 \
             -v
+
+      - name: Verify data integrity (offline)
+        env:
+          PREFECT_HOME: ${{ github.workspace }}/.prefect
+          PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: "true"
+          PREFECT_LOGGING_LEVEL: WARNING
+        run: uv run python run_pipeline.py --verify
 
       - name: Upload coverage report
         if: matrix.python-version == '3.11'

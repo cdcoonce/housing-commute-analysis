@@ -1,6 +1,11 @@
 """Shared test fixtures for housing-commute-analysis."""
 from __future__ import annotations
 
+import matplotlib
+
+matplotlib.use("Agg")  # headless backend so report/figure tests run without a display
+
+import os
 from pathlib import Path
 
 import numpy as np
@@ -69,3 +74,14 @@ def numpy_X_y() -> tuple[np.ndarray, np.ndarray]:
     X = np.random.randn(50, 3)
     y = 0.5 + 1.2 * X[:, 0] - 0.8 * X[:, 1] + 0.3 * X[:, 2] + np.random.randn(50) * 0.5
     return X, y
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _prefect_offline(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Force Prefect fully offline/ephemeral for the whole test session."""
+    home = tmp_path_factory.mktemp("prefect_home")
+    os.environ["PREFECT_HOME"] = str(home)
+    os.environ["PREFECT_RESULTS_LOCAL_STORAGE_PATH"] = str(home / "results")
+    os.environ["PREFECT_SERVER_ALLOW_EPHEMERAL_MODE"] = "true"
+    os.environ["PREFECT_LOGGING_LEVEL"] = "WARNING"
+    os.environ.pop("PREFECT_API_URL", None)

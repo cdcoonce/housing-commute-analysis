@@ -43,6 +43,8 @@ ENV/
 
 # Data
 data/final/*
+!data/final/final_zcta_dataset_*.csv
+!data/final/*.manifest.json
 data/raw/*
 data/processed/*
 data/models/*
@@ -77,6 +79,10 @@ mlruns/
 # Cache directories
 cache/
 .cache/
+
+# Prefect (local-only orchestration)
+.prefect/
+.prefect_cache/
 
 # Misc
 *.bak

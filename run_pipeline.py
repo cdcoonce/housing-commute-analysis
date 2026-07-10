@@ -45,6 +45,15 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Load environment variables from .env file (must happen before local imports)
 load_dotenv()
 
+# Offline Prefect defaults MUST be set before build (and thus prefect) is
+# imported so a fresh clone runs the flow with zero Prefect setup.
+os.environ.setdefault("PREFECT_HOME", str(PROJECT_ROOT / ".prefect"))
+os.environ.setdefault("PREFECT_SERVER_ALLOW_EPHEMERAL_MODE", "true")
+os.environ.setdefault("PREFECT_RESULTS_LOCAL_STORAGE_PATH", str(PROJECT_ROOT / ".prefect_cache"))
+# Enforce local-only runs: drop any inherited PREFECT_API_URL so a developer with
+# Prefect Cloud exported can't accidentally make a real run contact a server.
+os.environ.pop("PREFECT_API_URL", None)
+
 # Import after path setup and environment loading
 from src.pipelines.build import build_final_dataset  # noqa: E402
 
@@ -55,6 +64,10 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
+# Prefect's logging config resets the root logger to WARNING when a flow runs;
+# pin this module's logger to INFO so --verify/--generate-manifests output
+# stays visible (mirrors run_analysis.py).
+logger.setLevel(logging.INFO)
 
 
 def run_single_metro(metro: str) -> tuple[bool, str]:
@@ -94,12 +107,65 @@ def main():
         action='store_true',
         help='Run pipeline for all metros sequentially (phoenix, memphis, los_angeles, dallas, denver, atlanta, chicago, seattle, miami)'
     )
+    parser.add_argument("--generate-manifests", action="store_true",
+                        help="Offline: (re)write provenance manifests for existing final CSVs")
+    parser.add_argument("--verify", action="store_true",
+                        help="Offline: verify final CSVs against committed manifests (no network)")
     args = parser.parse_args()
-    
+
     logger.info("=" * 70)
     logger.info("DAT490 Housing Affordability Data Pipeline")
     logger.info("=" * 70)
-    
+
+    if args.generate_manifests:
+        from datetime import datetime, timezone
+
+        import polars as pl
+
+        from src.pipelines.config import DATA_FINAL, METRO_CONFIGS
+        from src.pipelines.manifest import build_manifest, get_git_commit, write_manifest
+
+        commit = get_git_commit()
+        ts = datetime.now(timezone.utc).isoformat()
+        count = 0
+        for metro_key in METRO_CONFIGS:
+            csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
+            if not csv.exists():
+                continue
+            df = pl.read_csv(csv)
+            zori_period = None
+            if "period" in df.columns and df["period"].drop_nulls().len() > 0:
+                zori_period = str(df["period"].drop_nulls().max())
+            write_manifest(
+                build_manifest(metro_key, csv, git_commit=commit, timestamp_utc=ts,
+                               zori_period=zori_period, steps=[]),
+                DATA_FINAL / f"{metro_key}.manifest.json",
+            )
+            count += 1
+            logger.info("wrote manifest for %s", metro_key)
+        logger.info("Generated %d manifests", count)
+        return 0
+
+    if args.verify:
+        from src.pipelines.config import DATA_FINAL
+        from src.pipelines.manifest import verify_manifest
+
+        manifests = sorted(DATA_FINAL.glob("*.manifest.json"))
+        if not manifests:
+            logger.warning("No manifests found in %s — run --generate-manifests first.", DATA_FINAL)
+            return 0
+        any_drift = False
+        for mpath in manifests:
+            metro_key = mpath.stem.replace(".manifest", "")
+            csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
+            drift = verify_manifest(csv, mpath)
+            if drift:
+                any_drift = True
+                logger.error("DRIFT %s: %s", metro_key, "; ".join(drift))
+            else:
+                logger.info("OK %s", metro_key)
+        return 1 if any_drift else 0
+
     # Check if running all metros
     if args.all:
         all_metros = ["phoenix", "memphis", "los_angeles", "dallas", "denver", "atlanta", "chicago", "seattle", "miami"]
