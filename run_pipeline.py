@@ -45,6 +45,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Load environment variables from .env file (must happen before local imports)
 load_dotenv()
 
+# Offline Prefect defaults MUST be set before build (and thus prefect) is
+# imported so a fresh clone runs the flow with zero Prefect setup.
+os.environ.setdefault("PREFECT_HOME", str(PROJECT_ROOT / ".prefect"))
+os.environ.setdefault("PREFECT_SERVER_ALLOW_EPHEMERAL_MODE", "true")
+os.environ.setdefault("PREFECT_RESULTS_LOCAL_STORAGE_PATH", str(PROJECT_ROOT / ".prefect_cache"))
+
 # Import after path setup and environment loading
 from src.pipelines.build import build_final_dataset  # noqa: E402
 
@@ -55,6 +61,10 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
+# Prefect's logging config resets the root logger to WARNING when a flow runs;
+# pin this module's logger to INFO so --verify/--generate-manifests output
+# stays visible (mirrors run_analysis.py).
+logger.setLevel(logging.INFO)
 
 
 def run_single_metro(metro: str) -> tuple[bool, str]:
