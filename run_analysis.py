@@ -23,6 +23,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 os.environ.setdefault("PREFECT_HOME", str(PROJECT_ROOT / ".prefect"))
 os.environ.setdefault("PREFECT_SERVER_ALLOW_EPHEMERAL_MODE", "true")
 os.environ.setdefault("PREFECT_RESULTS_LOCAL_STORAGE_PATH", str(PROJECT_ROOT / ".prefect_cache"))
+# Enforce local-only runs: drop any inherited PREFECT_API_URL so a developer with
+# Prefect Cloud exported can't accidentally make a real run contact a server.
+os.environ.pop("PREFECT_API_URL", None)
 
 from prefect import flow  # noqa: E402
 

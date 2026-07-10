@@ -27,15 +27,23 @@ from .tiger import get_cbsa_polygon, get_tracts_for_counties, get_state_zctas
 from .zori import fetch_zori_latest
 
 from prefect import flow, task
-from prefect.cache_policies import INPUTS
+from prefect.cache_policies import INPUTS, TASK_SOURCE
 
 from .prefect_config import CACHE_TTL, NETWORK_RETRIES  # importing prefect_config sets PREFECT_RESULTS_LOCAL_STORAGE_PATH
 
 # NOTE: do NOT set result_storage here — an unsaved LocalFileSystem block raises
 # TypeError at decorator time in Prefect 3.x. Persistence location comes from the
 # PREFECT_RESULTS_LOCAL_STORAGE_PATH env var (set in prefect_config on import).
+#
+# cache_policy is INPUTS + TASK_SOURCE (NOT bare INPUTS): with persist_result=True,
+# INPUTS keys the cache on input VALUES only, so the three tasks that all take the
+# same sole `COUNTIES` arg (fetch_tracts/fetch_acs/fetch_demographics) would collide
+# on ONE key and poison each other's shared persisted result. Adding TASK_SOURCE
+# differentiates the keys by each task's source body. This is Prefect's DEFAULT
+# minus RUN_ID, so it stays task-distinct while preserving cross-run 7-day resume
+# (DEFAULT's RUN_ID component would key each run separately and kill resume).
 _CACHE = {
-    "cache_policy": INPUTS,
+    "cache_policy": INPUTS + TASK_SOURCE,
     "cache_expiration": CACHE_TTL,
     "persist_result": True,
 }

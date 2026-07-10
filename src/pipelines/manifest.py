@@ -76,7 +76,12 @@ def verify_manifest(csv_path: Path, manifest_path: Path) -> list[str]:
         return [f"missing csv: {csv_path}"]
     actual_sha = compute_sha256(csv_path)
     if actual_sha != manifest.get("sha256"):
-        drift.append(f"sha256 drift: manifest={manifest.get('sha256')[:12]}… actual={actual_sha[:12]}…")
+        # Guard None: a corrupt manifest missing "sha256" should still report drift
+        # (it mismatches) rather than TypeError on slicing None.
+        drift.append(
+            f"sha256 drift: manifest={(manifest.get('sha256') or '')[:12]}… "
+            f"actual={(actual_sha or '')[:12]}…"
+        )
     df = pl.read_csv(csv_path)
     if df.height != manifest.get("row_count"):
         drift.append(f"row_count drift: manifest={manifest.get('row_count')} actual={df.height}")
