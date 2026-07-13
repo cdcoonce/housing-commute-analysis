@@ -1,9 +1,12 @@
 """Unit tests for src/pipelines/lodes.py (all offline)."""
 from __future__ import annotations
 
+import math
+
 import pytest
 import pandas as pd
 import geopandas as gpd
+import numpy as np
 from shapely.geometry import Polygon
 
 import src.pipelines.lodes as lodes
@@ -133,3 +136,43 @@ def test_distance_to_cbd_km_zero_at_centroid_and_min_over_points() -> None:
     dual = lodes.distance_to_cbd_km(zctas, [(lat0, lon0), (lat1, lon1)], utm)
     d2 = dual.set_index("ZCTA5CE")["distance_to_cbd_km"]
     assert d2["85001"] < 0.01 and d2["85002"] < 0.01
+
+
+def test_job_accessibility_hand_computable_two_tracts() -> None:
+    """One ZCTA co-centered with tract A; tract B exactly 10 km away.
+    A_i = jobs_A * exp(0) + jobs_B * exp(-10/10) = 100 + 50*e^-1."""
+    utm = 32612
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001"]},
+        geometry=[_square(400000.0, 3700000.0)],
+        crs=utm,
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["04013000100", "04013000200"]},
+        geometry=[_square(400000.0, 3700000.0, half=500.0),
+                  _square(410000.0, 3700000.0, half=500.0)],
+        crs=utm,
+    )
+    lodes_df = pd.DataFrame({
+        "zcta": ["85001", "85001"],
+        "trct": ["04013000100", "04013000200"],
+        "jobs": [100, 50],
+    })
+    out = lodes.job_accessibility(zctas, tracts, lodes_df, utm, decay_km=10.0)
+    expected = 100.0 + 50.0 * math.exp(-1.0)
+    assert np.isclose(out["job_accessibility"].item(), expected, rtol=1e-6)
+
+
+def test_job_accessibility_no_matching_tracts_returns_zero() -> None:
+    utm = 32612
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001"]}, geometry=[_square(400000.0, 3700000.0)], crs=utm
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["04013000900"]},
+        geometry=[_square(410000.0, 3700000.0, half=500.0)],
+        crs=utm,
+    )
+    lodes_df = pd.DataFrame({"zcta": ["85001"], "trct": ["04013000100"], "jobs": [7]})
+    out = lodes.job_accessibility(zctas, tracts, lodes_df, utm)
+    assert out["job_accessibility"].item() == 0.0

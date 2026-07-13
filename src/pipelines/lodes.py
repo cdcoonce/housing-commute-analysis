@@ -153,3 +153,49 @@ def distance_to_cbd_km(
         "ZCTA5CE": zctas["ZCTA5CE"].astype(str).str.zfill(5),
         "distance_to_cbd_km": per_point.min(axis=1) / 1000.0,
     })
+
+
+def job_accessibility(
+    zctas_gdf: gpd.GeoDataFrame,
+    tracts_gdf: gpd.GeoDataFrame,
+    lodes_df: pd.DataFrame,
+    utm_zone: int,
+    decay_km: float = GRAVITY_DECAY_KM,
+) -> pd.DataFrame:
+    """Hansen-type gravity index: A_i = sum_j jobs_j * exp(-d_ij / decay_km).
+
+    j ranges over the metro's census tracts (jobs summed from the LODES frame);
+    d_ij is UTM Euclidean distance between ZCTA centroid i and tract centroid j.
+    Tract altitude keeps the distance matrix small and further averages LODES
+    block noise. Jobs outside the metro's counties are not counted (documented
+    limitation for edge ZCTAs — consistent with the ACS county frame).
+    """
+    tract_jobs = lodes_df.groupby("trct", as_index=False)["jobs"].sum()
+    tracts = tracts_gdf.to_crs(utm_zone).copy()
+    tracts["trct"] = tracts["GEOID"].astype(str).str.zfill(11)
+    tracts = tracts.merge(tract_jobs, on="trct", how="inner")
+
+    zctas = zctas_gdf.to_crs(utm_zone)
+    zcta_ids = zctas["ZCTA5CE"].astype(str).str.zfill(5)
+
+    if tracts.empty:
+        logger.warning("job_accessibility: no tracts matched LODES jobs; returning 0s")
+        return pd.DataFrame({
+            "ZCTA5CE": zcta_ids,
+            "job_accessibility": np.zeros(len(zctas)),
+        })
+
+    tract_cent = tracts.geometry.centroid
+    tract_xy = np.column_stack([tract_cent.x.to_numpy(), tract_cent.y.to_numpy()])
+    jobs = tracts["jobs"].to_numpy(dtype=float)
+
+    zcta_cent = zctas.geometry.centroid
+    zcta_xy = np.column_stack([zcta_cent.x.to_numpy(), zcta_cent.y.to_numpy()])
+
+    # Pairwise (n_zcta, n_tract) distances in km
+    d_km = np.sqrt(
+        ((zcta_xy[:, None, :] - tract_xy[None, :, :]) ** 2).sum(axis=2)
+    ) / 1000.0
+    access = (jobs[None, :] * np.exp(-d_km / decay_km)).sum(axis=1)
+
+    return pd.DataFrame({"ZCTA5CE": zcta_ids, "job_accessibility": access})
