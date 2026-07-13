@@ -11,6 +11,7 @@ import polars as pl
 
 from src.pipelines.acs import DEFAULT_ACS_YEAR  # ACS commute vintage (2021)
 from src.pipelines.config import ZORI_ZIP_CSV_URL
+from src.pipelines.lodes import LODES_YEAR
 
 _DEMOGRAPHICS_YEAR = 2023  # fetch_demographics_for_county default vintage
 _SOURCE_URLS = {
@@ -19,6 +20,7 @@ _SOURCE_URLS = {
     "zori": ZORI_ZIP_CSV_URL,
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
     "osm": "https://overpass-api.de (via OSMnx)",
+    "lodes": f"https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 {LODES_YEAR} + xwalk)",
 }
 
 
@@ -55,6 +57,7 @@ def build_manifest(
         "run_timestamp_utc": timestamp_utc,
         "acs_commute_year": DEFAULT_ACS_YEAR,
         "acs_demographics_year": _DEMOGRAPHICS_YEAR,
+        "lodes_year": LODES_YEAR,
         "source_urls": _SOURCE_URLS,
         "zori_period": zori_period,
         "output_csv": csv_path.name,

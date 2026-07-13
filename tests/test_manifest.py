@@ -40,3 +40,19 @@ def test_verify_manifest_clean_then_drift(tmp_path: Path) -> None:
     assert verify_manifest(csv, mpath) == []          # clean
     pl.DataFrame({"ZCTA5CE": ["00001", "00002"], "period": ["a", "b"], "rent_to_income": [0.1, 0.2]}).write_csv(csv)
     assert verify_manifest(csv, mpath)                 # drift detected
+
+
+def test_manifest_includes_lodes_provenance(tmp_path) -> None:
+    import polars as pl
+
+    from src.pipelines.manifest import build_manifest
+
+    csv = tmp_path / "final_zcta_dataset_test.csv"
+    pl.DataFrame({"ZCTA5CE": [85001]}).write_csv(csv)
+    m = build_manifest(
+        "test", csv, git_commit="abc", timestamp_utc="2026-01-01T00:00:00+00:00",
+        zori_period=None, steps=[],
+    )
+    assert m["lodes_year"] == 2021
+    assert "lodes" in m["source_urls"]
+    assert "LODES8" in m["source_urls"]["lodes"]

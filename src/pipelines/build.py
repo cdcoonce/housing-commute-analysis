@@ -21,6 +21,14 @@ from .demographics import (
     create_income_segments,
     fetch_demographics_for_county,
 )
+from .lodes import (
+    LODES_YEAR,
+    distance_to_cbd_km,
+    fetch_metro_lodes,
+    job_accessibility,
+    states_for_counties,
+    zcta_job_counts,
+)
 from .osm import zcta_transit_density
 from .spatial import filter_zctas_in_cbsa, tract_to_zcta_centroid_map
 from .tiger import get_cbsa_polygon, get_tracts_for_counties, get_state_zctas
@@ -90,6 +98,29 @@ def transit_density_task(zctas_for_transit, utm_zone: int):
     )
 
 
+@task(name="fetch_lodes", **NETWORK_RETRIES, **_CACHE)
+def fetch_lodes_task(states: tuple, year: int):
+    return fetch_metro_lodes(states, year)
+
+
+@task(name="employment_features")
+def employment_features_task(lodes_df, zctas_in_metro, tracts, cbd_points, utm_zone: int):
+    """[ZCTA5CE, job_count, distance_to_cbd_km, job_accessibility] for the metro.
+
+    distance frame is the base (covers every metro ZCTA); job counts are
+    left-merged and filled to 0 (absence from WAC means zero jobs, not missing).
+    """
+    dist = distance_to_cbd_km(zctas_in_metro, cbd_points, utm_zone)
+    counts = zcta_job_counts(lodes_df)
+    access = job_accessibility(zctas_in_metro, tracts, lodes_df, utm_zone)
+    out = (
+        dist.merge(counts, on="ZCTA5CE", how="left")
+        .merge(access, on="ZCTA5CE", how="left")
+    )
+    out["job_count"] = out["job_count"].fillna(0.0)
+    return out
+
+
 # --- Plain CPU tasks ---
 @task(name="filter_zctas")
 def filter_zctas_task(zctas_all, cbsa_boundary, utm_zone: int):
@@ -146,6 +177,7 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     METRO_NAME = metro_config["name"]
     UTM_ZONE = metro_config["utm_zone"]
     ZIP_PREFIXES = metro_config["zip_prefixes"]
+    CBD_POINTS = metro_config["cbd_points"]
     FINAL_ZCTA_OUT = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
     
     logger.info("=" * 60)
@@ -253,7 +285,16 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     zctas_area = zctas_in_metro.to_crs(UTM_ZONE).copy()
     zctas_area["area_km2"] = zctas_area.geometry.area / 1_000_000  # Convert m² to km²
     zcta_area_df = zctas_area[["ZCTA5CE", "area_km2"]].copy()
-    
+
+    # Step 6c: Employment features from LEHD LODES (jobs by workplace block)
+    logger.info("STEP 6c: Fetching LODES employment data...")
+    lodes_states = states_for_counties(COUNTIES)
+    lodes_df = fetch_lodes_task(lodes_states, LODES_YEAR)
+    employment = employment_features_task(
+        lodes_df, zctas_in_metro, tracts_in_counties, CBD_POINTS, UTM_ZONE
+    )
+    logger.info(f"Computed employment features for {len(employment)} ZCTAs")
+
     # Step 7: Merge all data sources into final dataset
     final_dataset = (
         zcta_aggregated
@@ -277,11 +318,17 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
             on="ZCTA5CE",
             how="left"  # Left join to add area for density calculation
         )
+        .merge(
+            employment,
+            on="ZCTA5CE",
+            how="left"  # Left join to keep all ZCTAs
+        )
     )
-    
-    # Calculate population density (people per km²)
+
+    # Calculate population and job density (per km²)
     final_dataset["pop_density"] = final_dataset["total_pop"] / final_dataset["area_km2"]
-    final_dataset = final_dataset.drop(columns=["area_km2"])  # Remove intermediate column
+    final_dataset["job_density"] = final_dataset["job_count"] / final_dataset["area_km2"]
+    final_dataset = final_dataset.drop(columns=["area_km2", "job_count"])
     
     # Step 8: Create income segments based on median income quartiles
     final_dataset = create_income_segments(final_dataset)
@@ -312,6 +359,7 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
         'vehicle_access',
         'total_pop',
         'pop_density',
+        'job_density',
         'pct_white',
         'pct_black',
         'pct_asian',
@@ -320,6 +368,8 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
         'median_income',
         'income_segment',
         'stops_per_km2',
+        'distance_to_cbd_km',
+        'job_accessibility',
         'period'
     ]
     final_dataset = final_dataset[column_order]

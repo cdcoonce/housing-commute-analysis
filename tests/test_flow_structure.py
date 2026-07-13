@@ -56,19 +56,29 @@ def test_counties_tasks_have_distinct_cache_keys() -> None:
 
 
 def test_cacheable_tasks_include_task_source_component() -> None:
-    """Structural backstop: every counties-keyed cacheable task's policy must
+    """Structural backstop: every counties/URL-keyed cacheable task's policy must
     include a TASK_SOURCE component, so identical input VALUES cannot collide
     across different task bodies (this is what makes the keys above distinct).
     """
     from src.pipelines.build import (
         fetch_acs_task,
         fetch_demographics_task,
+        fetch_lodes_task,
         fetch_tracts_task,
     )
 
     task_source_type = type(TASK_SOURCE)
-    for task in (fetch_tracts_task, fetch_acs_task, fetch_demographics_task):
+    for task in (fetch_tracts_task, fetch_acs_task, fetch_demographics_task, fetch_lodes_task):
         policies = getattr(task.cache_policy, "policies", [task.cache_policy])
         assert any(isinstance(p, task_source_type) for p in policies), (
             f"{task.name} cache_policy lacks a TASK_SOURCE component: {task.cache_policy}"
         )
+
+
+def test_employment_tasks_exist() -> None:
+    from prefect import Task
+
+    from src.pipelines.build import employment_features_task, fetch_lodes_task
+
+    assert isinstance(fetch_lodes_task, Task)
+    assert isinstance(employment_features_task, Task)

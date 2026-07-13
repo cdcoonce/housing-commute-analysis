@@ -11,6 +11,7 @@ REQUIRED_COLUMNS: list[str] = [
     "renter_share", "vehicle_access", "total_pop", "pop_density", "pct_white",
     "pct_black", "pct_asian", "pct_hispanic", "pct_other", "median_income",
     "income_segment", "stops_per_km2", "period",
+    "job_density", "distance_to_cbd_km", "job_accessibility",
 ]
 
 # Columns expressed as 0-100 percentages/shares.
@@ -24,7 +25,10 @@ _PERCENT_COLUMNS = [
 ]
 # NOTE: median_income is EXCLUDED from non-negative checks — every committed dataset
 # carries the Census "jam" sentinel (down to -666666666) for suppressed tracts. Do not add it.
-_NON_NEGATIVE_COLUMNS = ["ttw_total", "total_pop", "pop_density", "stops_per_km2", "zori"]
+_NON_NEGATIVE_COLUMNS = [
+    "ttw_total", "total_pop", "pop_density", "stops_per_km2", "zori",
+    "job_density", "distance_to_cbd_km", "job_accessibility",
+]
 _LOADER_CRITICAL = ["ZCTA5CE", "rent_to_income", "commute_min_proxy", "median_income", "stops_per_km2"]
 _INCOME_SEGMENTS = {"Low", "Medium", "High"}
 _PERCENT_TOL = 1.0  # allow tiny rounding overshoot past 100
@@ -45,7 +49,7 @@ def _range_violation(df: pl.DataFrame, col: str, lo: float, hi: float) -> str | 
 def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True) -> None:
     """Raise ValueError if df violates the final-dataset contract. Nulls are ignored.
 
-    require_all_columns=True (default, pipeline write): all 32 REQUIRED_COLUMNS must exist.
+    require_all_columns=True (default, pipeline write): all 35 REQUIRED_COLUMNS must exist.
     require_all_columns=False (analysis load): only the loader-critical columns must exist;
       range checks apply to whichever bounded columns are present. This lets minimal test
       fixtures (fraction-unit shares, subset of columns) pass while still range-checking real data.
