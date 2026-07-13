@@ -13,6 +13,10 @@ from __future__ import annotations
 
 import logging
 
+import pandas as pd
+
+from .utils import http_csv_to_df
+
 logger = logging.getLogger(__name__)
 
 # 2021 pairs with the ACS 5-Year 2017-2021 commute vintage (acs.DEFAULT_ACS_YEAR).
@@ -62,3 +66,56 @@ def states_for_counties(counties: list[tuple[str, str]]) -> tuple[str, ...]:
             f"No postal mapping for state FIPS {unmapped}; extend STATE_FIPS_TO_POSTAL"
         )
     return tuple(sorted(STATE_FIPS_TO_POSTAL[f] for f in fips))
+
+
+def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
+    """One state's block-level jobs joined to ZCTA + tract via the LODES crosswalk.
+
+    Returns the slim frame [zcta, trct, jobs] aggregated to (zcta, trct) pairs.
+    Raw block rows and the (large, ~10-60 MB gz) crosswalk are NOT retained —
+    this keeps the Prefect-persisted cache result small.
+
+    Blocks with a blank or "99999" crosswalk zcta (unpopulated water/park
+    blocks) are dropped; they carry ~0 jobs.
+    """
+    wac = http_csv_to_df(
+        wac_url(state_postal, year),
+        compression="gzip",
+        dtype={"w_geocode": str},
+        usecols=["w_geocode", "C000"],
+    )
+    xwalk = http_csv_to_df(
+        xwalk_url(state_postal),
+        compression="gzip",
+        dtype={"tabblk2020": str, "zcta": str, "trct": str},
+        usecols=["tabblk2020", "zcta", "trct"],
+    )
+    xwalk = xwalk[xwalk["zcta"].str.fullmatch(r"\d{5}", na=False)]
+    xwalk = xwalk[xwalk["zcta"] != "99999"]
+
+    merged = wac.merge(xwalk, left_on="w_geocode", right_on="tabblk2020", how="inner")
+    out = (
+        merged.groupby(["zcta", "trct"], as_index=False)["C000"]
+        .sum()
+        .rename(columns={"C000": "jobs"})
+    )
+    logger.info(
+        "LODES %s %s: %d (zcta, tract) pairs, %d jobs",
+        state_postal, year, len(out), int(out["jobs"].sum()),
+    )
+    return out
+
+
+def fetch_metro_lodes(states: tuple[str, ...], year: int = LODES_YEAR) -> pd.DataFrame:
+    """All states' job frames for a metro, concatenated and re-aggregated.
+
+    A (zcta, tract) pair belongs to exactly one state, so the re-aggregation is
+    defensive only. `states` is a tuple so the wrapping Prefect task stays
+    cacheable on its inputs.
+    """
+    frames = [fetch_state_jobs(s, year) for s in states]
+    return (
+        pd.concat(frames, ignore_index=True)
+        .groupby(["zcta", "trct"], as_index=False)["jobs"]
+        .sum()
+    )
