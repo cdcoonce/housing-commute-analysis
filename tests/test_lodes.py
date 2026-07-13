@@ -31,9 +31,23 @@ def test_states_for_counties_unmapped_fips_raises() -> None:
 
 
 def _fake_http(monkeypatch, wac: pd.DataFrame, xwalk: pd.DataFrame) -> None:
-    """Route lodes' http_csv_to_df by URL to synthetic WAC / crosswalk frames."""
+    """Route lodes' http_csv_to_df by URL to synthetic WAC / crosswalk frames.
+
+    Asserts the load-bearing read_csv kwargs (compression/usecols/dtype) that
+    fetch_state_jobs must pass, so a future edit that drops one fails here
+    instead of silently degrading the production reads.
+    """
     def fake(url: str, timeout: int = 180, **kwargs):
-        return wac.copy() if "/wac/" in url else xwalk.copy()
+        assert kwargs.get("compression") == "gzip", f"missing compression='gzip' for {url}"
+        if "/wac/" in url:
+            assert kwargs.get("usecols") == ["w_geocode", "C000"], f"wrong usecols for {url}"
+            assert kwargs.get("dtype") == {"w_geocode": str}, f"wrong dtype for {url}"
+            return wac.copy()
+        assert kwargs.get("usecols") == ["tabblk2020", "zcta", "trct"], f"wrong usecols for {url}"
+        assert kwargs.get("dtype") == {
+            "tabblk2020": str, "zcta": str, "trct": str,
+        }, f"wrong dtype for {url}"
+        return xwalk.copy()
     monkeypatch.setattr(lodes, "http_csv_to_df", fake)
 
 
