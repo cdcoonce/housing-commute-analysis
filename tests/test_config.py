@@ -6,7 +6,7 @@ import pytest
 
 from src.pipelines.config import CENSUS_API_KEY, METRO_CONFIGS
 
-REQUIRED_KEYS = {"cbsa_code", "counties", "zip_prefixes", "utm_zone", "name"}
+REQUIRED_KEYS = {"cbsa_code", "counties", "zip_prefixes", "utm_zone", "name", "cbd_points"}
 
 
 def test_all_metros_have_required_keys() -> None:
@@ -48,3 +48,20 @@ def test_census_api_key_loaded() -> None:
     """CENSUS_API_KEY should be a non-empty string when the environment is configured."""
     assert CENSUS_API_KEY is not None
     assert len(CENSUS_API_KEY) > 0
+
+
+def test_all_metros_have_plausible_cbd_points() -> None:
+    """Every metro needs >=1 (lat, lon) CBD point inside the continental US."""
+    for metro, cfg in METRO_CONFIGS.items():
+        points = cfg["cbd_points"]
+        assert isinstance(points, list) and len(points) >= 1, (
+            f"Metro '{metro}' has no cbd_points"
+        )
+        for lat, lon in points:
+            assert 24.0 < lat < 49.0, f"Metro '{metro}' CBD lat out of CONUS range: {lat}"
+            assert -125.0 < lon < -66.0, f"Metro '{metro}' CBD lon out of CONUS range: {lon}"
+
+
+def test_dallas_is_dual_cbd() -> None:
+    """DFW is functionally dual-CBD: Dallas and Fort Worth, ~50 km apart."""
+    assert len(METRO_CONFIGS["dallas"]["cbd_points"]) == 2

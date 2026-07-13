@@ -21,6 +21,9 @@ RANDOM_STATE = int(os.getenv("RANDOM_STATE", "42"))
 #   "counties": List of (state_fips, county_fips) tuples for all counties in metro,
 #   "zip_prefixes": ZIP code prefixes for ZCTA queries,
 #   "utm_zone": UTM zone EPSG code for accurate spatial calculations
+#   "cbd_points": List of (lat, lon) CBD reference points (downtown core /
+#                 city hall, per Holian & Kahn CES-WP-11-21 CBD anchoring;
+#                 DFW is dual-CBD). Used for distance_to_cbd_km.
 # }
 METRO_CONFIGS = {
     "phoenix": {
@@ -31,7 +34,8 @@ METRO_CONFIGS = {
             ("04", "021"),  # AZ - Pinal
         ],
         "zip_prefixes": ["85"],
-        "utm_zone": 32612  # UTM Zone 12N
+        "utm_zone": 32612,  # UTM Zone 12N
+        "cbd_points": [(33.4484, -112.0740)],   # Downtown Phoenix (Washington & Central)
     },
     "memphis": {
         "name": "Memphis, TN-MS-AR",
@@ -43,7 +47,8 @@ METRO_CONFIGS = {
             ("28", "033"),  # MS - DeSoto
         ],
         "zip_prefixes": ["38", "72", "386"],  # TN, AR, MS prefixes
-        "utm_zone": 32616  # UTM Zone 16N
+        "utm_zone": 32616,  # UTM Zone 16N
+        "cbd_points": [(35.1495, -90.0490)],    # Downtown Memphis (Civic Center Plaza)
     },
     "los_angeles": {
         "name": "Los Angeles-Long Beach-Anaheim, CA",
@@ -52,7 +57,8 @@ METRO_CONFIGS = {
             ("06", "037"),  # CA - Los Angeles
         ],
         "zip_prefixes": ["90", "91"],  # Primary LA area prefixes
-        "utm_zone": 32611  # UTM Zone 11N
+        "utm_zone": 32611,  # UTM Zone 11N
+        "cbd_points": [(34.0537, -118.2427)],   # Los Angeles City Hall
     },
     "dallas": {
         "name": "Dallas-Fort Worth-Arlington, TX",
@@ -64,7 +70,11 @@ METRO_CONFIGS = {
             ("48", "439"),  # TX - Tarrant
         ],
         "zip_prefixes": ["75", "76"],  # Dallas and Fort Worth areas
-        "utm_zone": 32614  # UTM Zone 14N
+        "utm_zone": 32614,  # UTM Zone 14N
+        "cbd_points": [
+            (32.7767, -96.7970),                # Dallas City Hall
+            (32.7555, -97.3308),                # Downtown Fort Worth (Sundance Square)
+        ],
     },
     "denver": {
         "name": "Denver-Aurora-Lakewood, CO",
@@ -80,7 +90,8 @@ METRO_CONFIGS = {
             ("08", "059"),  # CO - Jefferson
         ],
         "zip_prefixes": ["80", "81"],
-        "utm_zone": 32613  # UTM Zone 13N
+        "utm_zone": 32613,  # UTM Zone 13N
+        "cbd_points": [(39.7392, -104.9903)],   # Denver City & County Building
     },
     "atlanta": {
         "name": "Atlanta-Sandy Springs-Alpharetta, GA",
@@ -95,7 +106,8 @@ METRO_CONFIGS = {
             ("13", "151"),  # GA - Henry
         ],
         "zip_prefixes": ["30"],
-        "utm_zone": 32616  # UTM Zone 16N
+        "utm_zone": 32616,  # UTM Zone 16N
+        "cbd_points": [(33.7537, -84.3901)],    # Five Points, Downtown Atlanta
     },
     "chicago": {
         "name": "Chicago-Naperville-Elgin, IL-IN-WI",
@@ -109,7 +121,8 @@ METRO_CONFIGS = {
             ("17", "197"),  # IL - Will
         ],
         "zip_prefixes": ["60", "61", "62"],
-        "utm_zone": 32616  # UTM Zone 16N
+        "utm_zone": 32616,  # UTM Zone 16N
+        "cbd_points": [(41.8837, -87.6318)],    # Chicago City Hall (the Loop)
     },
     "seattle": {
         "name": "Seattle-Tacoma-Bellevue, WA",
@@ -120,7 +133,8 @@ METRO_CONFIGS = {
             ("53", "061"),  # WA - Snohomish
         ],
         "zip_prefixes": ["98"],
-        "utm_zone": 32610  # UTM Zone 10N
+        "utm_zone": 32610,  # UTM Zone 10N
+        "cbd_points": [(47.6038, -122.3301)],   # Seattle City Hall
     },
     "miami": {
         "name": "Miami-Fort Lauderdale-Pompano Beach, FL",
@@ -131,7 +145,9 @@ METRO_CONFIGS = {
             ("12", "099"),  # FL - Palm Beach
         ],
         "zip_prefixes": ["33"],
-        "utm_zone": 32617  # UTM Zone 17N
+        "utm_zone": 32617,  # UTM Zone 17N
+        "cbd_points": [(25.7743, -80.1937)],    # Downtown Miami (Government Center)
+        #   NOTE: deliberately NOT Miami City Hall, which is in Coconut Grove.
     }
 }
 
