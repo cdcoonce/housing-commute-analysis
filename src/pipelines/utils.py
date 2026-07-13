@@ -42,7 +42,7 @@ def _get_session() -> requests.Session:
     return session
 
 
-def http_csv_to_df(url: str, timeout: int = 180) -> pd.DataFrame:
+def http_csv_to_df(url: str, timeout: int = 180, **read_csv_kwargs) -> pd.DataFrame:
     """Fetch a CSV file from a URL and return as a DataFrame.
 
     Parameters
@@ -51,6 +51,11 @@ def http_csv_to_df(url: str, timeout: int = 180) -> pd.DataFrame:
         Full URL to the CSV file.
     timeout : int
         Request timeout in seconds (default 180 for large files).
+    **read_csv_kwargs
+        Passed through to pandas.read_csv — e.g. compression="gzip" for
+        gzip-as-payload files (requests only auto-decodes transfer-encoding
+        gzip, and pandas cannot infer compression from a BytesIO buffer),
+        dtype={...} to preserve leading zeros, usecols=[...] to bound memory.
 
     Returns
     -------
@@ -74,7 +79,7 @@ def http_csv_to_df(url: str, timeout: int = 180) -> pd.DataFrame:
     try:
         response = _get_session().get(url, timeout=timeout)
         response.raise_for_status()
-        return pd.read_csv(io.BytesIO(response.content))
+        return pd.read_csv(io.BytesIO(response.content), **read_csv_kwargs)
     except requests.Timeout as e:
         raise requests.Timeout(
             f"Request timed out after {timeout}s for URL: {url}. "
