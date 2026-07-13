@@ -13,7 +13,10 @@ from __future__ import annotations
 
 import logging
 
+import geopandas as gpd
+import numpy as np
 import pandas as pd
+from shapely.geometry import Point
 
 from .utils import http_csv_to_df
 
@@ -119,3 +122,34 @@ def fetch_metro_lodes(states: tuple[str, ...], year: int = LODES_YEAR) -> pd.Dat
         .groupby(["zcta", "trct"], as_index=False)["jobs"]
         .sum()
     )
+
+
+def zcta_job_counts(lodes_df: pd.DataFrame) -> pd.DataFrame:
+    """Total jobs per ZCTA: [ZCTA5CE (str5), job_count]."""
+    out = lodes_df.groupby("zcta", as_index=False)["jobs"].sum()
+    out["ZCTA5CE"] = out["zcta"].astype(str).str.zfill(5)
+    return out[["ZCTA5CE", "jobs"]].rename(columns={"jobs": "job_count"})
+
+
+def distance_to_cbd_km(
+    zctas_gdf: gpd.GeoDataFrame,
+    cbd_points: list[tuple[float, float]],
+    utm_zone: int,
+) -> pd.DataFrame:
+    """Euclidean km from each ZCTA centroid to the nearest CBD point.
+
+    cbd_points are (lat, lon) tuples (human/map order); min over points supports
+    dual-CBD metros (DFW). Distances computed in the metro's UTM CRS.
+    """
+    zctas = zctas_gdf.to_crs(utm_zone)
+    centroids = zctas.geometry.centroid
+    cbd_series = gpd.GeoSeries(
+        [Point(lon, lat) for lat, lon in cbd_points], crs=4326
+    ).to_crs(utm_zone)
+    per_point = np.stack(
+        [centroids.distance(pt).to_numpy() for pt in cbd_series], axis=1
+    )
+    return pd.DataFrame({
+        "ZCTA5CE": zctas["ZCTA5CE"].astype(str).str.zfill(5),
+        "distance_to_cbd_km": per_point.min(axis=1) / 1000.0,
+    })

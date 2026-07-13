@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import pytest
 import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Polygon
 
 import src.pipelines.lodes as lodes
 
@@ -83,3 +85,51 @@ def test_fetch_metro_lodes_concats_states(monkeypatch) -> None:
     out = lodes.fetch_metro_lodes(("ar", "ms", "tn"), 2021)
     # one identical synthetic row per state, aggregated across the concat
     assert out["jobs"].sum() == 12
+
+
+def test_zcta_job_counts_sums_tracts_and_zfills() -> None:
+    lodes_df = pd.DataFrame({
+        "zcta": ["85001", "85001", "8500"],  # "8500" exercises zfill
+        "trct": ["04013000100", "04013000200", "04013000300"],
+        "jobs": [15, 7, 3],
+    })
+    out = lodes.zcta_job_counts(lodes_df)
+    assert list(out.columns) == ["ZCTA5CE", "job_count"]
+    assert out.set_index("ZCTA5CE").loc["85001", "job_count"] == 22
+    assert out.set_index("ZCTA5CE").loc["08500", "job_count"] == 3
+
+
+def _square(cx: float, cy: float, half: float = 1000.0) -> Polygon:
+    return Polygon([
+        (cx - half, cy - half), (cx + half, cy - half),
+        (cx + half, cy + half), (cx - half, cy + half),
+    ])
+
+
+def test_distance_to_cbd_km_zero_at_centroid_and_min_over_points() -> None:
+    """Two 2km squares in UTM 12N, centroids 10km apart. A CBD point placed at
+    each centroid (via inverse projection to lat/lon) must give ~0 km for both
+    ZCTAs — proving both the centroid math and the min-over-points rule."""
+    import pyproj
+
+    utm = 32612
+    c0, c1 = (400000.0, 3700000.0), (410000.0, 3700000.0)
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001", "85002"]},
+        geometry=[_square(*c0), _square(*c1)],
+        crs=utm,
+    )
+    to_wgs = pyproj.Transformer.from_crs(utm, 4326, always_xy=True)
+    lon0, lat0 = to_wgs.transform(*c0)
+    lon1, lat1 = to_wgs.transform(*c1)
+
+    # Single CBD at centroid 0: ZCTA 0 is ~0 km away, ZCTA 1 is ~10 km away
+    single = lodes.distance_to_cbd_km(zctas, [(lat0, lon0)], utm)
+    d = single.set_index("ZCTA5CE")["distance_to_cbd_km"]
+    assert d["85001"] < 0.01
+    assert abs(d["85002"] - 10.0) < 0.1
+
+    # Dual CBD (DFW pattern): min over points → both ~0
+    dual = lodes.distance_to_cbd_km(zctas, [(lat0, lon0), (lat1, lon1)], utm)
+    d2 = dual.set_index("ZCTA5CE")["distance_to_cbd_km"]
+    assert d2["85001"] < 0.01 and d2["85002"] < 0.01
