@@ -53,7 +53,8 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
     df : pl.DataFrame
         Input DataFrame with ZCTA-level data containing:
         rent_to_income, commute_min_proxy, renter_share, vehicle_access,
-        pop_density, and ZCTA5CE columns.
+        pop_density, job_density, distance_to_cbd_km, job_accessibility,
+        and ZCTA5CE columns.
 
     Returns
     -------
@@ -71,7 +72,8 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
 
     # Step 1: Validate and prepare data
     required_cols = ['rent_to_income', 'commute_min_proxy', 'renter_share',
-                     'vehicle_access', 'pop_density']
+                     'vehicle_access', 'pop_density', 'job_density',
+                     'distance_to_cbd_km', 'job_accessibility']
     missing_cols = [col for col in required_cols if col not in df.columns]
 
     if missing_cols:
@@ -90,20 +92,28 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
     renter_share_pct = df_clean['renter_share'].to_numpy()
     vehicle_access_pct = df_clean['vehicle_access'].to_numpy()
     pop_density_per_km2 = df_clean['pop_density'].to_numpy()
+    job_density_per_km2 = df_clean['job_density'].to_numpy()
+    dist_cbd_km = df_clean['distance_to_cbd_km'].to_numpy()
+    job_access = df_clean['job_accessibility'].to_numpy()
 
     # Step 2: Build feature matrices
     feature_matrix_linear = np.column_stack([
-        commute_time_min, renter_share_pct, vehicle_access_pct, pop_density_per_km2
+        commute_time_min, renter_share_pct, vehicle_access_pct, pop_density_per_km2,
+        job_density_per_km2, dist_cbd_km, job_access
     ])
-    feature_names_linear = ['commute_min_proxy', 'renter_share', 'vehicle_access', 'pop_density']
+    feature_names_linear = ['commute_min_proxy', 'renter_share', 'vehicle_access',
+                            'pop_density', 'job_density', 'distance_to_cbd_km',
+                            'job_accessibility']
 
     commute_squared = commute_time_min ** 2
     feature_matrix_quad = np.column_stack([
         commute_time_min, commute_squared, renter_share_pct,
-        vehicle_access_pct, pop_density_per_km2
+        vehicle_access_pct, pop_density_per_km2,
+        job_density_per_km2, dist_cbd_km, job_access
     ])
     feature_names_quad = ['commute_min_proxy', 'commute_min_proxy²', 'renter_share',
-                          'vehicle_access', 'pop_density']
+                          'vehicle_access', 'pop_density', 'job_density',
+                          'distance_to_cbd_km', 'job_accessibility']
 
     # Step 3: VIF
     logger.info("Checking for multicollinearity (VIF)...")
@@ -144,7 +154,9 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
 
     # Build model DataFrame
     model_df = df_clean.select(['ZCTA5CE', 'rent_to_income', 'commute_min_proxy',
-                                 'renter_share', 'vehicle_access', 'pop_density'])
+                                 'renter_share', 'vehicle_access', 'pop_density',
+                                 'job_density', 'distance_to_cbd_km',
+                                 'job_accessibility'])
     model_df = model_df.with_columns([
         pl.Series('predicted', y_pred),
         pl.Series('residuals', resid)
