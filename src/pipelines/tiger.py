@@ -13,16 +13,31 @@ import pandas as pd
 import requests
 
 from .config import ZIP_PREFIXES
-from .utils import esri_geojson_to_gdf
+from .utils import esri_geojson_to_gdf, http_json_to_dict
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
 
 # Census TIGER/Line REST API endpoints
-TIGER_CBSA_URL = (
+TIGER_CBSA_BASE_URL = (
     "https://tigerweb.geo.census.gov/arcgis/rest/services/"
-    "TIGERweb/CBSA/MapServer/15/query"
+    "TIGERweb/CBSA/MapServer"
 )
+# Pinned CBSA delineation vintage (issue #2). TIGERweb inserts new vintage
+# groups into this MapServer and reshuffles layer ids (an "ACS 2025" group
+# shifted the Census-2020 layers from 15-16 to 26-27), so the layer is
+# resolved from the service's layer listing by vintage-group name instead of
+# a hardcoded index. "ACS 2024" carries the 2023 OMB delineations — the
+# vintage the committed 9-metro datasets were built against. Changing this
+# constant is a deliberate delineation change and requires a full rebuild
+# through scripts/rebuild_gate.py.
+CBSA_VINTAGE = "ACS 2024"
+CBSA_LAYER_NAME = "Metropolitan Statistical Areas"
+
+# Per-process cache of resolved layer ids, keyed by (base_url, vintage):
+# one layer-listing fetch serves every metro in a run. Deliberately module-
+# level (not Prefect-cached) so a fresh process always re-resolves.
+_cbsa_layer_cache: dict[tuple[str, str], int] = {}
 TIGER_ZCTA_URL = (
     "https://tigerweb.geo.census.gov/arcgis/rest/services/"
     "TIGERweb/tigerWMS_ACS2024/MapServer/2/query"
@@ -34,33 +49,120 @@ TIGER_TRACTS_URL = (
 )
 
 
+def resolve_cbsa_layer_id(
+    base_url: str = TIGER_CBSA_BASE_URL,
+    vintage: str = CBSA_VINTAGE,
+) -> int:
+    """Resolve the CBSA MapServer layer id for the pinned delineation vintage.
+
+    Queries the MapServer's layer listing (``{base_url}?f=json``) and selects
+    the ``CBSA_LAYER_NAME`` feature layer nested under the top-level vintage
+    group named ``vintage``. Never falls back to a hardcoded index: if the
+    vintage group is missing or the match is not unique, the service has been
+    reorganized under us and the build must stop rather than silently switch
+    delineation vintages.
+
+    Args:
+        base_url: MapServer root URL (no trailing slash, no layer id)
+        vintage: Top-level vintage group name (e.g. 'ACS 2024', 'Census 2020')
+
+    Returns:
+        The layer id to query, cached per process per (base_url, vintage).
+
+    Raises:
+        requests.RequestException: If the layer-listing request fails
+        ValueError: If the listing has no layers, the vintage group is absent,
+            or the layer match is missing/ambiguous
+    """
+    cache_key = (base_url, vintage)
+    if cache_key in _cbsa_layer_cache:
+        return _cbsa_layer_cache[cache_key]
+
+    listing = http_json_to_dict(base_url, params={"f": "json"})
+    layers = listing.get("layers") if isinstance(listing, dict) else None
+    if not layers:
+        raise ValueError(
+            f"no layers in MapServer listing from {base_url}; cannot resolve "
+            f"CBSA vintage {vintage!r}"
+        )
+
+    layers_by_id = {layer["id"]: layer for layer in layers}
+    vintage_group_ids = {
+        layer["id"]
+        for layer in layers
+        if layer.get("name") == vintage and layer.get("type") == "Group Layer"
+    }
+    if not vintage_group_ids:
+        raise ValueError(
+            f"CBSA vintage group {vintage!r} not found in TIGERweb layer "
+            f"listing at {base_url}; refusing to fall back to a layer index"
+        )
+
+    def _under_vintage(layer: dict) -> bool:
+        parent_id = layer.get("parentLayerId", -1)
+        while parent_id is not None and parent_id != -1:
+            if parent_id in vintage_group_ids:
+                return True
+            parent = layers_by_id.get(parent_id)
+            if parent is None:
+                return False
+            parent_id = parent.get("parentLayerId", -1)
+        return False
+
+    matches = [
+        layer
+        for layer in layers
+        if layer.get("name") == CBSA_LAYER_NAME
+        and layer.get("type") == "Feature Layer"
+        and _under_vintage(layer)
+    ]
+    if len(matches) != 1:
+        detail = (
+            f"ids {sorted(layer['id'] for layer in matches)}" if matches else "none"
+        )
+        raise ValueError(
+            f"{'ambiguous' if matches else 'no'} {CBSA_LAYER_NAME!r} match "
+            f"under CBSA vintage {vintage!r} at {base_url} ({detail}); "
+            "refusing to guess a layer"
+        )
+
+    layer_id = matches[0]["id"]
+    logger.info(f"Resolved CBSA layer for vintage {vintage!r}: id {layer_id}")
+    _cbsa_layer_cache[cache_key] = layer_id
+    return layer_id
+
+
 def get_cbsa_polygon(cbsa_code: str) -> gpd.GeoDataFrame:
     """Fetch the boundary polygon for a Core-Based Statistical Area (CBSA).
-    
+
     CBSAs are metro/micropolitan areas defined by the Office of Management and
-    Budget. This function retrieves the boundary polygon for spatial filtering.
-    
+    Budget. This function retrieves the boundary polygon for spatial filtering,
+    from the layer serving the pinned ``CBSA_VINTAGE`` delineations (resolved
+    by name at fetch time — TIGERweb reorders layer ids between vintages).
+
     Args:
         cbsa_code: 5-digit CBSA code (e.g., '38060' for Phoenix metro)
-        
+
     Returns:
         GeoDataFrame with one row containing CBSA, NAME, and geometry columns
-        
+
     Raises:
         requests.HTTPError: If the TIGER API request fails
-        
+        ValueError: If the pinned vintage cannot be resolved to exactly one layer
+
     Example:
         >>> phoenix = get_cbsa_polygon('38060')
         >>> print(phoenix['NAME'].iloc[0])
         Phoenix-Mesa-Chandler, AZ Metro Area
     """
+    layer_id = resolve_cbsa_layer_id()
     params = {
         "where": f"CBSA='{cbsa_code}'",
         "outFields": "CBSA,NAME",
         "returnGeometry": "true",
         "f": "geojson"
     }
-    return esri_geojson_to_gdf(TIGER_CBSA_URL, params)
+    return esri_geojson_to_gdf(f"{TIGER_CBSA_BASE_URL}/{layer_id}/query", params)
 
 def get_state_zctas(
     zip_prefixes: list[str] | None = None

@@ -117,6 +117,26 @@ def test_build_manifest_regenerated_offline_never_claims_build_commit(tmp_path: 
     assert len(m["sha256"]) == 64
 
 
+def test_manifest_records_cbsa_vintage_in_both_provenance_modes(tmp_path: Path) -> None:
+    """Issue #2: the pinned CBSA delineation vintage is stamped into manifests.
+
+    TIGERweb reorders MapServer layer ids; the manifest must say which
+    delineation vintage the CBSA polygon came from, in both provenance modes.
+    """
+    from src.pipelines.tiger import CBSA_VINTAGE
+
+    csv = _tiny_csv(tmp_path)
+    built = build_manifest(
+        "test", csv, git_commit="abc", timestamp_utc="t", zori_period=None, steps=[],
+    )
+    regenerated = build_manifest(
+        "test", csv, git_commit="abc", timestamp_utc="t", zori_period=None, steps=[],
+        provenance="regenerated-offline",
+    )
+    assert built["cbsa_vintage"] == CBSA_VINTAGE == "ACS 2024"
+    assert regenerated["cbsa_vintage"] == "ACS 2024"
+
+
 def test_build_manifest_rejects_unknown_provenance(tmp_path: Path) -> None:
     csv = _tiny_csv(tmp_path)
     with pytest.raises(ValueError, match="provenance"):

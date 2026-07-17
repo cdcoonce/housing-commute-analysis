@@ -12,6 +12,7 @@ import polars as pl
 from src.pipelines.acs import DEFAULT_ACS_YEAR  # ACS commute vintage (2021)
 from src.pipelines.config import METRO_CONFIGS, ZORI_ZIP_CSV_URL
 from src.pipelines.lodes import LODES_YEAR
+from src.pipelines.tiger import CBSA_VINTAGE  # pinned CBSA delineation vintage
 
 _DEMOGRAPHICS_YEAR = 2023  # fetch_demographics_for_county default vintage
 _SOURCE_URLS = {
@@ -104,6 +105,7 @@ def build_manifest(
         "acs_commute_year": DEFAULT_ACS_YEAR,
         "acs_demographics_year": _DEMOGRAPHICS_YEAR,
         "lodes_year": LODES_YEAR,
+        "cbsa_vintage": CBSA_VINTAGE,
         "source_urls": _SOURCE_URLS,
         "zori_period": zori_period,
         "output_csv": csv_path.name,
