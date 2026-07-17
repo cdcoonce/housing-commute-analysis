@@ -87,6 +87,14 @@ This analysis examines the relationship between housing affordability, commute t
 - **The concave relationship** persists in Denver, DFW, and Memphis, indicating a "drive until you qualify" effect with diminishing returns: rent burden gains flatten at longer commutes. Miami flipped from concave to positive linear; Seattle's selected model is now a convex quadratic, but its commute terms are not significant.
 - **Multicollinearity increased with the new variables**: `job_accessibility` posts VIFs of 5–11 in every metro except DFW, and Los Angeles — formerly the only metro with no multicollinearity issues (max VIF = 3.38) — now has a max VIF of 9.21.
 
+### Commute-Time Threshold (2026-07)
+
+For metros whose AIC-selected model is quadratic, the "drive until you qualify" threshold is now estimated as the vertex of the quadratic, t\* = −B₁/(2·B₂), with a delta-method 95% CI. A threshold is reported only when the curvature is significantly concave (B₂ < 0, p < 0.05) *and* the vertex lies inside the observed commute range.
+
+- **Denver is the only metro that clears both guards: t\* = 36.5 minutes** (delta-method SE = 2.32, 95% CI [31.9, 41.0]). Beyond that commute time the fitted rent-burden curve turns over — longer commutes no longer trade for improved affordability.
+- **The other eight metros are honest nulls** ("convex or insignificant curvature"): Atlanta, Chicago, Los Angeles, Miami, and Phoenix select linear models (no vertex exists); Seattle's selected quadratic is convex (B₂ = +0.0001, p = 0.21); DFW and Memphis have concave point estimates whose curvature terms fail the significance guard (B₂ p = 0.0625 and p = 0.1946, respectively).
+- **An AIC-selected quadratic does not imply a significant concave vertex.** DFW and Memphis appear as "Quadratic / Concave" in the table above — and DFW's commute term is significant — but in both cases the significance attaches to the linear term, not the curvature, so no threshold is identified there. The "diminishing returns" reading for DFW and Memphis rests on the sign of the point estimate only; Denver is the sole metro where the concavity itself is statistically supported.
+
 ---
 
 ## 4. RQ2 — Equity Analysis
@@ -219,7 +227,7 @@ Memphis (51 ZCTAs after duplicate-row removal) has the best RQ1 model fit; Miami
 2. **Explore Seattle's racial equity outlier.** Why does Seattle show no racial rent burden disparities when 8 other metros do? Is this a function of demographics, policy, or spatial sorting?
 3. **Longitudinal analysis.** This cross-sectional analysis captures a single point in time. Tracking how these relationships evolve — especially in rapidly growing metros like Phoenix, DFW, and Seattle — would strengthen causal claims.
 4. **Incorporate employment center locations.** **Done (2026-07)** — job density, distance to CBD, and job accessibility were added to all models; see §9. Model fit improved in every metro on both RQ1 and ACI, most dramatically for the ACI models (Phoenix 0.017 → 0.335, Memphis 0.168 → 0.687). The prediction that this would help "particularly in polycentric metros like LA and DFW" was half right: DFW's ACI fit rose sharply (0.354 → 0.571), but LA saw the smallest RQ1 gain of the nine (+0.02) and the second-smallest ACI gain (+0.04).
-5. **Examine the "drive until you qualify" threshold.** The concave relationships suggest a spatial boundary where commute-affordability tradeoffs break down. Identifying this inflection point per metro could inform housing location guidance.
+5. **Examine the "drive until you qualify" threshold.** **Answered (2026-07)** — a vertex estimator (t\* = −B₁/(2·B₂) with a delta-method 95% CI, reported only for significantly concave quadratics whose vertex falls inside the observed commute range) was added to the RQ1 models; see §3. The answer is largely a negative one: once the employment-center controls entered the models (§9), the apparent concavity that motivated this direction mostly vanished — the quadratic's curvature was substantially proxying employment-center spatial structure. The threshold is identified in only one metro: **Denver, at 36.5 minutes (95% CI [31.9, 41.0])**. The other eight metros show convex or statistically insignificant curvature.
 
 ---
 
@@ -249,3 +257,4 @@ Substantive shifts attributable to the re-run:
 - DFW's negative transit-ACI effect — previously the analysis's only "transit reduces pressure" result — is no longer significant; Phoenix gained a significant *positive* transit effect (§5).
 - Phoenix is no longer unexplainable (ACI 0.017 → 0.335), and the Memphis best-RQ1/worst-ACI paradox is resolved (ACI 0.168 → 0.687) (§5, §7).
 - Job accessibility is income-stratified in 5 of 9 metros (RQ2 ANOVA: Los Angeles and Denver p < 0.0001, Miami p = 0.0006, Seattle p = 0.0018, Phoenix p = 0.018) (§4).
+- A drive-until-you-qualify threshold estimator (quadratic vertex, delta-method CI, guarded on significant concavity and in-range vertex) now runs alongside RQ1; on the re-run models it applies in only one metro — Denver, t\* = 36.5 min, 95% CI [31.9, 41.0] — with the other eight reporting convex or insignificant curvature (§3).
