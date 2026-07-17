@@ -22,6 +22,7 @@ cache key and forces a refetch.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 import pandas as pd
 import polars as pl
@@ -35,6 +36,7 @@ from .build import (
     filter_zctas_task,
 )
 from .config import DATA_FINAL, METRO_CONFIGS, ZORI_PANEL_CSV_URL
+from .manifest import build_panel_manifest, get_git_commit, write_manifest
 from .prefect_config import NETWORK_RETRIES
 from .schema import validate_zori_panel
 from .zori import fetch_zori_series
@@ -122,6 +124,23 @@ def build_panel_flow(metro_key: str = "phoenix") -> str:
 
     ZORI_PANEL_OUT.parent.mkdir(parents=True, exist_ok=True)
     zori_panel.to_csv(ZORI_PANEL_OUT, index=False)
+
+    # Step 4: provenance manifest (vintage-parameterized; design §3 Manifests).
+    # The flow stamps its own run time as pull_timestamp_utc: a warm cache may
+    # serve an earlier fetch, but committed builds run against a same-day pull
+    # (Task 7 procedure), so run time ~= pull vintage.
+    ts = datetime.now(timezone.utc).isoformat()
+    manifest = build_panel_manifest(
+        metro_key,
+        ZORI_PANEL_OUT,
+        "zori_panel",
+        git_commit=get_git_commit(),
+        timestamp_utc=ts,
+        extra={"pull_timestamp_utc": ts},
+    )
+    manifest_path = DATA_FINAL / f"{metro_key}.zori_panel.manifest.json"
+    write_manifest(manifest, manifest_path)
+    logger.info(f"Wrote manifest {manifest_path.name}")
 
     logger.info("=" * 60)
     logger.info(f"SUCCESS: Wrote {len(zori_panel)} panel rows to {ZORI_PANEL_OUT.name}")

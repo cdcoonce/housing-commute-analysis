@@ -10,7 +10,7 @@ from typing import Any
 import polars as pl
 
 from src.pipelines.acs import DEFAULT_ACS_YEAR  # ACS commute vintage (2021)
-from src.pipelines.config import METRO_CONFIGS, ZORI_ZIP_CSV_URL
+from src.pipelines.config import METRO_CONFIGS, ZORI_PANEL_CSV_URL, ZORI_ZIP_CSV_URL
 from src.pipelines.lodes import LODES_YEAR
 from src.pipelines.tiger import CBSA_VINTAGE  # pinned CBSA delineation vintage
 
@@ -114,6 +114,100 @@ def build_manifest(
         "sha256": compute_sha256(csv_path),
         "steps": steps,
     }
+
+
+_PANEL_KINDS = ("zori_panel", "lodes_panel", "acs_commute_2019")
+_ACS_COMMUTE_2019_YEAR = 2019  # frozen pre-COVID vintage (ACS 5-year 2015-2019)
+
+
+def _panel_source_urls(kind: str, extra: dict[str, Any]) -> dict[str, str]:
+    """Kind-parameterized source provenance (design §3 Manifests).
+
+    Never reuses _SOURCE_URLS verbatim: its lodes entry interpolates
+    LODES_YEAR (2021), which would stamp self-contradictory provenance
+    ("WAC 2021") beside an explicit multi-year ``years`` list.
+    """
+    tiger = _SOURCE_URLS["tiger"]  # metro ZCTA set comes from the shared geo tasks
+    if kind == "zori_panel":
+        return {"zori": ZORI_PANEL_CSV_URL, "tiger": tiger}
+    if kind == "lodes_panel":
+        years = extra["years"]
+        return {
+            "lodes": (
+                "https://lehd.ces.census.gov/data/lodes/LODES8 "
+                f"(WAC S000_JT00 {years[0]}–{years[-1]} + xwalk)"
+            ),
+            "tiger": tiger,
+        }
+    # acs_commute_2019
+    return {
+        "acs": f"https://api.census.gov/data/{_ACS_COMMUTE_2019_YEAR}/acs/acs5",
+        "tiger": tiger,
+    }
+
+
+def build_panel_manifest(
+    metro_key: str,
+    csv_path: Path,
+    kind: str,
+    *,
+    git_commit: str,
+    timestamp_utc: str,
+    extra: dict[str, Any],
+    provenance: str = PROVENANCE_PIPELINE_BUILD,
+) -> dict[str, Any]:
+    """Provenance manifest for an RQ4 panel data product (design §3 Manifests).
+
+    Reuses the 35-column manifest machinery (compute_sha256,
+    _metro_config_snapshot, provenance-mode routing, cbsa_vintage) but
+    parameterizes source provenance per ``kind``:
+
+    - ``"zori_panel"`` — the smoothed non-SA panel URL; adds
+      period_min/period_max/n_months/n_zctas computed from the CSV
+      (``pull_timestamp_utc`` arrives via ``extra`` — only the producing
+      flow knows it).
+    - ``"lodes_panel"`` — the LODES8 URL pattern parameterized by
+      ``extra["years"]`` (required), never the stale single-year string.
+    - ``"acs_commute_2019"`` — the frozen ACS 2019 5-year vintage.
+
+    ``extra`` keys land at the manifest top level (years, pull_timestamp_utc,
+    ...). The 35-column build_manifest path is untouched.
+    """
+    if kind not in _PANEL_KINDS:
+        raise ValueError(f"unknown panel kind {kind!r}; expected one of {_PANEL_KINDS}")
+    if kind == "lodes_panel" and "years" not in extra:
+        raise ValueError("lodes_panel manifests require extra['years'] (explicit vintage list)")
+    if provenance not in _PROVENANCE_MODES:
+        raise ValueError(
+            f"unknown provenance mode {provenance!r}; expected one of {_PROVENANCE_MODES}"
+        )
+    is_build = provenance == PROVENANCE_PIPELINE_BUILD
+    df = pl.read_csv(csv_path)
+    manifest: dict[str, Any] = {
+        "metro_key": metro_key,
+        "kind": kind,
+        "metro_config": _metro_config_snapshot(metro_key),
+        "provenance": provenance,
+        "git_commit": git_commit if is_build else None,
+        "regenerated_at_commit": None if is_build else git_commit,
+        "run_timestamp_utc": timestamp_utc,
+        "cbsa_vintage": CBSA_VINTAGE,
+        "source_urls": _panel_source_urls(kind, extra),
+        "output_csv": csv_path.name,
+        "row_count": df.height,
+        "columns": [{"name": n, "dtype": str(t)} for n, t in zip(df.columns, df.dtypes)],
+        "sha256": compute_sha256(csv_path),
+    }
+    if kind == "zori_panel":
+        periods = df["period"]
+        manifest.update(
+            period_min=str(periods.min()),
+            period_max=str(periods.max()),
+            n_months=periods.n_unique(),
+            n_zctas=df["ZCTA5CE"].n_unique(),
+        )
+    manifest.update(extra)
+    return manifest
 
 
 def write_manifest(manifest: dict[str, Any], out_path: Path) -> None:

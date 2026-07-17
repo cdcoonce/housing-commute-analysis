@@ -146,6 +146,134 @@ def test_build_manifest_rejects_unknown_provenance(tmp_path: Path) -> None:
         )
 
 
+def test_panel_manifest_lodes_provenance_uses_years_not_2021(tmp_path) -> None:
+    import polars as pl
+
+    from src.pipelines.manifest import build_panel_manifest
+
+    csv = tmp_path / "lodes_panel_test.csv"
+    pl.DataFrame({"ZCTA5CE": ["85001"], "year": [2015]}).write_csv(csv)
+    m = build_panel_manifest(
+        "test", csv, "lodes_panel",
+        git_commit="abc", timestamp_utc="2026-01-01T00:00:00+00:00",
+        extra={"years": list(range(2015, 2024))},
+    )
+    assert m["years"] == list(range(2015, 2024))
+    assert "2021" not in m["source_urls"]["lodes"]          # no stale single-year stamp
+    assert m["output_csv"] == "lodes_panel_test.csv"
+
+
+def test_committed_manifests_reference_tracked_csvs() -> None:
+    """A manifest must never land while its CSV is gitignored (design §1)."""
+    import json
+    import subprocess
+    from src.pipelines.config import DATA_FINAL
+
+    for mpath in sorted(DATA_FINAL.glob("*.manifest.json")):
+        out_csv = json.loads(mpath.read_text()).get("output_csv")
+        if out_csv is None:
+            continue
+        rc = subprocess.run(
+            ["git", "check-ignore", "-q", str(DATA_FINAL / out_csv)],
+            cwd=DATA_FINAL.parent.parent,
+        ).returncode
+        assert rc != 0, f"{mpath.name} references gitignored CSV {out_csv}"
+
+
+def test_panel_manifest_zori_kind_records_vintage_and_panel_stats(tmp_path: Path) -> None:
+    """zori_panel manifests carry the non-SA panel URL as source provenance plus
+    period_min/period_max/n_months/n_zctas computed from the CSV; the flow's
+    pull_timestamp_utc arrives via extra (design §3 Manifests)."""
+    from src.pipelines.config import ZORI_PANEL_CSV_URL
+    from src.pipelines.manifest import build_panel_manifest
+
+    csv = tmp_path / "zori_panel_test.csv"
+    pl.DataFrame(
+        {
+            "ZCTA5CE": ["85001", "85001", "85002"],
+            "period": ["2015-01-31", "2015-02-28", "2015-01-31"],
+            "zori": [1500.0, 1510.0, 1200.0],
+        }
+    ).write_csv(csv)
+    m = build_panel_manifest(
+        "test", csv, "zori_panel",
+        git_commit="abc", timestamp_utc="2026-01-01T00:00:00+00:00",
+        extra={"pull_timestamp_utc": "2026-01-01T00:00:00+00:00"},
+    )
+    assert m["kind"] == "zori_panel"
+    assert m["source_urls"]["zori"] == ZORI_PANEL_CSV_URL
+    assert m["source_urls"]["zori"].endswith("_sm_month.csv")   # non-SA vintage
+    assert m["pull_timestamp_utc"] == "2026-01-01T00:00:00+00:00"
+    assert m["period_min"] == "2015-01-31"
+    assert m["period_max"] == "2015-02-28"
+    assert m["n_months"] == 2
+    assert m["n_zctas"] == 2
+    assert m["output_csv"] == "zori_panel_test.csv"
+    assert len(m["sha256"]) == 64
+
+
+def test_panel_manifest_rejects_unknown_kind_and_missing_years(tmp_path: Path) -> None:
+    from src.pipelines.manifest import build_panel_manifest
+
+    csv = tmp_path / "zori_panel_test.csv"
+    pl.DataFrame({"ZCTA5CE": ["85001"], "period": ["2015-01-31"], "zori": [1.0]}).write_csv(csv)
+    with pytest.raises(ValueError, match="kind"):
+        build_panel_manifest(
+            "test", csv, "not_a_kind",
+            git_commit="abc", timestamp_utc="t", extra={},
+        )
+    with pytest.raises(ValueError, match="years"):
+        build_panel_manifest(
+            "test", csv, "lodes_panel",
+            git_commit="abc", timestamp_utc="t", extra={},
+        )
+
+
+def test_verify_pairs_panel_manifest_via_output_csv(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """--verify must resolve zori_panel_x.csv from the manifest's output_csv field;
+    the old final_zcta_dataset_{stem}.csv convention would mis-pair it to a
+    nonexistent file and report guaranteed drift."""
+    import run_pipeline
+    import src.pipelines.config as config
+    from src.pipelines.manifest import build_panel_manifest, write_manifest
+
+    csv = tmp_path / "zori_panel_x.csv"
+    pl.DataFrame(
+        {"ZCTA5CE": ["85001"], "period": ["2020-01-31"], "zori": [1500.0]}
+    ).write_csv(csv)
+    m = build_panel_manifest(
+        "x", csv, "zori_panel",
+        git_commit="abc", timestamp_utc="2026-01-01T00:00:00+00:00",
+        extra={"pull_timestamp_utc": "2026-01-01T00:00:00+00:00"},
+    )
+    write_manifest(m, tmp_path / "x.zori_panel.manifest.json")
+    monkeypatch.setattr(config, "DATA_FINAL", tmp_path)
+
+    assert run_pipeline.verify_manifests_offline() == 0
+
+
+def test_resolve_manifest_csv_falls_back_to_naming_convention(tmp_path: Path) -> None:
+    """Pre-field manifests (no output_csv) still pair via the
+    final_zcta_dataset_{stem}.csv convention."""
+    import run_pipeline
+
+    with_field = tmp_path / "x.zori_panel.manifest.json"
+    with_field.write_text(json.dumps({"output_csv": "zori_panel_x.csv"}))
+    assert (
+        run_pipeline._resolve_manifest_csv(with_field, tmp_path)
+        == tmp_path / "zori_panel_x.csv"
+    )
+
+    without_field = tmp_path / "phoenix.manifest.json"
+    without_field.write_text(json.dumps({"sha256": "0" * 64}))
+    assert (
+        run_pipeline._resolve_manifest_csv(without_field, tmp_path)
+        == tmp_path / "final_zcta_dataset_phoenix.csv"
+    )
+
+
 def test_generate_manifests_offline_path_records_regenerated_provenance(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

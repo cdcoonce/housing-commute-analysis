@@ -45,6 +45,9 @@ ENV/
 data/final/*
 !data/final/final_zcta_dataset_*.csv
 !data/final/*.manifest.json
+!data/final/zori_panel_*.csv
+!data/final/lodes_panel_*.csv
+!data/final/acs_commute_2019_*.csv
 data/raw/*
 data/processed/*
 data/models/*
