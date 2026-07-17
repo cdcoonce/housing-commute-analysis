@@ -50,6 +50,13 @@ class RQ1Results:
         Number of ZCTAs in the analysis.
     model_df : pl.DataFrame
         DataFrame with ZCTA IDs, actual values, predictions, and residuals.
+    threshold : dict[str, Any]
+        Drive-until-you-qualify threshold estimate from the quadratic model:
+        keys t_star, se, ci_low, ci_high (floats or None), valid (bool), and
+        reason (str or None). The vertex t* = -B1/(2*B2) with a delta-method
+        SE is reported only when curvature is significantly concave and t*
+        lies within the observed commute range; otherwise valid is False and
+        reason explains why no threshold is claimed.
     """
 
     model_linear: dict[str, Any]
@@ -68,6 +75,7 @@ class RQ1Results:
     feature_names: list[str]
     sample_size: int
     model_df: pl.DataFrame
+    threshold: dict[str, Any]
 
 
 @dataclass
