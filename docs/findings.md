@@ -1,13 +1,14 @@
 # Cross-Metro Findings: Housing Affordability & Commute Trade-Off Analysis
 
 **Date:** 2026-03-07
+**Revised:** 2026-07 (employment variables)
 **Metros Analyzed:** Atlanta (ATL), Chicago (CHI), Dallas-Fort Worth (DFW), Denver (DEN), Los Angeles (LA), Memphis (MEM), Miami (MIA), Phoenix (PHX), Seattle (SEA)
 
 ---
 
 ## Executive Summary
 
-This analysis examines the relationship between housing affordability, commute time, and transit access across nine U.S. metropolitan areas at the ZCTA level. The central finding is that **affordability is primarily an income and renter-concentration problem, not a commute problem** — commute time is a statistically significant predictor of rent burden in only 4 of 9 metros. Racial disparities in housing cost burden are pervasive (8 of 9 metros), and transit access has contradictory effects depending on metro structure: it signals expensive, high-demand areas in dense cities but genuinely serves affordability in sprawling ones.
+This analysis examines the relationship between housing affordability, commute time, and transit access across nine U.S. metropolitan areas at the ZCTA level. The central finding is that **affordability is primarily an income and renter-concentration problem** — renter share is a significant predictor of rent burden in 8 of 9 metros, while commute time is significant in 6 of 9 (revised up from 4 of 9 after the 2026-07 addition of employment-center variables; see §9). Racial disparities in housing cost burden are pervasive (8 of 9 metros), and transit access signals expensive, high-demand areas in dense cities; no metro shows a significant affordability-serving transit effect once employment structure is controlled.
 
 ---
 
@@ -66,24 +67,25 @@ This analysis examines the relationship between housing affordability, commute t
 
 | Metro | Model | Adj R² | Commute Sig? | p-value | Relationship |
 |-------|-------|--------|-------------|---------|-------------|
-| Memphis | Quadratic | 0.726 | Yes | <0.001 | Concave |
-| Seattle | Linear | 0.585 | Yes | <0.01 | Positive linear |
-| Atlanta | Quadratic | 0.554 | No | 0.31 | Convex |
-| Denver | Quadratic | 0.483 | Yes | <0.05 | Concave |
-| Chicago | Quadratic | 0.435 | No | 0.37 | Convex |
-| Los Angeles | Linear | 0.428 | No | 0.09 | Positive linear |
-| Dallas-Fort Worth | Quadratic | 0.322 | Yes | <0.01 | Concave |
-| Phoenix | Linear | 0.315 | No | 0.56 | Weak positive |
-| Miami | Quadratic | 0.300 | No | 0.05 | Concave |
+| Memphis | Quadratic | 0.7963 | No | 0.07 | Concave |
+| Atlanta | Linear | 0.7024 | Yes | <0.001 | Positive linear |
+| Seattle | Quadratic | 0.6135 | No | 0.32 | Convex |
+| Denver | Quadratic | 0.5131 | Yes | <0.05 | Concave |
+| Chicago | Linear | 0.4669 | Yes | <0.05 | Positive linear |
+| Los Angeles | Linear | 0.4465 | Yes | <0.05 | Positive linear |
+| Dallas-Fort Worth | Quadratic | 0.3868 | Yes | <0.05 | Concave |
+| Phoenix | Linear | 0.3862 | No | 0.85 | Weak positive |
+| Miami | Linear | 0.3247 | Yes | <0.01 | Positive linear |
 
 ### Key Takeaways
 
-- **Commute time is statistically significant in only 4 of 9 metros** (Memphis, Seattle, Denver, DFW). In the other five, other factors dominate.
-- **Renter share is the most consistently significant predictor**, reaching p < 0.01 in 7 of 9 metros. Areas with higher concentrations of renters have higher rent burdens universally.
-- **Memphis has the strongest model fit** (R² = 0.73), likely because its smaller, simpler spatial structure follows a more predictable center-periphery gradient.
-- **Phoenix is the hardest metro to model** (R² = 0.32, no significant predictors), suggesting its affordability dynamics are driven by factors outside this analysis — possibly rapid development, land use patterns, or seasonal population shifts.
-- **The concave relationship** in Denver, DFW, Memphis, and Miami indicates a "drive until you qualify" effect with diminishing returns: rent burden drops with longer commutes up to a point, then plateaus. Very long commutes do not continue to buy proportionally more affordability.
-- **Los Angeles is the only metro with no multicollinearity issues** (max VIF = 3.38), making it the most technically reliable model despite moderate explanatory power.
+- **Commute time is statistically significant in 6 of 9 metros** (Atlanta, Chicago, Los Angeles, Denver, DFW, Miami) — up from 4 of 9 before employment-center variables were added, and with different membership: Memphis and Seattle dropped out of significance while Atlanta, Chicago, Los Angeles, and Miami entered (see §9).
+- **Renter share remains the most consistently significant predictor** — significant in 8 of 9 metros (p < 0.01 in 7). Phoenix is the sole exception (p = 0.078). Areas with higher concentrations of renters have higher rent burdens nearly universally.
+- **The new employment-center variables register directly in RQ1:** `job_accessibility` is significant and negative in Chicago (p < 0.0001), DFW (p = 0.005), Phoenix (p = 0.009), and Seattle (p = 0.034); `distance_to_cbd_km` is significant and negative in Chicago (p < 0.0001), DFW (p = 0.0004), and Phoenix (p = 0.025); `job_density` is significant and positive in Atlanta (p = 0.009).
+- **Memphis still has the strongest model fit** (R² = 0.80), but commute time itself is no longer significant there (p = 0.07) — renter share (p < 0.0001) now carries the model. Note the Memphis sample changed in the re-run (duplicate rows removed; see §9).
+- **Miami is now the hardest metro to model** (R² = 0.32). Phoenix — previously the weakest fit with no significant predictors — improved to R² = 0.39 with four significant predictors (vehicle access, population density, distance to CBD, job accessibility).
+- **The concave relationship** persists in Denver, DFW, and Memphis, indicating a "drive until you qualify" effect with diminishing returns: rent burden gains flatten at longer commutes. Miami flipped from concave to positive linear; Seattle's selected model is now a convex quadratic, but its commute terms are not significant.
+- **Multicollinearity increased with the new variables**: `job_accessibility` posts VIFs of 5–11 in every metro except DFW, and Los Angeles — formerly the only metro with no multicollinearity issues (max VIF = 3.38) — now has a max VIF of 9.21.
 
 ---
 
@@ -92,27 +94,30 @@ This analysis examines the relationship between housing affordability, commute t
 ### Income Disparities
 
 - **All 9 metros show statistically significant income-based rent burden differences** (p < 0.0001 in all cases). This is the single most robust finding in the entire analysis.
-- Chicago has the strongest F-statistic (F = 103.9), indicating the most pronounced income stratification in rent burden.
+- Chicago has the strongest F-statistic (F = 80.6), indicating the most pronounced income stratification in rent burden.
 
 ### Racial Disparities
 
 - **8 of 9 metros show significant racial differences in rent burden.** Majority-white ZCTAs consistently have lower rent burdens.
 - **Seattle is the sole exception** — no significant racial differences (F = 0.11, p = 0.90). Seattle's affordability dynamics are income-driven but not race-stratified.
-- Chicago shows the strongest racial disparity signal (F = 59.0), followed by DFW (F = 26.9) and Memphis (F = 21.4).
+- Chicago shows the strongest racial disparity signal (F = 59.0), followed by DFW (F = 26.9) and Memphis (F = 12.7).
 
 ### Commute × Income Interaction
 
-- In **8 of 9 metros**, the interaction between commute time and low-income status is not significant — the commute-rent tradeoff operates similarly regardless of income level.
-- **Seattle is again the exception** (p = 0.014): low-income ZCTAs there experience a fundamentally different commute-affordability dynamic. The negative interaction coefficient (−0.0062) suggests low-income residents in Seattle benefit more from the "drive until you qualify" tradeoff than other income groups.
+- In **7 of 9 metros**, the interaction between commute time and low-income status is not significant — the commute-rent tradeoff operates similarly regardless of income level.
+- **Seattle remains an exception** (p = 0.022): the negative interaction coefficient (−0.0054) suggests low-income residents there benefit more from the "drive until you qualify" tradeoff than other income groups.
+- **Chicago is a new exception in the 2026-07 re-run** (p = 0.020): its *positive* interaction coefficient (+0.0032) suggests rent burden rises faster with commute time in low-income ZCTAs — the opposite of Seattle's dynamic.
 
 ### Transit Access and Income
 
-Transit density differs significantly across income segments in only 3 metros:
-- **Chicago** (p = 0.003)
+Transit density differs significantly across income segments in 5 metros (2026-07 re-run):
+- **Phoenix** (p < 0.0001)
 - **Los Angeles** (p < 0.0001)
-- **Miami** (p = 0.0002)
+- **Chicago** (p = 0.016)
+- **Miami** (p = 0.0018)
+- **Atlanta** (p = 0.037)
 
-These are the three metros with the most developed transit systems, suggesting transit access is income-stratified only where transit infrastructure is substantial.
+Transit stratification is no longer confined to the legacy-transit metros — Phoenix and Atlanta now register as well. **Job accessibility is also income-stratified in 5 of 9 metros** (ANOVA): Los Angeles and Denver (p < 0.0001), Miami (p = 0.0006), Seattle (p = 0.0018), and Phoenix (p = 0.018).
 
 ### K-Means Clustering
 
@@ -129,30 +134,33 @@ Every metro produced a distinct "extreme pressure" cluster:
 
 | Metro | ACI Adj R² | Transit Sig? | Transit Direction |
 |-------|-----------|-------------|-------------------|
-| Chicago | 0.573 | Yes (p < 0.0001) | Positive |
-| Seattle | 0.485 | No | — |
-| Los Angeles | 0.373 | No | — |
-| Dallas-Fort Worth | 0.354 | Yes (p = 0.007) | **Negative** |
-| Denver | 0.352 | No | — |
-| Miami | 0.318 | Yes (p = 0.017) | Positive |
-| Atlanta | 0.238 | No | — |
-| Memphis | 0.168 | No | — |
-| Phoenix | 0.017 | No | — |
+| Memphis | 0.6873 | No | — |
+| Chicago | 0.6423 | Yes (p = 0.001) | Positive |
+| Miami | 0.5930 | Yes (p = 0.0004) | Positive |
+| Dallas-Fort Worth | 0.5705 | No | — |
+| Atlanta | 0.5375 | No | — |
+| Seattle | 0.4936 | No | — |
+| Denver | 0.4440 | No | — |
+| Los Angeles | 0.4102 | No | — |
+| Phoenix | 0.3348 | Yes (p = 0.003) | Positive |
 
 ### Key Takeaways
 
-- **Transit access has contradictory effects depending on metro structure:**
-  - In **Chicago and Miami**, transit-rich areas have *higher* combined ACI pressure because they are desirable, expensive locations. More transit = more demand = higher costs.
-  - In **Dallas-Fort Worth**, transit access has a significant *negative* relationship with ACI — the only metro where more transit = less combined pressure. Quantile regression confirms this across all quantiles (coefficients −0.04 to −0.085, strengthening at higher quantiles). DFW's transit genuinely serves affordable areas.
-  - In 6 other metros, transit has no measurable effect on ACI.
+- **Job accessibility is the most consistent ACI predictor** — significant and *negative* in 8 of 9 metros (all but Los Angeles): Atlanta, Chicago, DFW, and Miami at p < 0.0001, Phoenix (p = 0.0003), Denver (p = 0.0065), Memphis (p = 0.011), and Seattle (p = 0.012). Higher job accessibility is associated with lower combined affordability-commute pressure everywhere it registers.
 
-- **Phoenix is essentially unexplainable** by this model (R² = 0.017). The transit/income/rent/commute dynamics there operate through mechanisms not captured by these variables.
+- **Distance to CBD** is significant and negative in Chicago (B = −0.037, p = 0.001) and Miami (B = −0.034, p < 0.0001) — combined pressure falls with distance from the core in those metros. It is borderline negative in Atlanta (p = 0.058) and borderline *positive* in Los Angeles (B = +0.031, p = 0.050).
 
-- **The Memphis paradox:** Best-fitting RQ1 model (R² = 0.73) but worst-fitting ACI model (R² = 0.17). Commute time alone powerfully predicts rent burden in Memphis, but when you add transit to the model, it collapses — because Memphis has virtually no transit infrastructure. Transit stop density is near zero for most ZCTAs.
+- **Transit access still signals expensive, high-demand areas in dense metros:** significant and positive in Chicago (p = 0.001), Miami (p = 0.0004), and — new in this re-run — Phoenix (p = 0.003).
+
+- **DFW's negative transit effect did not survive the employment controls.** Previously the only metro where more transit meant less combined pressure (p = 0.007), DFW's transit coefficient is now non-significant (p = 0.11). The negative sign persists only in upper-quantile point estimates (−0.085 at the median, −0.069 at the 75th percentile; the 25th-percentile coefficient is positive).
+
+- **Phoenix is no longer unexplainable** — ACI Adj R² jumped from 0.017 to 0.335 with the employment variables, with transit (positive) and job accessibility (negative) both significant.
+
+- **The Memphis paradox is resolved:** its ACI model went from worst-fitting (R² = 0.17) to best-fitting (R² = 0.69). Transit stop density is still irrelevant there (p = 0.71) because Memphis has virtually no transit infrastructure — but job accessibility (p = 0.011) now supplies the spatial signal transit couldn't.
 
 - **ACI distribution varies substantially across metros:**
   - Chicago has the widest range (−3.64 to 6.08), indicating extreme within-metro variation.
-  - Memphis has the tightest range (max 2.0), indicating more spatial homogeneity.
+  - Memphis has the tightest range (max 1.83), indicating more spatial homogeneity.
   - Los Angeles has an extreme negative outlier (ACI = −6.675).
 
 ---
@@ -161,7 +169,7 @@ Every metro produced a distinct "extreme pressure" cluster:
 
 ### Theme A: Affordability Is an Income Problem, Not a Commute Problem
 
-Commute time predicts rent burden in only 4 of 9 metros. Renter share and income segment are the dominant drivers everywhere. Policy interventions targeting commute reduction alone will not meaningfully address affordability.
+Commute time predicts rent burden in 6 of 9 metros once employment-center variables are controlled (§9) — more than the 4 of 9 originally reported — but renter share (8 of 9 metros) and income segment (9 of 9) remain the dominant drivers everywhere. Policy interventions targeting commute reduction alone will still not meaningfully address affordability.
 
 ### Theme B: Racial Inequality in Housing Is Pervasive but Not Universal
 
@@ -169,15 +177,15 @@ Commute time predicts rent burden in only 4 of 9 metros. Renter share and income
 
 ### Theme C: Transit Is a Double-Edged Sword
 
-In dense, established transit cities (Chicago, Miami), transit-rich areas have higher combined housing-commute pressure because they are in-demand locations. In car-dependent sprawl metros (DFW), transit access genuinely reduces combined pressure. For most metros, transit has no measurable effect. Transit investment must be paired with affordability protections to avoid displacement.
+In dense, established transit cities (Chicago, Miami) — and, in the 2026-07 re-run, Phoenix — transit-rich areas have higher combined housing-commute pressure because they are in-demand locations. The apparent counter-example (DFW, where transit access seemed to genuinely reduce combined pressure) did not survive the employment-variable controls and is no longer significant (§5, §9). For most metros, transit has no measurable effect. Transit investment must be paired with affordability protections to avoid displacement.
 
 ### Theme D: "Drive Until You Qualify" Has Limits
 
-The concave quadratic relationships in Denver, DFW, Memphis, and Miami show that rent burden initially decreases with longer commutes but plateaus. At a certain distance, further driving no longer buys proportionally more affordability — suggesting a spatial boundary to the tradeoff.
+The concave quadratic relationships in Denver, DFW, and Memphis (Miami's re-run model is now positive linear) show that rent burden initially decreases with longer commutes but plateaus. At a certain distance, further driving no longer buys proportionally more affordability — suggesting a spatial boundary to the tradeoff.
 
 ### Theme E: Metro Structure Matters More Than Metro Size
 
-Memphis (75 ZCTAs) has the best RQ1 model fit; Phoenix (147 ZCTAs) and Miami (178 ZCTAs) have the worst. Explanatory power tracks with how consistently the metro's spatial structure follows the expected center-periphery gradient, not with observation count.
+Memphis (51 ZCTAs after duplicate-row removal) has the best RQ1 model fit; Miami (178 ZCTAs) and Phoenix (147 ZCTAs) have the worst. Explanatory power tracks with how consistently the metro's spatial structure follows the expected center-periphery gradient, not with observation count.
 
 ---
 
@@ -186,13 +194,13 @@ Memphis (75 ZCTAs) has the best RQ1 model fit; Phoenix (147 ZCTAs) and Miami (17
 | Finding | Metro | Detail |
 |---------|-------|--------|
 | No racial rent disparities | Seattle | Only metro where race does not significantly predict rent burden (F = 0.11, p = 0.90) |
-| Significant commute × income interaction | Seattle | Only metro where low-income residents experience a different commute-rent tradeoff (p = 0.014) |
-| Transit reduces ACI | DFW | Only metro where transit access is associated with lower combined pressure |
+| Significant commute × income interaction | Seattle, Chicago | Low-income residents experience a different commute-rent tradeoff (Seattle p = 0.022, negative; Chicago p = 0.020, positive — new in 2026-07) |
+| Transit reduces ACI (retracted 2026-07) | DFW | Effect no longer significant (p = 0.11) once employment variables are controlled — see §9 |
 | Extreme pressure ZCTAs | ATL, SEA | 2-ZCTA clusters with rent burdens of 0.527 (ATL) and 0.432 (SEA) |
 | Double-burdened zone | Chicago | Cluster with highest rent burden (0.333) AND longest commute (39.9 min) |
-| Unexplainable by model | Phoenix | Both RQ1 (R² = 0.32) and ACI (R² = 0.02) models fail to explain variance |
+| Formerly unexplainable | Phoenix | Employment variables lifted RQ1 to R² = 0.39 and ACI to R² = 0.33 (was 0.32 / 0.02) — see §9 |
 | Widest income gap | Memphis | 17.1 percentage point gap between low- and high-income rent burden |
-| Best RQ1, worst ACI | Memphis | R² = 0.73 for commute model, R² = 0.17 for transit-inclusive model |
+| Best RQ1, no longer worst ACI | Memphis | R² = 0.80 for commute model; ACI model improved from R² = 0.17 to 0.69 once job accessibility entered — see §9 |
 
 ---
 
@@ -202,13 +210,42 @@ Memphis (75 ZCTAs) has the best RQ1 model fit; Phoenix (147 ZCTAs) and Miami (17
 
 1. **Income-targeted interventions** (rental assistance, inclusionary zoning, wage policy) are more likely to reduce rent burden than commute-oriented strategies alone.
 2. **Transit investment requires affordability protections.** In Chicago and Miami, transit-rich areas already price out lower-income residents. Expanding transit without anti-displacement measures may worsen affordability in the areas it serves.
-3. **DFW's transit model is worth studying.** It is the only metro where transit access correlates with lower combined pressure — understanding why could inform transit planning in other sprawl metros.
+3. **DFW's transit result did not survive employment controls.** The 2026-03 finding that DFW was the only metro where transit access correlated with lower combined pressure is no longer significant once job accessibility and CBD distance are in the model (§9); transit-planning inferences drawn from it should be treated as superseded.
 4. **Racial equity in housing** remains a challenge in 8 of 9 metros. Place-based policies must account for racial disparities in cost burden, not just income-based ones.
 
 ### Future Research Directions
 
-1. **Investigate Phoenix.** Neither model explains its affordability dynamics. Rapid growth, seasonal migration, and land use patterns are candidate explanatory factors.
+1. **Investigate Phoenix.** *(Partially answered, 2026-07.)* Employment-center variables lifted Phoenix's ACI fit from 0.017 to 0.335 and made four RQ1 predictors significant (§9) — job accessibility was a major missing variable. Rapid growth, seasonal migration, and land use patterns remain candidates for the residual.
 2. **Explore Seattle's racial equity outlier.** Why does Seattle show no racial rent burden disparities when 8 other metros do? Is this a function of demographics, policy, or spatial sorting?
 3. **Longitudinal analysis.** This cross-sectional analysis captures a single point in time. Tracking how these relationships evolve — especially in rapidly growing metros like Phoenix, DFW, and Seattle — would strengthen causal claims.
-4. **Incorporate employment center locations.** Adding job density or distance-to-CBD as variables could improve model fit, particularly in polycentric metros like LA and DFW.
+4. **Incorporate employment center locations.** **Done (2026-07)** — job density, distance to CBD, and job accessibility were added to all models; see §9. Model fit improved in every metro on both RQ1 and ACI, most dramatically for the ACI models (Phoenix 0.017 → 0.335, Memphis 0.168 → 0.687). The prediction that this would help "particularly in polycentric metros like LA and DFW" was half right: DFW's ACI fit rose sharply (0.354 → 0.571), but LA saw the smallest RQ1 gain of the nine (+0.02) and the second-smallest ACI gain (+0.04).
 5. **Examine the "drive until you qualify" threshold.** The concave relationships suggest a spatial boundary where commute-affordability tradeoffs break down. Identifying this inflection point per metro could inform housing location guidance.
+
+---
+
+## 9. Employment-Variable Impact (2026-07)
+
+The 2026-07 re-run added three employment-center variables to every model — `job_density`, `distance_to_cbd_km`, and `job_accessibility` — and refreshed the live data inputs. Model fit, before (2026-03 baseline, copied from the original §3/§5 tables) vs after (regenerated per-metro analysis summaries):
+
+| Metro | RQ1 Adj R² (before) | RQ1 Adj R² (after) | ACI Adj R² (before) | ACI Adj R² (after) |
+|-------|--------------------:|-------------------:|--------------------:|-------------------:|
+| Atlanta | 0.554 | 0.7024 | 0.238 | 0.5375 |
+| Chicago | 0.435 | 0.4669 | 0.573 | 0.6423 |
+| Dallas-Fort Worth | 0.322 | 0.3868 | 0.354 | 0.5705 |
+| Denver | 0.483 | 0.5131 | 0.352 | 0.4440 |
+| Los Angeles | 0.428 | 0.4465 | 0.373 | 0.4102 |
+| Memphis | 0.726 | 0.7963 | 0.168 | 0.6873 |
+| Miami | 0.300 | 0.3247 | 0.318 | 0.5930 |
+| Phoenix | 0.315 | 0.3862 | 0.017 | 0.3348 |
+| Seattle | 0.585 | 0.6135 | 0.485 | 0.4936 |
+
+Fit improved in all nine metros on both measures. The largest gains are in the ACI models (Memphis +0.52, Phoenix +0.32, Atlanta +0.30, Miami +0.28), where `job_accessibility` is significant and negative in 8 of 9 metros (all but Los Angeles).
+
+**Comparison caveats.** RQ1 comparisons are drift-free — all predictors are ACS/TIGER/LODES-derived and either byte-identical to the baseline or newly added — *except* Atlanta (117 vs 125 ZCTAs; the stale-baseline Carroll County config was remediated) and Memphis (52 vs 76 rows; duplicate-ZCTA rows were removed from the committed data, and Memphis's before-values were computed on the dup-weighted data). ACI comparisons additionally confound the new employment variables with zori/OSM live-data drift from the 2026-07 rebuild (drift magnitudes are recorded in the rebuild gate output on PR #4).
+
+Substantive shifts attributable to the re-run:
+
+- Commute significance moved from 4 of 9 metros to 6 of 9, with changed membership: Atlanta, Chicago, Los Angeles, and Miami became significant; Memphis and Seattle dropped out (§3).
+- DFW's negative transit-ACI effect — previously the analysis's only "transit reduces pressure" result — is no longer significant; Phoenix gained a significant *positive* transit effect (§5).
+- Phoenix is no longer unexplainable (ACI 0.017 → 0.335), and the Memphis best-RQ1/worst-ACI paradox is resolved (ACI 0.168 → 0.687) (§5, §7).
+- Job accessibility is income-stratified in 5 of 9 metros (RQ2 ANOVA: Los Angeles and Denver p < 0.0001, Miami p = 0.0006, Seattle p = 0.0018, Phoenix p = 0.018) (§4).
