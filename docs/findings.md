@@ -84,7 +84,7 @@ This analysis examines the relationship between housing affordability, commute t
 - **The new employment-center variables register directly in RQ1:** `job_accessibility` is significant and negative in Chicago (p < 0.0001), DFW (p = 0.005), Phoenix (p = 0.009), and Seattle (p = 0.034); `distance_to_cbd_km` is significant and negative in Chicago (p < 0.0001), DFW (p = 0.0004), and Phoenix (p = 0.025); `job_density` is significant and positive in Atlanta (p = 0.009).
 - **Memphis still has the strongest model fit** (R² = 0.80), but commute time itself is no longer significant there (p = 0.07) — renter share (p < 0.0001) now carries the model. Note the Memphis sample changed in the re-run (duplicate rows removed; see §9).
 - **Miami is now the hardest metro to model** (R² = 0.32). Phoenix — previously the weakest fit with no significant predictors — improved to R² = 0.39 with four significant predictors (vehicle access, population density, distance to CBD, job accessibility).
-- **The concave relationship** persists in Denver, DFW, and Memphis, indicating a "drive until you qualify" effect with diminishing returns: rent burden gains flatten at longer commutes. Miami flipped from concave to positive linear; Seattle's selected model is now a convex quadratic, but its commute terms are not significant.
+- **The concave relationship** is statistically supported only in Denver (see the threshold subsection below); DFW and Memphis retain concave point estimates whose curvature terms are not significant, so their "diminishing returns" reading is suggestive rather than established. Miami flipped from concave to positive linear; Seattle's selected model is now a convex quadratic, but its commute terms are not significant.
 - **Multicollinearity increased with the new variables**: `job_accessibility` posts VIFs of 5–11 in every metro except DFW, and Los Angeles — formerly the only metro with no multicollinearity issues (max VIF = 3.38) — now has a max VIF of 9.21.
 
 ### Commute-Time Threshold (2026-07)
@@ -189,7 +189,7 @@ In dense, established transit cities (Chicago, Miami) — and, in the 2026-07 re
 
 ### Theme D: "Drive Until You Qualify" Has Limits
 
-The concave quadratic relationships in Denver, DFW, and Memphis (Miami's re-run model is now positive linear) show that rent burden initially decreases with longer commutes but plateaus. At a certain distance, further driving no longer buys proportionally more affordability — suggesting a spatial boundary to the tradeoff.
+The concave quadratic relationship — statistically supported only in Denver, with concave-but-insignificant point estimates in DFW and Memphis (Miami's re-run model is now positive linear) — suggests rent burden initially decreases with longer commutes but plateaus. At a certain distance, further driving no longer buys proportionally more affordability — suggesting a spatial boundary to the tradeoff.
 
 ### Theme E: Metro Structure Matters More Than Metro Size
 
