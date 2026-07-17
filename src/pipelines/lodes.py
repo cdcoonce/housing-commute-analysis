@@ -28,6 +28,11 @@ LODES_YEAR = 2021
 LODES_VERSION = "LODES8"  # 2020 census blocks — do NOT use LODES7 (2010 blocks)
 LODES_BASE_URL = "https://lehd.ces.census.gov/data/lodes"
 
+# RQ4 annual panel window: 2015 matches the ZORI window start; 2023 is the
+# newest published LODES8 year (extend when 2024 drops — the panel gate is
+# append-only). The single-year LODES_YEAR cross-sectional path is untouched.
+LODES_PANEL_YEARS: tuple[int, ...] = tuple(range(2015, 2024))
+
 # Exponential decay length (km) for the gravity job-accessibility index.
 # The single sensitivity knob for job_accessibility; see design doc.
 GRAVITY_DECAY_KM = 10.0
@@ -71,22 +76,16 @@ def states_for_counties(counties: list[tuple[str, str]]) -> tuple[str, ...]:
     return tuple(sorted(STATE_FIPS_TO_POSTAL[f] for f in fips))
 
 
-def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
-    """One state's block-level jobs joined to ZCTA + tract via the LODES crosswalk.
+def fetch_state_xwalk(state_postal: str) -> pd.DataFrame:
+    """One state's LODES block→geography crosswalk, filtered to real ZCTAs.
 
-    Returns the slim frame [zcta, trct, jobs] aggregated to (zcta, trct) pairs.
-    Raw block rows and the (large, ~10-60 MB gz) crosswalk are NOT retained —
-    this keeps the Prefect-persisted cache result small.
+    Returns [tabblk2020, zcta, trct]. Blocks with a blank or "99999" crosswalk
+    zcta (unpopulated water/park blocks) are dropped; they carry ~0 jobs.
 
-    Blocks with a blank or "99999" crosswalk zcta (unpopulated water/park
-    blocks) are dropped; they carry ~0 jobs.
+    Uncached helper (never a Prefect-persisted result): the raw crosswalk is
+    2.7-11.4 MB gz (verified 2026-07-17) and retaining it would violate the
+    cache-size discipline. Callers join it and keep only slim aggregates.
     """
-    wac = http_csv_to_df(
-        wac_url(state_postal, year),
-        compression="gzip",
-        dtype={"w_geocode": str},
-        usecols=["w_geocode", "C000"],
-    )
     xwalk = http_csv_to_df(
         xwalk_url(state_postal),
         compression="gzip",
@@ -94,17 +93,73 @@ def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
         usecols=["tabblk2020", "zcta", "trct"],
     )
     xwalk = xwalk[xwalk["zcta"].str.fullmatch(r"\d{5}", na=False)]
-    xwalk = xwalk[xwalk["zcta"] != "99999"]
+    return xwalk[xwalk["zcta"] != "99999"]
 
+
+def _wac_zcta_tract_jobs(
+    state_postal: str, year: int, xwalk: pd.DataFrame
+) -> pd.DataFrame:
+    """One state-year WAC joined to a pre-fetched crosswalk: [zcta, trct, jobs].
+
+    HTTP errors (including a 404 on an unpublished state-year) propagate —
+    a missing state-year is a loud failure, never a silent zero-fill.
+    """
+    wac = http_csv_to_df(
+        wac_url(state_postal, year),
+        compression="gzip",
+        dtype={"w_geocode": str},
+        usecols=["w_geocode", "C000"],
+    )
     merged = wac.merge(xwalk, left_on="w_geocode", right_on="tabblk2020", how="inner")
-    out = (
+    return (
         merged.groupby(["zcta", "trct"], as_index=False)["C000"]
         .sum()
         .rename(columns={"C000": "jobs"})
     )
+
+
+def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
+    """One state's block-level jobs joined to ZCTA + tract via the LODES crosswalk.
+
+    Returns the slim frame [zcta, trct, jobs] aggregated to (zcta, trct) pairs.
+    Raw block rows and the (2.7-11.4 MB gz, verified 2026-07-17) crosswalk are
+    NOT retained — this keeps the Prefect-persisted cache result small.
+    """
+    out = _wac_zcta_tract_jobs(state_postal, year, fetch_state_xwalk(state_postal))
     logger.info(
         "LODES %s %s: %d (zcta, tract) pairs, %d jobs",
         state_postal, year, len(out), int(out["jobs"].sum()),
+    )
+    return out
+
+
+def fetch_state_lodes_panel(
+    state_postal: str, years: tuple[int, ...] = LODES_PANEL_YEARS
+) -> pd.DataFrame:
+    """One state's (zcta, tract) job counts for every year in `years`.
+
+    Downloads the state crosswalk ONCE, then joins each year's WAC file
+    against it. An HTTP error on any single year **propagates** — a missing
+    state-year must abort the panel build, never zero-fill (design §2).
+
+    Returns [year, zcta, trct, jobs], aggregated per (year, zcta, trct) and
+    stable-sorted (issue #6 ordering convention).
+    """
+    xwalk = fetch_state_xwalk(state_postal)
+    frames = []
+    for year in years:
+        year_frame = _wac_zcta_tract_jobs(state_postal, year, xwalk)
+        year_frame.insert(0, "year", int(year))
+        frames.append(year_frame)
+    out = (
+        pd.concat(frames, ignore_index=True)
+        .groupby(["year", "zcta", "trct"], as_index=False)["jobs"]
+        .sum()
+        .sort_values(["year", "zcta", "trct"], kind="stable", ignore_index=True)
+    )
+    logger.info(
+        "LODES panel %s %s-%s: %d (year, zcta, tract) rows, %d job-years",
+        state_postal, min(years), max(years), len(out), int(out["jobs"].sum()),
     )
     return out
 

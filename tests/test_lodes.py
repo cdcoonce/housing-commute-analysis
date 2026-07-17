@@ -176,3 +176,76 @@ def test_job_accessibility_no_matching_tracts_returns_zero() -> None:
     lodes_df = pd.DataFrame({"zcta": ["85001"], "trct": ["04013000100"], "jobs": [7]})
     out = lodes.job_accessibility(zctas, tracts, lodes_df, utm)
     assert out["job_accessibility"].item() == 0.0
+
+
+def test_fetch_state_lodes_panel_one_xwalk_fetch(monkeypatch) -> None:
+    calls = {"xwalk": 0, "wac": 0}
+
+    def fake(url: str, timeout: int = 180, **kwargs):
+        if "/wac/" in url:
+            calls["wac"] += 1
+            return pd.DataFrame({"w_geocode": ["1" * 15], "C000": [4]})
+        calls["xwalk"] += 1
+        return pd.DataFrame({"tabblk2020": ["1" * 15], "zcta": ["38103"], "trct": ["1" * 11]})
+
+    monkeypatch.setattr(lodes, "http_csv_to_df", fake)
+    out = lodes.fetch_state_lodes_panel("tn", (2015, 2016, 2017))
+    assert calls == {"xwalk": 1, "wac": 3}           # xwalk once, one WAC per year
+    assert set(out["year"]) == {2015, 2016, 2017}
+    assert list(out.columns) == ["year", "zcta", "trct", "jobs"]
+
+
+def test_fetch_state_lodes_panel_404_year_raises(monkeypatch) -> None:
+    """A missing state-year must be a loud failure, never a zero-fill (design §2)."""
+    import requests
+
+    def fake(url: str, timeout: int = 180, **kwargs):
+        if "_2016.csv.gz" in url:
+            raise requests.HTTPError("404 Not Found")
+        if "/wac/" in url:
+            return pd.DataFrame({"w_geocode": ["1" * 15], "C000": [4]})
+        return pd.DataFrame({"tabblk2020": ["1" * 15], "zcta": ["38103"], "trct": ["1" * 11]})
+
+    monkeypatch.setattr(lodes, "http_csv_to_df", fake)
+    with pytest.raises(requests.HTTPError):
+        lodes.fetch_state_lodes_panel("tn", (2015, 2016))
+
+
+def test_fetch_state_jobs_unchanged_via_xwalk_helper(monkeypatch) -> None:
+    """The extraction must leave the single-year path's output identical."""
+    wac = pd.DataFrame({
+        "w_geocode": ["040130001001000", "040130001001001", "040130002002000",
+                      "040130003003000", "040130004004000"],
+        "C000": [10, 5, 7, 3, 9],
+    })
+    xwalk = pd.DataFrame({
+        "tabblk2020": ["040130001001000", "040130001001001", "040130002002000",
+                       "040130003003000", "040130004004000"],
+        "zcta": ["85001", "85001", "85002", "", "99999"],  # blank + sentinel dropped
+        "trct": ["04013000100", "04013000100", "04013000200",
+                 "04013000300", "04013000400"],
+    })
+    _fake_http(monkeypatch, wac, xwalk)
+
+    calls = {"xwalk": 0}
+    real_fetch_state_xwalk = lodes.fetch_state_xwalk
+
+    def spy(state_postal: str) -> pd.DataFrame:
+        calls["xwalk"] += 1
+        return real_fetch_state_xwalk(state_postal)
+
+    monkeypatch.setattr(lodes, "fetch_state_xwalk", spy)
+    out = lodes.fetch_state_jobs("az", 2021)
+    assert calls["xwalk"] == 1  # single-year path now routes through the helper
+    # Pinned pre-refactor output (captured from the code before the extraction).
+    expected = pd.DataFrame({
+        "zcta": ["85001", "85002"],
+        "trct": ["04013000100", "04013000200"],
+        "jobs": [15, 7],
+    })
+    pd.testing.assert_frame_equal(out, expected)
+
+
+def test_lodes_panel_years_constant() -> None:
+    """2015 matches the ZORI window start; 2023 is the newest published LODES8 year."""
+    assert lodes.LODES_PANEL_YEARS == tuple(range(2015, 2024))
