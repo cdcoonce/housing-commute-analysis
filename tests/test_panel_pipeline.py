@@ -48,3 +48,19 @@ def test_tidy_zori_tail_equals_latest(monkeypatch, zori_wide) -> None:
         [["zip", "period", "zori"]].reset_index(drop=True)
     )
     pd.testing.assert_frame_equal(tail, latest)
+
+
+def test_fetch_zori_series_prefix_filter(monkeypatch, zori_wide) -> None:
+    _patch_http(monkeypatch, zori_wide)
+    out = zori.fetch_zori_series("fixture://", ("850", "851"))
+    assert set(out.columns) == {"zip", "period", "zori"}
+    assert out["zip"].str[:3].isin({"850", "851"}).all()
+    assert "38103" not in set(out["zip"])            # non-matching ZIP excluded
+    # stable-sorted for deterministic committed bytes (issue #6 convention)
+    assert out.equals(out.sort_values(["zip", "period"], kind="stable", ignore_index=True))
+
+
+def test_zori_panel_url_is_non_sa() -> None:
+    from src.pipelines.config import ZORI_PANEL_CSV_URL, ZORI_ZIP_CSV_URL
+    assert ZORI_PANEL_CSV_URL.endswith("_sm_month.csv")        # no _sa_
+    assert ZORI_ZIP_CSV_URL.endswith("_sm_sa_month.csv")       # cross-sectional untouched

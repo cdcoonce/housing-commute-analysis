@@ -63,6 +63,32 @@ def tidy_zori(zori_data: pd.DataFrame) -> pd.DataFrame:
     return zori_tidy
 
 
+def fetch_zori_series(zori_csv_url: str, zip_prefixes: tuple[str, ...]) -> pd.DataFrame:
+    """Fetch the full monthly ZORI series for ZIPs matching the given prefixes.
+
+    Args:
+        zori_csv_url: URL to a Zillow ZORI CSV file (wide format with date columns).
+        zip_prefixes: ZIP-code prefixes to keep (e.g. ("850", "851")); any length.
+
+    Returns:
+        DataFrame with columns: zip (5-digit string), period (date string),
+        zori (float). One row per (zip, period) with an observed value —
+        absent months are absent rows, never nulls. Stable-sorted by
+        (zip, period) for deterministic committed bytes (issue #6 convention).
+
+    Raises:
+        requests.HTTPError: If fetching the CSV fails
+        KeyError: If expected columns are missing from the CSV
+    """
+    zori_tidy = tidy_zori(http_csv_to_df(zori_csv_url))
+
+    series = zori_tidy[zori_tidy["zip"].str.startswith(tuple(zip_prefixes))]
+    series = series.sort_values(["zip", "period"], kind="stable", ignore_index=True)
+
+    series["zori"] = series["zori"].astype(float)
+    return series[["zip", "period", "zori"]]
+
+
 def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
     """Fetch the latest ZORI (rent index) value for each ZIP code from Zillow.
 
