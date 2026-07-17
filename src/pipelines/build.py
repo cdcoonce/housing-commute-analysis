@@ -126,6 +126,52 @@ def employment_features_task(lodes_df, zctas_in_metro, tracts, cbd_points, utm_z
     return out
 
 
+def aggregate_acs_to_zcta(
+    acs_features: pd.DataFrame, tract_to_zcta_map: pd.DataFrame
+) -> pd.DataFrame:
+    """Aggregate tract-level ACS commute features to ZCTA level.
+
+    Joins ACS features to the tract-to-ZCTA centroid map, then reduces each
+    ZCTA group (means for rates/proxies, sum for worker counts). Output rows
+    are key-sorted by ZCTA5CE (pandas groupby default).
+
+    Order-invariance (issue #6): upstream tract row order (Census API response
+    order surviving concat and the GEOID merge) is not stable, and float
+    mean/sum accumulate in input row order. Stable-sorting by GEOID before the
+    groupby pins the reduction order, making the output byte-identical under
+    any permutation of the input rows.
+    """
+    acs_with_zcta = (
+        acs_features.merge(tract_to_zcta_map, on="GEOID", how="inner")
+        .sort_values("GEOID", kind="stable", ignore_index=True)
+    )
+    return acs_with_zcta.groupby("ZCTA5CE", as_index=False).agg({
+        "rent_to_income": "mean",  # Average rent burden across tracts
+        "commute_min_proxy": "mean",  # Average estimated commute time (minutes)
+        "ttw_total": "sum",  # Total workers (summed across tracts)
+        # Commute time distribution (percentage in each bin)
+        "pct_commute_lt10": "mean",  # Average % with commute < 10 min
+        "pct_commute_10_19": "mean",  # Average % with commute 10-19 min
+        "pct_commute_20_29": "mean",  # Average % with commute 20-29 min
+        "pct_commute_30_44": "mean",  # Average % with commute 30-44 min
+        "pct_commute_45_59": "mean",  # Average % with commute 45-59 min
+        "pct_commute_60_plus": "mean",  # Average % with commute 60+ min
+        # Transportation mode share
+        "pct_drive_alone": "mean",  # Average % driving alone
+        "pct_carpool": "mean",  # Average % carpooling
+        "pct_transit": "mean",  # Average % using transit
+        "pct_walk": "mean",  # Average % walking
+        "pct_wfh": "mean",  # Average % working from home
+        "pct_car": "mean",  # Average % using car (alone + carpool)
+        # Rent burden
+        "pct_rent_burden_30": "mean",  # Average % rent burdened (30%+)
+        "pct_rent_burden_50": "mean",  # Average % severely rent burdened (50%+)
+        # Tenure and vehicle access (for RQ1 controls)
+        "renter_share": "mean",  # Average % of units that are renter-occupied
+        "vehicle_access": "mean",  # Average % of households with 1+ vehicles
+    })
+
+
 # --- Plain CPU tasks ---
 @task(name="filter_zctas")
 def filter_zctas_task(zctas_all, cbsa_boundary, utm_zone: int):
@@ -229,35 +275,9 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
         tract_to_zcta_map.to_csv(debug_path, index=False)
         logger.debug("Wrote debug tract-to-ZCTA map to %s", debug_path)
 
-    # Join ACS commute features with tract-to-ZCTA mapping
-    acs_with_zcta = acs_features.merge(tract_to_zcta_map, on="GEOID", how="inner")
-    
     # Aggregate commute tract-level data to ZCTA level using appropriate statistics
-    zcta_aggregated = acs_with_zcta.groupby("ZCTA5CE", as_index=False).agg({
-        "rent_to_income": "mean",  # Average rent burden across tracts
-        "commute_min_proxy": "mean",  # Average estimated commute time (minutes)
-        "ttw_total": "sum",  # Total workers (summed across tracts)
-        # Commute time distribution (percentage in each bin)
-        "pct_commute_lt10": "mean",  # Average % with commute < 10 min
-        "pct_commute_10_19": "mean",  # Average % with commute 10-19 min
-        "pct_commute_20_29": "mean",  # Average % with commute 20-29 min
-        "pct_commute_30_44": "mean",  # Average % with commute 30-44 min
-        "pct_commute_45_59": "mean",  # Average % with commute 45-59 min
-        "pct_commute_60_plus": "mean",  # Average % with commute 60+ min
-        # Transportation mode share
-        "pct_drive_alone": "mean",  # Average % driving alone
-        "pct_carpool": "mean",  # Average % carpooling
-        "pct_transit": "mean",  # Average % using transit
-        "pct_walk": "mean",  # Average % walking
-        "pct_wfh": "mean",  # Average % working from home
-        "pct_car": "mean",  # Average % using car (alone + carpool)
-        # Rent burden
-        "pct_rent_burden_30": "mean",  # Average % rent burdened (30%+)
-        "pct_rent_burden_50": "mean",  # Average % severely rent burdened (50%+)
-        # Tenure and vehicle access (for RQ1 controls)
-        "renter_share": "mean",  # Average % of units that are renter-occupied
-        "vehicle_access": "mean",  # Average % of households with 1+ vehicles
-    })
+    # (join to the tract-to-ZCTA map + order-invariant groupby; see helper above)
+    zcta_aggregated = aggregate_acs_to_zcta(acs_features, tract_to_zcta_map)
     logger.info(f"Aggregated commute data to {len(zcta_aggregated)} ZCTAs")
     
     # Aggregate demographic data to ZCTA level (population-weighted)

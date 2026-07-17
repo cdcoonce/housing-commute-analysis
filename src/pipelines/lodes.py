@@ -173,7 +173,13 @@ def job_accessibility(
     tract_jobs = lodes_df.groupby("trct", as_index=False)["jobs"].sum()
     tracts = tracts_gdf.to_crs(utm_zone).copy()
     tracts["trct"] = tracts["GEOID"].astype(str).str.zfill(11)
-    tracts = tracts.merge(tract_jobs, on="trct", how="inner")
+    # Stable-sort by tract GEOID (issue #6): the gravity sum below reduces over
+    # the tract axis in this frame's row order, and TIGERweb feature order is
+    # not stable — sorting pins the reduction order so the index is
+    # byte-identical under any permutation of the input rows.
+    tracts = tracts.merge(tract_jobs, on="trct", how="inner").sort_values(
+        "trct", kind="stable", ignore_index=True
+    )
 
     zctas = zctas_gdf.to_crs(utm_zone)
     zcta_ids = zctas["ZCTA5CE"].astype(str).str.zfill(5)
