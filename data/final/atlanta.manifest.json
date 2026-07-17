@@ -43,11 +43,14 @@
       ]
     ]
   },
-  "git_commit": "0ecc9cec242d240e13b850ba30a88690f5f2983d",
-  "run_timestamp_utc": "2026-07-17T03:45:50.952365+00:00",
+  "provenance": "pipeline-build",
+  "git_commit": "e1b24640e492f484d4ffe96f58f73d590f31d5ed",
+  "regenerated_at_commit": null,
+  "run_timestamp_utc": "2026-07-17T12:52:43.914232+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
   "lodes_year": 2021,
+  "cbsa_vintage": "ACS 2024",
   "source_urls": {
     "acs": "https://api.census.gov/data/2021/acs/acs5",
     "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
@@ -56,7 +59,7 @@
     "osm": "https://overpass-api.de (via OSMnx)",
     "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2021 + xwalk)"
   },
-  "zori_period": "2026-05-31",
+  "zori_period": "2026-06-30",
   "output_csv": "final_zcta_dataset_atlanta.csv",
   "row_count": 117,
   "columns": [
@@ -201,6 +204,6 @@
       "dtype": "String"
     }
   ],
-  "sha256": "6d95bf001b4717d5b84ebab33188ca1b921cd1efffccb1370bb2269890a939d6",
+  "sha256": "b4f44d1f6faa8efeae77496ae8c7ab34248d0baff76ef7fd53833687648131fb",
   "steps": []
 }
