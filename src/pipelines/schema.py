@@ -94,3 +94,82 @@ def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True
     errors = [e for e in errors if e]
     if errors:
         raise ValueError("Schema violations: " + "; ".join(errors))
+
+
+# --- RQ4 panel products (additive; the 35-column contract above is untouched) ---
+
+ZORI_PANEL_COLUMNS: list[str] = ["ZCTA5CE", "period", "zori"]
+
+
+def validate_zori_panel(df: pl.DataFrame) -> list[str]:
+    """Validate a zori_panel_<metro> frame; return error strings (empty = valid).
+
+    Contract (design §1/§5): exact columns [ZCTA5CE, period, zori]; ZCTA5CE Utf8
+    zero-padded 5-digit (read with schema_overrides={"ZCTA5CE": pl.Utf8}); period
+    an ISO month-end date string (exactly Zillow's column labels); zori strictly
+    positive and non-null — missing cells are absent rows, never nulls; no
+    duplicate (ZCTA5CE, period) keys.
+    """
+    if list(df.columns) != ZORI_PANEL_COLUMNS:
+        return [f"columns must be exactly {ZORI_PANEL_COLUMNS}, got {list(df.columns)}"]
+
+    errors: list[str] = []
+
+    if df["ZCTA5CE"].dtype != pl.Utf8:
+        errors.append(f"ZCTA5CE must be Utf8, got {df['ZCTA5CE'].dtype}")
+    else:
+        bad_zcta = df["ZCTA5CE"].filter(
+            df["ZCTA5CE"].is_null() | ~df["ZCTA5CE"].str.contains(r"^\d{5}$")
+        )
+        if bad_zcta.len() > 0:
+            sample = bad_zcta.unique().sort().to_list()[:10]
+            errors.append(
+                f"ZCTA5CE has {bad_zcta.len()} non-5-digit values (first 10: {sample})"
+            )
+
+    if df["period"].dtype != pl.Utf8:
+        errors.append(f"period must be Utf8 ISO date strings, got {df['period'].dtype}")
+    else:
+        parsed = df["period"].str.to_date("%Y-%m-%d", strict=False)
+        bad_date = parsed.is_null()
+        if bad_date.any():
+            sample = df["period"].filter(bad_date).unique().sort().to_list()[:10]
+            errors.append(
+                f"period has {int(bad_date.sum())} non-ISO-date values (first 10: {sample})"
+            )
+        not_month_end = parsed.is_not_null() & (parsed != parsed.dt.month_end())
+        if not_month_end.any():
+            sample = df["period"].filter(not_month_end).unique().sort().to_list()[:10]
+            errors.append(
+                f"period has {int(not_month_end.sum())} non-month-end dates "
+                f"(first 10: {sample})"
+            )
+
+    if not df["zori"].dtype.is_numeric():
+        errors.append(f"zori must be numeric, got {df['zori'].dtype}")
+    else:
+        n_null = df["zori"].null_count()
+        if n_null > 0:
+            errors.append(
+                f"zori has {n_null} null cells (missing cells must be absent rows, "
+                "never nulls)"
+            )
+        nonpos = df["zori"].drop_nulls().filter(df["zori"].drop_nulls() <= 0)
+        if nonpos.len() > 0:
+            errors.append(f"zori must be > 0: {nonpos.len()} cells <= 0 (min={nonpos.min()})")
+
+    keys = df.select(["ZCTA5CE", "period"])
+    n_dup = keys.height - keys.unique().height
+    if n_dup > 0:
+        dup_sample = (
+            keys.filter(keys.is_duplicated())
+            .unique()
+            .sort(["ZCTA5CE", "period"])
+            .head(10)
+            .rows()
+        )
+        errors.append(
+            f"(ZCTA5CE, period) has {n_dup} duplicate key rows (first 10: {dup_sample})"
+        )
+
+    return errors

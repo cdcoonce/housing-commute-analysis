@@ -7,7 +7,11 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from src.pipelines.schema import REQUIRED_COLUMNS, validate_final_dataset
+from src.pipelines.schema import (
+    REQUIRED_COLUMNS,
+    validate_final_dataset,
+    validate_zori_panel,
+)
 
 _FINAL_DIR = Path(__file__).resolve().parents[1] / "data" / "final"
 
@@ -65,3 +69,85 @@ def test_unique_zcta_accepted() -> None:
     data["income_segment"] = ["Low", "High"]
     data["ZCTA5CE"] = ["38103", "38104"]
     validate_final_dataset(pl.DataFrame(data))
+
+
+# --- validate_zori_panel (RQ4 panel products; additive, design §1/§5) ---
+
+
+def _valid_zori_panel() -> pl.DataFrame:
+    """Minimal valid panel: Utf8 zero-padded ZCTAs, month-end periods, positive zori."""
+    return pl.DataFrame(
+        {
+            "ZCTA5CE": ["08501", "85001", "85001"],
+            "period": ["2020-01-31", "2020-01-31", "2020-02-29"],
+            "zori": [1450.0, 1500.5, 1510.25],
+        }
+    )
+
+
+def test_zori_panel_valid_frame_passes() -> None:
+    assert validate_zori_panel(_valid_zori_panel()) == []
+
+
+def test_zori_panel_wrong_columns_rejected() -> None:
+    errors = validate_zori_panel(_valid_zori_panel().drop("zori"))
+    assert errors and any("columns" in e for e in errors)
+
+
+def test_zori_panel_null_zori_rejected() -> None:
+    """Missing cells must be absent rows, never nulls (design §1 invariant)."""
+    df = _valid_zori_panel().with_columns(
+        pl.Series("zori", [None, 1500.5, 1510.25], dtype=pl.Float64)
+    )
+    errors = validate_zori_panel(df)
+    assert errors and any("null" in e for e in errors)
+
+
+def test_zori_panel_nonpositive_zori_rejected() -> None:
+    df = _valid_zori_panel().with_columns(
+        pl.Series("zori", [0.0, 1500.5, 1510.25], dtype=pl.Float64)
+    )
+    errors = validate_zori_panel(df)
+    assert errors and any("zori" in e and "> 0" in e for e in errors)
+
+
+def test_zori_panel_duplicate_key_rejected() -> None:
+    df = pl.DataFrame(
+        {
+            "ZCTA5CE": ["85001", "85001"],
+            "period": ["2020-01-31", "2020-01-31"],
+            "zori": [1500.5, 1500.5],
+        }
+    )
+    errors = validate_zori_panel(df)
+    assert errors and any("duplicate" in e for e in errors)
+
+
+def test_zori_panel_bad_date_rejected() -> None:
+    df = _valid_zori_panel().with_columns(
+        pl.Series("period", ["2020-13-99", "2020-01-31", "2020-02-29"])
+    )
+    errors = validate_zori_panel(df)
+    assert errors and any("period" in e for e in errors)
+
+
+def test_zori_panel_non_month_end_date_rejected() -> None:
+    """Periods are exactly Zillow's month-end column labels (design §1)."""
+    df = _valid_zori_panel().with_columns(
+        pl.Series("period", ["2020-01-15", "2020-01-31", "2020-02-29"])
+    )
+    errors = validate_zori_panel(df)
+    assert errors and any("month-end" in e for e in errors)
+
+
+def test_zori_panel_i64_zcta_rejected() -> None:
+    """A leading-zero ZCTA read without schema_overrides infers i64 — must fail."""
+    df = _valid_zori_panel().with_columns(pl.Series("ZCTA5CE", [8501, 85001, 85001]))
+    errors = validate_zori_panel(df)
+    assert errors and any("Utf8" in e for e in errors)
+
+
+def test_zori_panel_non_5_digit_zcta_rejected() -> None:
+    df = _valid_zori_panel().with_columns(pl.Series("ZCTA5CE", ["8501", "85001", "85001"]))
+    errors = validate_zori_panel(df)
+    assert errors and any("5-digit" in e for e in errors)
