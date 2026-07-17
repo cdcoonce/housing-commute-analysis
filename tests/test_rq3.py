@@ -24,3 +24,16 @@ def test_analyze_rq3_aci_is_sum_of_zscores(sample_zcta_df: pl.DataFrame) -> None
 def test_analyze_rq3_quantile_keys(sample_zcta_df: pl.DataFrame) -> None:
     result = analyze_rq3(sample_zcta_df)
     assert set(result.quantile_results.keys()).issubset({0.25, 0.5, 0.75})
+
+
+def test_rq3_includes_employment_candidates(sample_zcta_df: pl.DataFrame) -> None:
+    result = analyze_rq3(sample_zcta_df)
+    for name in ("job_density", "distance_to_cbd_km", "job_accessibility"):
+        assert name in result.feature_names
+
+
+def test_rq3_still_runs_without_employment_columns(sample_zcta_df: pl.DataFrame) -> None:
+    df = sample_zcta_df.drop(["job_density", "distance_to_cbd_km", "job_accessibility"])
+    result = analyze_rq3(df)
+    assert result.aci_model is not None
+    assert 'job_density' not in result.feature_names
