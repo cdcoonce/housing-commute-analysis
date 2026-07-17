@@ -21,9 +21,9 @@
     ]
   },
   "provenance": "pipeline-build",
-  "git_commit": "e1b24640e492f484d4ffe96f58f73d590f31d5ed",
+  "git_commit": "b95bd0297474c67b1f1906942228973627cf860c",
   "regenerated_at_commit": null,
-  "run_timestamp_utc": "2026-07-17T12:52:00.772962+00:00",
+  "run_timestamp_utc": "2026-07-17T13:23:49.087524+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
   "lodes_year": 2021,
@@ -181,6 +181,6 @@
       "dtype": "String"
     }
   ],
-  "sha256": "6fa1072d7be12dce523e13effa77e276d1e2d6dc8cda5f5c1c54a38cfccb2be0",
+  "sha256": "53e9feca394da71f19524fa5bc5309fe991a728094ae3cac7f04a2c6b6119f3f",
   "steps": []
 }

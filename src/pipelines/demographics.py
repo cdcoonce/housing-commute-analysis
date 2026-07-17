@@ -195,9 +195,16 @@ def aggregate_demographics_to_zcta(
         influence on ZCTA-level percentages. Formula:
         weighted_pct = sum(pct_i * pop_i) / sum(pop_i)
     """
-    # Join demographics with tract-to-ZCTA mapping
-    demo_with_zcta = demographics_df.merge(tract_to_zcta_map, on="GEOID", how="inner")
-    
+    # Join demographics with tract-to-ZCTA mapping.
+    # Stable-sort by GEOID before grouping (issue #6): the weighted means below
+    # sum value*weight products in row order, and upstream Census API row order
+    # is not stable — sorting pins the reduction order so output is
+    # byte-identical under any permutation of the input rows.
+    demo_with_zcta = (
+        demographics_df.merge(tract_to_zcta_map, on="GEOID", how="inner")
+        .sort_values("GEOID", kind="stable", ignore_index=True)
+    )
+
     # For each ZCTA, calculate population-weighted averages
     # Population weighting ensures larger tracts contribute proportionally to ZCTA metrics,
     # avoiding bias from small-population tracts with extreme values
