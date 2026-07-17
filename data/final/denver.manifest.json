@@ -1,17 +1,67 @@
 {
   "metro_key": "denver",
-  "git_commit": "60d4769743a6dd13f8d62602d21d7d306546ec00",
-  "run_timestamp_utc": "2026-07-10T15:22:16.351532+00:00",
+  "metro_config": {
+    "cbsa_code": "19740",
+    "counties": [
+      [
+        "08",
+        "001"
+      ],
+      [
+        "08",
+        "005"
+      ],
+      [
+        "08",
+        "013"
+      ],
+      [
+        "08",
+        "014"
+      ],
+      [
+        "08",
+        "031"
+      ],
+      [
+        "08",
+        "035"
+      ],
+      [
+        "08",
+        "039"
+      ],
+      [
+        "08",
+        "059"
+      ]
+    ],
+    "zip_prefixes": [
+      "80",
+      "81"
+    ],
+    "utm_zone": 32613,
+    "cbd_points": [
+      [
+        39.7392,
+        -104.9903
+      ]
+    ]
+  },
+  "git_commit": "0ecc9cec242d240e13b850ba30a88690f5f2983d",
+  "run_timestamp_utc": "2026-07-17T03:45:39.981260+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
+  "lodes_year": 2021,
   "source_urls": {
     "acs": "https://api.census.gov/data/2021/acs/acs5",
     "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
     "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
-    "osm": "https://overpass-api.de (via OSMnx)"
+    "osm": "https://overpass-api.de (via OSMnx)",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2021 + xwalk)"
   },
-  "zori_period": "2025-10-31",
+  "zori_period": "2026-05-31",
   "output_csv": "final_zcta_dataset_denver.csv",
   "row_count": 103,
   "columns": [
@@ -108,6 +158,10 @@
       "dtype": "Float64"
     },
     {
+      "name": "job_density",
+      "dtype": "Float64"
+    },
+    {
       "name": "pct_white",
       "dtype": "Float64"
     },
@@ -140,10 +194,18 @@
       "dtype": "Float64"
     },
     {
+      "name": "distance_to_cbd_km",
+      "dtype": "Float64"
+    },
+    {
+      "name": "job_accessibility",
+      "dtype": "Float64"
+    },
+    {
       "name": "period",
       "dtype": "String"
     }
   ],
-  "sha256": "89a2e6dceef6f2791b375b531bf786a80c314a3a4255a0b3a6a15d6af15c65bc",
+  "sha256": "457c7f8dab364ba5e73bfce96041f80851d0edbfd5b3a2826a28ff26537a028c",
   "steps": []
 }

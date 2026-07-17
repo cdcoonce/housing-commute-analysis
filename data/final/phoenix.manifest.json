@@ -1,17 +1,42 @@
 {
   "metro_key": "phoenix",
-  "git_commit": "60d4769743a6dd13f8d62602d21d7d306546ec00",
-  "run_timestamp_utc": "2026-07-10T15:22:16.351532+00:00",
+  "metro_config": {
+    "cbsa_code": "38060",
+    "counties": [
+      [
+        "04",
+        "013"
+      ],
+      [
+        "04",
+        "021"
+      ]
+    ],
+    "zip_prefixes": [
+      "85"
+    ],
+    "utm_zone": 32612,
+    "cbd_points": [
+      [
+        33.4484,
+        -112.074
+      ]
+    ]
+  },
+  "git_commit": "0ecc9cec242d240e13b850ba30a88690f5f2983d",
+  "run_timestamp_utc": "2026-07-17T03:42:38.931141+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
+  "lodes_year": 2021,
   "source_urls": {
     "acs": "https://api.census.gov/data/2021/acs/acs5",
     "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
     "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
-    "osm": "https://overpass-api.de (via OSMnx)"
+    "osm": "https://overpass-api.de (via OSMnx)",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2021 + xwalk)"
   },
-  "zori_period": "2025-10-31",
+  "zori_period": "2026-05-31",
   "output_csv": "final_zcta_dataset_phoenix.csv",
   "row_count": 150,
   "columns": [
@@ -108,6 +133,10 @@
       "dtype": "Float64"
     },
     {
+      "name": "job_density",
+      "dtype": "Float64"
+    },
+    {
       "name": "pct_white",
       "dtype": "Float64"
     },
@@ -140,10 +169,18 @@
       "dtype": "Float64"
     },
     {
+      "name": "distance_to_cbd_km",
+      "dtype": "Float64"
+    },
+    {
+      "name": "job_accessibility",
+      "dtype": "Float64"
+    },
+    {
       "name": "period",
       "dtype": "String"
     }
   ],
-  "sha256": "d2b51a4e0e6f7f7ae730bbecda3a0aed58c401ed6f2937975427200fec827697",
+  "sha256": "95ed85221785dc99ef69c68fb326b478af8eb898aff5de620193b553c8eb4f63",
   "steps": []
 }
