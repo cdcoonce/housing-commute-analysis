@@ -15,28 +15,12 @@ from .utils import http_csv_to_df
 logger = logging.getLogger(__name__)
 
 
-def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
-    """Fetch the latest ZORI (rent index) value for each ZIP code from Zillow.
-    
-    Args:
-        zori_csv_url: URL to Zillow's ZORI CSV file (wide format with date columns)
-        
-    Returns:
-        DataFrame with columns: zip (5-digit string), period (date), zori (float).
-        Contains one row per ZIP code with the most recent available rent index.
-        
-    Raises:
-        requests.HTTPError: If fetching the CSV fails
-        KeyError: If expected columns are missing from the CSV
-        
-    Note:
-        Zillow's CSV is in wide format with one column per month. This function
-        converts to long format and extracts the latest non-null value per ZIP.
-        Non-numeric values like 'MA' (Missing/Not Available) are handled.
+def tidy_zori(zori_data: pd.DataFrame) -> pd.DataFrame:
+    """Zillow wide CSV -> long [zip, period, zori]; drops non-numeric/missing cells.
+
+    Extracted verbatim from fetch_zori_latest so the latest-month path stays
+    byte-identical (proven against tests/fixtures/zori_latest_golden.csv).
     """
-    # Download Zillow ZORI CSV (typically ~30-50 MB)
-    zori_data = http_csv_to_df(zori_csv_url)
-    
     # Standardize column name: Zillow uses 'RegionName' for ZIP codes
     if "RegionName" in zori_data.columns:
         zori_data = zori_data.rename(columns={"RegionName": "zip"})
@@ -75,7 +59,32 @@ def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
     # Handle non-numeric values like 'MA' (Missing/Not Available) in Zillow data
     zori_tidy["zori"] = pd.to_numeric(zori_tidy["zori"], errors="coerce")
     zori_tidy = zori_tidy.dropna(subset=["zori"])
-    
+
+    return zori_tidy
+
+
+def fetch_zori_latest(zori_csv_url: str) -> pd.DataFrame:
+    """Fetch the latest ZORI (rent index) value for each ZIP code from Zillow.
+
+    Args:
+        zori_csv_url: URL to Zillow's ZORI CSV file (wide format with date columns)
+
+    Returns:
+        DataFrame with columns: zip (5-digit string), period (date), zori (float).
+        Contains one row per ZIP code with the most recent available rent index.
+
+    Raises:
+        requests.HTTPError: If fetching the CSV fails
+        KeyError: If expected columns are missing from the CSV
+
+    Note:
+        Zillow's CSV is in wide format with one column per month. This function
+        converts to long format and extracts the latest non-null value per ZIP.
+        Non-numeric values like 'MA' (Missing/Not Available) are handled.
+    """
+    # Download Zillow ZORI CSV (typically ~30-50 MB)
+    zori_tidy = tidy_zori(http_csv_to_df(zori_csv_url))
+
     # Keep only the most recent observation for each ZIP code
     # Sort by ZIP and period, then take the last (most recent) row per ZIP
     latest_zori = (
