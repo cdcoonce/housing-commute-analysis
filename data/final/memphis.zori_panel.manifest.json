@@ -1,0 +1,67 @@
+{
+  "metro_key": "memphis",
+  "kind": "zori_panel",
+  "metro_config": {
+    "cbsa_code": "32820",
+    "counties": [
+      [
+        "47",
+        "157"
+      ],
+      [
+        "47",
+        "047"
+      ],
+      [
+        "05",
+        "035"
+      ],
+      [
+        "28",
+        "033"
+      ]
+    ],
+    "zip_prefixes": [
+      "38",
+      "72"
+    ],
+    "utm_zone": 32616,
+    "cbd_points": [
+      [
+        35.1495,
+        -90.049
+      ]
+    ]
+  },
+  "provenance": "pipeline-build",
+  "git_commit": "157edb487ac8efb694c966f3f01b4f071046a614",
+  "regenerated_at_commit": null,
+  "run_timestamp_utc": "2026-07-17T14:56:35.493088+00:00",
+  "cbsa_vintage": "ACS 2024",
+  "source_urls": {
+    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
+  },
+  "output_csv": "zori_panel_memphis.csv",
+  "row_count": 2661,
+  "columns": [
+    {
+      "name": "ZCTA5CE",
+      "dtype": "Int64"
+    },
+    {
+      "name": "period",
+      "dtype": "String"
+    },
+    {
+      "name": "zori",
+      "dtype": "Float64"
+    }
+  ],
+  "sha256": "f7f822db47e786da94ca2edc5d6c8d446b423edd5ad83befcca930dda3b26b5a",
+  "period_min": "2015-01-31",
+  "period_max": "2026-06-30",
+  "n_months": 138,
+  "n_zctas": 39,
+  "pull_timestamp_utc": "2026-07-17T14:56:35.493088+00:00"
+}
