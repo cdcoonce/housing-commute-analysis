@@ -11,12 +11,21 @@ and population density to isolate the commute effect.
 
 Model Specification:
     rent_to_income = beta_0 + beta_1(commute_min_proxy) + beta_2(commute_min_proxy^2) +
-                     beta_3(renter_share) + beta_4(vehicle_access) + beta_5(pop_density) + e
+                     beta_3(renter_share) + beta_4(vehicle_access) + beta_5(pop_density) +
+                     beta_6(job_density) + beta_7(distance_to_cbd_km) +
+                     beta_8(job_accessibility) + e
 
 Model Comparison:
-    - Linear Model: rent_to_income ~ commute + renter_share + vehicle_access + pop_density
-    - Quadratic Model: rent_to_income ~ commute + commute^2 + renter_share + vehicle_access + pop_density
+    - Linear Model: rent_to_income ~ commute + controls (renter_share, vehicle_access,
+      pop_density, job_density, distance_to_cbd_km, job_accessibility)
+    - Quadratic Model: adds commute^2 to the linear specification
     - Selection Criteria: Akaike Information Criterion (AIC) - lower is better
+
+Threshold ("drive until you qualify"):
+    From the quadratic model, the vertex t* = -beta_1/(2*beta_2) estimates the
+    commute time where the affordability tradeoff breaks down, with a
+    delta-method standard error. Reported only when curvature is significantly
+    concave (beta_2 < 0, p < 0.05) and t* falls within the observed commute range.
 
 Validation:
     - 3-fold cross-validation RMSE for predictive accuracy
@@ -27,6 +36,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -39,6 +49,67 @@ from .results import RQ1Results
 from .visualization import plot_diagnostics
 
 logger = logging.getLogger(__name__)
+
+#: Reason strings for an undefined threshold (referenced by tests and reports).
+REASON_NOT_CONCAVE = 'convex or insignificant curvature'
+REASON_OUTSIDE_RANGE = 'vertex outside observed range'
+
+
+def estimate_threshold(
+    model_quad: dict[str, Any],
+    commute_time: np.ndarray,
+) -> dict[str, Any]:
+    """Estimate the drive-until-you-qualify commute threshold from the quadratic model.
+
+    The vertex of the fitted quadratic, t* = -B1/(2*B2), is the commute time at
+    which the rent-burden curve turns over. Its standard error comes from the
+    delta method with gradient g = [-1/(2*B2), B1/(2*B2^2)] applied to the
+    robust (HC3) covariance of (B1, B2); the 95% CI is t* +/- 1.96*SE.
+
+    A threshold is only claimed (valid=True) when both guards pass:
+
+    1. Curvature is concave and significant: B2 < 0 with p < 0.05.
+    2. t* lies within the observed commute_min_proxy range of the model data.
+
+    Parameters
+    ----------
+    model_quad : dict[str, Any]
+        fit_ols_robust() output for the quadratic model. Positional contract:
+        params[0]=const, params[1]=commute, params[2]=commute^2.
+    commute_time : np.ndarray
+        Observed commute_min_proxy values used to fit the model.
+
+    Returns
+    -------
+    dict[str, Any]
+        Keys: t_star, se, ci_low, ci_high (floats, or None when not computed),
+        valid (bool), reason (str when valid is False, else None).
+    """
+    b1 = float(model_quad['params'][1])
+    b2 = float(model_quad['params'][2])
+    p_b2 = float(model_quad['pvalues'][2])
+
+    if not (b2 < 0 and p_b2 < 0.05):
+        return {'t_star': None, 'se': None, 'ci_low': None, 'ci_high': None,
+                'valid': False, 'reason': REASON_NOT_CONCAVE}
+
+    t_star = -b1 / (2.0 * b2)
+
+    # Delta-method SE over the robust covariance of (B1, B2).
+    cov_b1_b2 = np.asarray(model_quad['results'].cov_params())[1:3, 1:3]
+    gradient = np.array([-1.0 / (2.0 * b2), b1 / (2.0 * b2 ** 2)])
+    se = float(np.sqrt(gradient @ cov_b1_b2 @ gradient))
+    ci_low = t_star - 1.96 * se
+    ci_high = t_star + 1.96 * se
+
+    commute_min = float(np.min(commute_time))
+    commute_max = float(np.max(commute_time))
+    if not commute_min <= t_star <= commute_max:
+        return {'t_star': t_star, 'se': se, 'ci_low': ci_low, 'ci_high': ci_high,
+                'valid': False, 'reason': REASON_OUTSIDE_RANGE}
+
+    return {'t_star': t_star, 'se': se, 'ci_low': ci_low, 'ci_high': ci_high,
+            'valid': True, 'reason': None}
 
 
 def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
@@ -162,6 +233,16 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
         pl.Series('residuals', resid)
     ])
 
+    # Step 7: Drive-until-you-qualify threshold (from the quadratic model)
+    threshold = estimate_threshold(model_quad, commute_time_min)
+    if threshold['valid']:
+        logger.info(
+            f"Threshold: t* = {threshold['t_star']:.1f} min "
+            f"(95% CI [{threshold['ci_low']:.1f}, {threshold['ci_high']:.1f}])"
+        )
+    else:
+        logger.info(f"Threshold undefined: {threshold['reason']}")
+
     return RQ1Results(
         model_linear=model_linear,
         model_quad=model_quad,
@@ -179,6 +260,7 @@ def analyze_rq1(df: pl.DataFrame) -> RQ1Results:
         feature_names=best_features,
         sample_size=len(df_clean),
         model_df=model_df,
+        threshold=threshold,
     )
 
 
@@ -240,7 +322,9 @@ def report_rq1(
         f.write("**Model Specification:**\n\n")
         f.write("```text\n")
         f.write("rent_to_income = B0 + B1(commute_min_proxy) + B2(commute_min_proxy^2) +\n")
-        f.write("                 B3(renter_share) + B4(vehicle_access) + B5(pop_density) + e\n")
+        f.write("                 B3(renter_share) + B4(vehicle_access) + B5(pop_density) +\n")
+        f.write("                 B6(job_density) + B7(distance_to_cbd_km) +\n")
+        f.write("                 B8(job_accessibility) + e\n")
         f.write("```\n\n")
         f.write("**Analysis:**\n\n")
         f.write("- Metro-specific linear regression with non-linearity testing\n")
@@ -289,8 +373,24 @@ def report_rq1(
     }
     save_markdown_table(vif_data, md_path, "Multicollinearity Diagnostics (VIF)")
 
-    # Interpretation
+    # Threshold + interpretation
     with open(md_path, 'a') as f:
+        f.write("## Drive-Until-You-Qualify Threshold\n\n")
+        thr = results.threshold
+        if thr['valid']:
+            f.write(
+                f"Estimated commute-time threshold (vertex of the quadratic): "
+                f"**t\\* = {thr['t_star']:.1f} minutes** "
+                f"(delta-method SE = {thr['se']:.2f}, "
+                f"95% CI [{thr['ci_low']:.1f}, {thr['ci_high']:.1f}]).\n\n"
+            )
+            f.write(
+                "Beyond this commute time, the fitted rent-burden curve turns over: "
+                "longer commutes no longer trade for improved affordability.\n\n"
+            )
+        else:
+            f.write(f"No threshold reported: {thr['reason']}.\n\n")
+
         f.write("## Interpretation\n\n")
         f.write(f"The **{best_model_name.lower()} model** was selected based on "
                 "Akaike Information Criterion (AIC). ")
