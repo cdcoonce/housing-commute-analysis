@@ -43,6 +43,34 @@ LIVE_COLUMNS = {"zori", "period", "stops_per_km2"}
 NEW_COLUMNS = {"job_density", "distance_to_cbd_km", "job_accessibility"}
 FINAL_DIR = Path(__file__).resolve().parents[1] / "data" / "final"
 
+# Frozen NUMERIC columns tolerate last-ULP float differences (summation-order /
+# numpy-version nondeterminism in tract->ZCTA aggregation, ~1e-16 relative).
+# Any real data change is many orders of magnitude larger than this.
+FLOAT_NOISE_RTOL = 1e-12
+
+
+def _is_float_noise(base_col: pd.Series, new_col: pd.Series) -> bool:
+    """True iff both columns are genuinely numeric and differ only within
+    FLOAT_NOISE_RTOL. Non-numeric columns (coercion would fabricate NaNs)
+    always return False and keep strict byte-identity."""
+    import numpy as np
+
+    base_num = pd.to_numeric(base_col, errors="coerce")
+    new_num = pd.to_numeric(new_col, errors="coerce")
+    if not (base_num.notna() == base_col.notna()).all():
+        return False
+    if not (new_num.notna() == new_col.notna()).all():
+        return False
+    return bool(
+        np.isclose(
+            base_num.to_numpy(dtype=float),
+            new_num.to_numpy(dtype=float),
+            rtol=FLOAT_NOISE_RTOL,
+            atol=0.0,
+            equal_nan=True,
+        ).all()
+    )
+
 
 def _assign_income_segment(income: float, q_low: float, q_high: float) -> str | None:
     """Mirror the assignment rule in src/pipelines/demographics.py:259-267."""
@@ -123,8 +151,11 @@ def check_metro(baseline_csv: Path, new_csv: Path, accept_drift: set[str]) -> li
         n_diff = int((base[col].fillna("") != new[col].fillna("")).sum())
         if col in accept_drift:
             print(f"    accepted drift {col}: {n_diff} rows differ")
-        else:
-            errors.append(f"frozen column '{col}' drifted in {n_diff} rows")
+            continue
+        if _is_float_noise(base[col], new[col]):
+            print(f"    float-noise drift {col}: {n_diff} rows differ at <= {FLOAT_NOISE_RTOL} relative")
+            continue
+        errors.append(f"frozen column '{col}' drifted in {n_diff} rows")
 
     if "income_segment" in accept_drift and "income_segment" in base.columns and "income_segment" in new.columns:
         errors.extend(verify_income_segment_drift(base, new))

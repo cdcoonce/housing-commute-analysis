@@ -33,6 +33,37 @@ def _row(zcta: str, income: float = 50000.0) -> dict:
     }
 
 
+def test_check_metro_tolerates_float_noise_but_fails_real_drift(tmp_path) -> None:
+    """A last-ULP float difference in a frozen numeric column (summation-order
+    noise, ~1e-16 relative) must not fail the gate — but a real value change
+    (>> 1e-12 relative) must."""
+    base = _write_csv(
+        tmp_path / "base.csv",
+        [_row("98338"), _row("98409", income=60000.0)],
+    )
+    noise = _row("98338")
+    noise["median_income"] = 50000.000000000007  # ULP-level
+    new_noise = _write_csv(tmp_path / "new_noise.csv", [noise, _row("98409", income=60000.0)])
+    errors = rebuild_gate.check_metro(base, new_noise, accept_drift=set())
+    assert not any("median_income" in e for e in errors), errors
+
+    real = _row("98338")
+    real["median_income"] = 50100.0  # 0.2% — real drift
+    new_real = _write_csv(tmp_path / "new_real.csv", [real, _row("98409", income=60000.0)])
+    errors = rebuild_gate.check_metro(base, new_real, accept_drift=set())
+    assert any("median_income" in e for e in errors), errors
+
+
+def test_check_metro_still_fails_non_numeric_frozen_drift(tmp_path) -> None:
+    """String-typed frozen columns keep strict byte-identity."""
+    base = _write_csv(tmp_path / "base.csv", [_row("98338"), _row("98409")])
+    changed = _row("98338")
+    changed["income_segment"] = "High"
+    new = _write_csv(tmp_path / "new.csv", [changed, _row("98409")])
+    errors = rebuild_gate.check_metro(base, new, accept_drift=set())
+    assert any("income_segment" in e for e in errors), errors
+
+
 def test_check_metro_reports_duplicate_rows_instead_of_crashing(tmp_path) -> None:
     """Equal ZCTA sets but unequal row counts (duplicated ZCTA5CE rows) must
     produce a gate FAILURE naming the duplication — not a ValueError from the
