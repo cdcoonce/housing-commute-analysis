@@ -97,7 +97,8 @@ def analyze_rq2(df: pl.DataFrame) -> RQ2Results:
         x_list = [x_commute, x_low_inc, x_interaction]
         feature_names = ['commute_min_proxy', 'low_income', 'commute*low_income']
 
-        for control_col in ['stops_per_km2', 'pct_car', 'pct_white', 'total_pop']:
+        for control_col in ['stops_per_km2', 'pct_car', 'pct_white', 'total_pop',
+                            'job_density', 'distance_to_cbd_km', 'job_accessibility']:
             if control_col in df_model.columns:
                 control_data = df_model[control_col].to_numpy()
                 if not np.all(np.isnan(control_data)):
@@ -143,6 +144,11 @@ def analyze_rq2(df: pl.DataFrame) -> RQ2Results:
         if 'stops_per_km2' in df.columns:
             anova_results.append(
                 anova_by_group(df, 'stops_per_km2', 'income_segment', income_groups)
+            )
+
+        if 'job_accessibility' in df.columns:
+            anova_results.append(
+                anova_by_group(df, 'job_accessibility', 'income_segment', income_groups)
             )
 
         # Race-based ANOVA
@@ -408,6 +414,7 @@ def report_rq2(
         'rent_to_income': 'Rent Burden',
         'long45_share': 'Long Commute Share',
         'stops_per_km2': 'Transit Density',
+        'job_accessibility': 'Job Accessibility',
     }
 
     for ar in results.anova_results:
