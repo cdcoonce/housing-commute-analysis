@@ -249,3 +249,101 @@ def test_fetch_state_jobs_unchanged_via_xwalk_helper(monkeypatch) -> None:
 def test_lodes_panel_years_constant() -> None:
     """2015 matches the ZORI window start; 2023 is the newest published LODES8 year."""
     assert lodes.LODES_PANEL_YEARS == tuple(range(2015, 2024))
+
+
+def test_job_accessibility_by_year_hand_computable_per_year() -> None:
+    """Same geometry as the single-year hand-computable test, jobs varying by
+    year: A_iy = jobs_Ay + jobs_By * e^-1 must hold independently per year."""
+    utm = 32612
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001"]},
+        geometry=[_square(400000.0, 3700000.0)],
+        crs=utm,
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["04013000100", "04013000200"]},
+        geometry=[_square(400000.0, 3700000.0, half=500.0),
+                  _square(410000.0, 3700000.0, half=500.0)],
+        crs=utm,
+    )
+    panel = pd.DataFrame({
+        "year": [2015, 2015, 2016, 2016],
+        "zcta": ["85001"] * 4,
+        "trct": ["04013000100", "04013000200"] * 2,
+        "jobs": [100, 50, 200, 80],
+    })
+    out = lodes.job_accessibility_by_year(zctas, tracts, panel, utm, decay_km=10.0)
+    assert list(out.columns) == ["ZCTA5CE", "year", "job_accessibility"]
+    by_year = out.set_index("year")["job_accessibility"]
+    assert np.isclose(by_year[2015], 100.0 + 50.0 * math.exp(-1.0), rtol=1e-6)
+    assert np.isclose(by_year[2016], 200.0 + 80.0 * math.exp(-1.0), rtol=1e-6)
+
+
+def test_job_accessibility_by_year_allclose_with_single_year() -> None:
+    """For a shared year on identical synthetic geometry the panel path must
+    np.allclose the existing single-year job_accessibility. NOT byte-equality:
+    the matmul's pairwise-summation grouping differs (design §2)."""
+    utm = 32612
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001", "85002", "85003"]},
+        geometry=[_square(400000.0, 3700000.0),
+                  _square(407000.0, 3703000.0),
+                  _square(395000.0, 3695000.0)],
+        crs=utm,
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["04013000100", "04013000200", "04013000300", "04013000400"]},
+        geometry=[_square(401000.0, 3701000.0, half=500.0),
+                  _square(409000.0, 3702000.0, half=500.0),
+                  _square(396000.0, 3694000.0, half=500.0),
+                  _square(404000.0, 3698000.0, half=500.0)],
+        crs=utm,
+    )
+    single_year_df = pd.DataFrame({
+        "zcta": ["85001", "85002", "85003", "85001"],
+        "trct": ["04013000100", "04013000200", "04013000300", "04013000400"],
+        "jobs": [123, 456, 789, 55],
+    })
+    panel = single_year_df.copy()
+    panel.insert(0, "year", 2021)
+    # A second year with different jobs must not perturb the shared year.
+    other = single_year_df.copy()
+    other.insert(0, "year", 2022)
+    other["jobs"] = [1, 2, 3, 4]
+    panel = pd.concat([panel, other], ignore_index=True)
+
+    single = lodes.job_accessibility(zctas, tracts, single_year_df, utm)
+    multi = lodes.job_accessibility_by_year(zctas, tracts, panel, utm)
+    shared = (
+        multi[multi["year"] == 2021]
+        .set_index("ZCTA5CE")["job_accessibility"]
+        .reindex(single["ZCTA5CE"])
+    )
+    assert np.allclose(shared.to_numpy(), single["job_accessibility"].to_numpy())
+
+
+def test_job_accessibility_by_year_absent_tract_year_contributes_zero() -> None:
+    """A tract with jobs in only one year contributes 0 in the other years
+    (union tract axis, 0-filled), not a silent carry-forward."""
+    utm = 32612
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": ["85001"]},
+        geometry=[_square(400000.0, 3700000.0)],
+        crs=utm,
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["04013000100", "04013000200"]},
+        geometry=[_square(400000.0, 3700000.0, half=500.0),
+                  _square(410000.0, 3700000.0, half=500.0)],
+        crs=utm,
+    )
+    panel = pd.DataFrame({
+        "year": [2015, 2016, 2016],
+        "zcta": ["85001"] * 3,
+        "trct": ["04013000100", "04013000100", "04013000200"],
+        "jobs": [100, 100, 50],  # tract ...200 exists only in 2016
+    })
+    out = lodes.job_accessibility_by_year(zctas, tracts, panel, utm, decay_km=10.0)
+    by_year = out.set_index("year")["job_accessibility"]
+    assert np.isclose(by_year[2015], 100.0, rtol=1e-6)  # no e^-1 term
+    assert np.isclose(by_year[2016], 100.0 + 50.0 * math.exp(-1.0), rtol=1e-6)

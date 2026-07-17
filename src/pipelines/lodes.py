@@ -260,3 +260,74 @@ def job_accessibility(
     access = (jobs[None, :] * np.exp(-d_km / decay_km)).sum(axis=1)
 
     return pd.DataFrame({"ZCTA5CE": zcta_ids, "job_accessibility": access})
+
+
+def job_accessibility_by_year(
+    zctas_gdf: gpd.GeoDataFrame,
+    tracts_gdf: gpd.GeoDataFrame,
+    lodes_panel_df: pd.DataFrame,
+    utm_zone: int,
+    decay_km: float = GRAVITY_DECAY_KM,
+) -> pd.DataFrame:
+    """Gravity job-accessibility per (ZCTA, year), vectorized across years.
+
+    The (n_zcta, n_tract) decay matrix exp(-D/decay_km) is computed ONCE and
+    multiplied against an (n_tract, n_years) jobs matrix built on the UNION
+    tract axis: a tract with jobs in only some years is 0-filled in the others
+    (never carried forward). Tract rows are stable-sorted by `trct` before the
+    reduction (issue #6 order-invariance convention).
+
+    Agreement with the single-year `job_accessibility` for a shared year holds
+    at np.allclose, NOT byte-equality: the matmul's pairwise-summation grouping
+    differs from the single-year broadcast-and-sum (design §2).
+
+    Returns [ZCTA5CE, year, job_accessibility] — ZCTAs in zctas_gdf row order
+    (matching `job_accessibility`), years ascending within each ZCTA.
+    """
+    tract_year_jobs = (
+        lodes_panel_df.groupby(["trct", "year"], as_index=False)["jobs"]
+        .sum()
+        .pivot(index="trct", columns="year", values="jobs")
+        .fillna(0.0)
+        .sort_index(kind="stable")
+        .sort_index(axis=1)
+    )
+    years = [int(y) for y in tract_year_jobs.columns]
+
+    tracts = tracts_gdf.to_crs(utm_zone).copy()
+    tracts["trct"] = tracts["GEOID"].astype(str).str.zfill(11)
+    tracts = tracts.merge(
+        tract_year_jobs.reset_index(), on="trct", how="inner"
+    ).sort_values("trct", kind="stable", ignore_index=True)
+
+    zctas = zctas_gdf.to_crs(utm_zone)
+    zcta_ids = zctas["ZCTA5CE"].astype(str).str.zfill(5)
+
+    if tracts.empty:
+        logger.warning(
+            "job_accessibility_by_year: no tracts matched LODES jobs; returning 0s"
+        )
+        return pd.DataFrame({
+            "ZCTA5CE": np.repeat(zcta_ids.to_numpy(), len(years)),
+            "year": np.tile(np.asarray(years, dtype=int), len(zctas)),
+            "job_accessibility": np.zeros(len(zctas) * len(years)),
+        })
+
+    tract_cent = tracts.geometry.centroid
+    tract_xy = np.column_stack([tract_cent.x.to_numpy(), tract_cent.y.to_numpy()])
+    jobs_by_year = tracts[years].to_numpy(dtype=float)  # (n_tract, n_years)
+
+    zcta_cent = zctas.geometry.centroid
+    zcta_xy = np.column_stack([zcta_cent.x.to_numpy(), zcta_cent.y.to_numpy()])
+
+    # Pairwise (n_zcta, n_tract) distances in km — computed once for all years
+    d_km = np.sqrt(
+        ((zcta_xy[:, None, :] - tract_xy[None, :, :]) ** 2).sum(axis=2)
+    ) / 1000.0
+    access = np.exp(-d_km / decay_km) @ jobs_by_year  # (n_zcta, n_years)
+
+    return pd.DataFrame({
+        "ZCTA5CE": np.repeat(zcta_ids.to_numpy(), len(years)),
+        "year": np.tile(np.asarray(years, dtype=int), len(zctas)),
+        "job_accessibility": access.ravel(),
+    })
