@@ -65,6 +65,19 @@ def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True
         if missing:
             raise ValueError(f"Schema violation: missing critical columns {missing}")
 
+    # One row per ZCTA is the dataset's core invariant: duplicated ZCTA5CE values
+    # mean upstream row multiplication (e.g. double-fetched ZCTAs from overlapping
+    # zip prefixes) and must fail loudly rather than reach analysis.
+    if "ZCTA5CE" in df.columns:
+        zctas = df["ZCTA5CE"].drop_nulls()
+        n_dup_rows = zctas.len() - zctas.n_unique()
+        if n_dup_rows > 0:
+            dup_values = zctas.filter(zctas.is_duplicated()).unique().sort().to_list()
+            errors.append(
+                f"ZCTA5CE has {n_dup_rows} duplicate rows "
+                f"(duplicated values, first 10: {dup_values[:10]})"
+            )
+
     for col in _PERCENT_COLUMNS:
         errors.append(_range_violation(df, col, 0.0, 100.0 + _PERCENT_TOL))
     for col in _NON_NEGATIVE_COLUMNS:

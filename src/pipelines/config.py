@@ -46,7 +46,7 @@ METRO_CONFIGS = {
             ("05", "035"),  # AR - Crittenden
             ("28", "033"),  # MS - DeSoto
         ],
-        "zip_prefixes": ["38", "72", "386"],  # TN, AR, MS prefixes
+        "zip_prefixes": ["38", "72"],  # TN+MS ("38" covers 386xx MS), AR prefixes
         "utm_zone": 32616,  # UTM Zone 16N
         "cbd_points": [(35.1495, -90.0490)],    # Downtown Memphis (Civic Center Plaza)
     },

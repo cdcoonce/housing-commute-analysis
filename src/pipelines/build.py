@@ -109,13 +109,18 @@ def employment_features_task(lodes_df, zctas_in_metro, tracts, cbd_points, utm_z
 
     distance frame is the base (covers every metro ZCTA); job counts are
     left-merged and filled to 0 (absence from WAC means zero jobs, not missing).
+
+    All frames are one-row-per-ZCTA (dist/access mirror zctas_in_metro; counts is
+    groupby-unique), so the merges validate one_to_one: a duplicated ZCTA in the
+    input (e.g. from overlapping zip prefixes) raises MergeError instead of
+    silently multiplying rows.
     """
     dist = distance_to_cbd_km(zctas_in_metro, cbd_points, utm_zone)
     counts = zcta_job_counts(lodes_df)
     access = job_accessibility(zctas_in_metro, tracts, lodes_df, utm_zone)
     out = (
-        dist.merge(counts, on="ZCTA5CE", how="left")
-        .merge(access, on="ZCTA5CE", how="left")
+        dist.merge(counts, on="ZCTA5CE", how="left", validate="one_to_one")
+        .merge(access, on="ZCTA5CE", how="left", validate="one_to_one")
     )
     out["job_count"] = out["job_count"].fillna(0.0)
     return out
@@ -295,33 +300,42 @@ def build_metro_flow(metro_key: str = "phoenix") -> str:
     )
     logger.info(f"Computed employment features for {len(employment)} ZCTAs")
 
-    # Step 7: Merge all data sources into final dataset
+    # Step 7: Merge all data sources into final dataset.
+    # zcta_aggregated is groupby-unique and every right frame is one-row-per-ZCTA
+    # (demographics/zori are groupby-unique; transit/area/employment mirror the
+    # deduplicated zctas_in_metro), so each merge validates one_to_one — any key
+    # duplication raises MergeError instead of silently multiplying rows.
     final_dataset = (
         zcta_aggregated
         .merge(
             zcta_demographics,
             on="ZCTA5CE",
-            how="left"  # Left join to keep all ZCTAs
+            how="left",  # Left join to keep all ZCTAs
+            validate="one_to_one",
         )
         .merge(
             zori_data[["ZCTA5CE", "period", "zori"]],
             on="ZCTA5CE",
-            how="left"  # Left join to keep all ZCTAs even without ZORI data
+            how="left",  # Left join to keep all ZCTAs even without ZORI data
+            validate="one_to_one",
         )
         .merge(
             transit_density,
             on="ZCTA5CE",
-            how="left"  # Left join to keep all ZCTAs even without transit data
+            how="left",  # Left join to keep all ZCTAs even without transit data
+            validate="one_to_one",
         )
         .merge(
             zcta_area_df,
             on="ZCTA5CE",
-            how="left"  # Left join to add area for density calculation
+            how="left",  # Left join to add area for density calculation
+            validate="one_to_one",
         )
         .merge(
             employment,
             on="ZCTA5CE",
-            how="left"  # Left join to keep all ZCTAs
+            how="left",  # Left join to keep all ZCTAs
+            validate="one_to_one",
         )
     )
 

@@ -65,3 +65,24 @@ def test_all_metros_have_plausible_cbd_points() -> None:
 def test_dallas_is_dual_cbd() -> None:
     """DFW is functionally dual-CBD: Dallas and Fort Worth, ~50 km apart."""
     assert len(METRO_CONFIGS["dallas"]["cbd_points"]) == 2
+
+
+def test_zip_prefixes_are_non_overlapping() -> None:
+    """No metro may list a zip prefix that is a prefix of another of its own prefixes.
+
+    A shorter prefix already matches every ZCTA of any longer prefix it starts
+    (e.g. "38" covers all of "386"), so listing both fetches those ZCTAs twice
+    and duplicates every downstream row (root cause of memphis's duplicated rows).
+    """
+    for metro, cfg in METRO_CONFIGS.items():
+        prefixes = cfg["zip_prefixes"]
+        shadowed = [
+            (a, b)
+            for i, a in enumerate(prefixes)
+            for j, b in enumerate(prefixes)
+            if i != j and b.startswith(a)
+        ]
+        assert not shadowed, (
+            f"Metro '{metro}' has overlapping zip_prefixes {shadowed}: the first "
+            "prefix of each pair already covers the second, double-fetching those ZCTAs"
+        )
