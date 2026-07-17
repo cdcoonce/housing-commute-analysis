@@ -94,3 +94,37 @@ def test_zori_panel_task_renames_filters_sorts() -> None:
         out.sort_values(["ZCTA5CE", "period"], kind="stable", ignore_index=True)
     )
     assert len(out) == 4
+
+
+def test_committed_zcta_frame_reads_committed_dataset(monkeypatch, tmp_path) -> None:
+    """The panel's ZCTA universe is the committed 35-column dataset's ZCTA5CE set
+    (design coverage-table semantics), zero-padded, not the geometric CBSA set."""
+    import src.pipelines.panel as panel
+
+    csv = tmp_path / "final_zcta_dataset_phoenix.csv"
+    pd.DataFrame({"ZCTA5CE": [85001, 85002], "zori": [1.0, 2.0]}).to_csv(csv, index=False)
+    monkeypatch.setattr(panel, "DATA_FINAL", tmp_path)
+
+    out = panel.committed_zcta_frame("phoenix")
+    assert list(out["ZCTA5CE"]) == ["85001", "85002"]
+
+
+def test_committed_zcta_frame_missing_dataset_raises(monkeypatch, tmp_path) -> None:
+    import src.pipelines.panel as panel
+
+    monkeypatch.setattr(panel, "DATA_FINAL", tmp_path)
+    with pytest.raises(FileNotFoundError, match="final_zcta_dataset_phoenix"):
+        panel.committed_zcta_frame("phoenix")
+
+
+def test_build_panel_flow_scopes_by_committed_dataset_not_geometry() -> None:
+    """Structural: the flow must not resolve the metro ZCTA set from the
+    geometric CBSA-filter tasks (out-of-dataset ZIPs would enter the panel)."""
+    import inspect
+
+    from src.pipelines.panel import build_panel_flow
+
+    src = inspect.getsource(build_panel_flow.fn)
+    assert "committed_zcta_frame" in src
+    for geo_task in ("filter_zctas_task", "fetch_cbsa_boundary_task", "fetch_state_zctas_task"):
+        assert geo_task not in src

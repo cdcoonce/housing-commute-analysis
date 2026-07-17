@@ -2,10 +2,10 @@
 
 Builds the per-metro committed panel data products for RQ4 (COVID commute-gradient
 repricing). This flow is deliberately separate from build_metro_flow so the
-cross-sectional 35-column build path is not modified at all; the shared cacheable
-geo tasks (fetch_cbsa_boundary_task, fetch_state_zctas_task, filter_zctas_task)
-are imported from build.py — Prefect's INPUTS + TASK_SOURCE cache is flow-agnostic,
-so a panel build after a dataset build hits cache on all shared fetches.
+cross-sectional 35-column build path is not modified at all. The panel's ZCTA
+universe is the committed 35-column dataset itself (committed_zcta_frame) — the
+analysis-usable set whose covariates RQ4 joins — so the flow needs no geometric
+fetches; its only network task is the ZORI series pull.
 
 Phase 1 covers the ZORI half (zori_panel_<metro>.csv); the LODES/ACS halves land
 in Phase 2 (design doc §2, docs/plans/2026-07-17-rq4-zori-dynamics-design.md).
@@ -29,12 +29,7 @@ import polars as pl
 
 from prefect import flow, task
 
-from .build import (
-    _CACHE,
-    fetch_cbsa_boundary_task,
-    fetch_state_zctas_task,
-    filter_zctas_task,
-)
+from .build import _CACHE
 from .config import DATA_FINAL, METRO_CONFIGS, ZORI_PANEL_CSV_URL
 from .manifest import build_panel_manifest, get_git_commit, write_manifest
 from .prefect_config import NETWORK_RETRIES
@@ -56,14 +51,40 @@ def fetch_zori_series_task(
     return fetch_zori_series(url, zip_prefixes)
 
 
+def committed_zcta_frame(metro_key: str) -> pd.DataFrame:
+    """ZCTA universe for a metro's panel products: the committed 35-column
+    dataset's ZCTA5CE set (design coverage-table semantics).
+
+    The panel is scoped to the analysis-usable universe — RQ4 joins every
+    covariate from the committed dataset, so panel rows for ZCTAs outside it
+    are unusable by construction (a geometric CBSA scope would include e.g.
+    in-CBSA ZCTAs with no configured-county tract data).
+
+    Raises
+    ------
+    FileNotFoundError
+        If the committed dataset CSV is absent — build it first.
+    """
+    csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
+    if not csv.exists():
+        raise FileNotFoundError(
+            f"{csv.name} is required to scope the {metro_key} panel; "
+            "build the cross-sectional dataset first"
+        )
+    frame = pd.read_csv(csv, usecols=["ZCTA5CE"], dtype={"ZCTA5CE": str})
+    frame["ZCTA5CE"] = frame["ZCTA5CE"].str.zfill(5)
+    return frame
+
+
 # --- Plain CPU tasks ---
 @task(name="zori_panel")
 def zori_panel_task(zori_long: pd.DataFrame, zctas_in_metro) -> pd.DataFrame:
     """[ZCTA5CE, period, zori] monthly panel for the metro's ZCTA set.
 
     Renames zip -> ZCTA5CE, inner-filters to the metro ZCTA set (ZIPs matching
-    the prefix pull but outside the CBSA are dropped), and stable-sorts by
-    (ZCTA5CE, period) for deterministic committed bytes (issue #6 convention).
+    the prefix pull but outside the committed dataset are dropped), and
+    stable-sorts by (ZCTA5CE, period) for deterministic committed bytes
+    (issue #6 convention).
     """
     panel = zori_long.rename(columns={"zip": "ZCTA5CE"})
     metro_zctas = set(zctas_in_metro["ZCTA5CE"].astype(str))
@@ -86,9 +107,7 @@ def build_panel_flow(metro_key: str = "phoenix") -> str:
     Returns the output CSV path as a string.
     """
     metro_config = METRO_CONFIGS[metro_key]
-    CBSA_CODE = metro_config["cbsa_code"]
     METRO_NAME = metro_config["name"]
-    UTM_ZONE = metro_config["utm_zone"]
     ZIP_PREFIXES = metro_config["zip_prefixes"]
     ZORI_PANEL_OUT = DATA_FINAL / f"zori_panel_{metro_key}.csv"
 
@@ -96,12 +115,11 @@ def build_panel_flow(metro_key: str = "phoenix") -> str:
     logger.info(f"Building panel data products for: {METRO_NAME}")
     logger.info("=" * 60)
 
-    # Step 1: metro ZCTA set (shared cacheable geo tasks)
-    logger.info("STEP 1: Resolving the metro ZCTA set...")
-    cbsa_boundary = fetch_cbsa_boundary_task(CBSA_CODE)
-    zctas_all = fetch_state_zctas_task(ZIP_PREFIXES)
-    zctas_in_metro = filter_zctas_task(zctas_all, cbsa_boundary, UTM_ZONE)
-    logger.info(f"{len(zctas_in_metro)} ZCTAs in metro")
+    # Step 1: metro ZCTA set = the committed 35-column dataset's universe
+    # (design coverage-table semantics; no geometric fetches needed)
+    logger.info("STEP 1: Resolving the metro ZCTA set from the committed dataset...")
+    zctas_in_metro = committed_zcta_frame(metro_key)
+    logger.info(f"{len(zctas_in_metro)} ZCTAs in the committed dataset")
 
     # Step 2: full monthly ZORI series (non-SA vintage; design §4 "Index choice")
     logger.info("STEP 2: Fetching the monthly ZORI series...")
