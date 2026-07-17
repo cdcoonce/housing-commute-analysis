@@ -42,6 +42,38 @@ def test_verify_manifest_clean_then_drift(tmp_path: Path) -> None:
     assert verify_manifest(csv, mpath)                 # drift detected
 
 
+def test_build_manifest_records_metro_config(tmp_path: Path) -> None:
+    """A known metro's config essentials are embedded, JSON-serializable (tuples -> lists)."""
+    import json
+
+    from src.pipelines.config import METRO_CONFIGS
+
+    csv = _tiny_csv(tmp_path)
+    m = build_manifest(
+        "phoenix", csv, git_commit="abc", timestamp_utc="2026-07-16T00:00:00Z",
+        zori_period=None, steps=[],
+    )
+    mc = m["metro_config"]
+    assert mc is not None
+    assert mc["cbsa_code"] == "38060"
+    assert mc["utm_zone"] == 32612
+    assert mc["counties"] == [list(c) for c in METRO_CONFIGS["phoenix"]["counties"]]
+    assert mc["zip_prefixes"] == METRO_CONFIGS["phoenix"]["zip_prefixes"]
+    assert mc["cbd_points"] == [list(p) for p in METRO_CONFIGS["phoenix"]["cbd_points"]]
+    # No tuples anywhere: must round-trip through strict JSON unchanged.
+    assert json.loads(json.dumps(mc)) == mc
+
+
+def test_build_manifest_unknown_metro_config_is_null(tmp_path: Path) -> None:
+    """Metros absent from METRO_CONFIGS (e.g. the 'test' metro) yield null, not a raise."""
+    csv = _tiny_csv(tmp_path)
+    m = build_manifest(
+        "test", csv, git_commit="abc", timestamp_utc="2026-07-16T00:00:00Z",
+        zori_period=None, steps=[],
+    )
+    assert m["metro_config"] is None
+
+
 def test_manifest_includes_lodes_provenance(tmp_path) -> None:
     import polars as pl
 

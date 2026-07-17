@@ -10,7 +10,7 @@ from typing import Any
 import polars as pl
 
 from src.pipelines.acs import DEFAULT_ACS_YEAR  # ACS commute vintage (2021)
-from src.pipelines.config import ZORI_ZIP_CSV_URL
+from src.pipelines.config import METRO_CONFIGS, ZORI_ZIP_CSV_URL
 from src.pipelines.lodes import LODES_YEAR
 
 _DEMOGRAPHICS_YEAR = 2023  # fetch_demographics_for_county default vintage
@@ -41,6 +41,25 @@ def get_git_commit() -> str:
         return "unknown"
 
 
+def _metro_config_snapshot(metro_key: str) -> dict[str, Any] | None:
+    """JSON-serializable snapshot of the producing metro's config essentials.
+
+    Records the county list (and friends) in the manifest so a silent config
+    change is visible as provenance drift. Unknown metros (e.g. the "test"
+    metro used in tests) yield None rather than raising.
+    """
+    config = METRO_CONFIGS.get(metro_key)
+    if config is None:
+        return None
+    return {
+        "cbsa_code": config["cbsa_code"],
+        "counties": [list(county) for county in config["counties"]],
+        "zip_prefixes": list(config["zip_prefixes"]),
+        "utm_zone": config["utm_zone"],
+        "cbd_points": [list(point) for point in config["cbd_points"]],
+    }
+
+
 def build_manifest(
     metro_key: str,
     csv_path: Path,
@@ -53,6 +72,7 @@ def build_manifest(
     df = pl.read_csv(csv_path)
     return {
         "metro_key": metro_key,
+        "metro_config": _metro_config_snapshot(metro_key),
         "git_commit": git_commit,
         "run_timestamp_utc": timestamp_utc,
         "acs_commute_year": DEFAULT_ACS_YEAR,
