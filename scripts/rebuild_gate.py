@@ -104,6 +104,14 @@ def check_metro(baseline_csv: Path, new_csv: Path, accept_drift: set[str]) -> li
     if set(base["ZCTA5CE"]) != set(new["ZCTA5CE"]):
         errors.append("ZCTA set changed")
         return errors
+    if len(base) != len(new):
+        dup_base = int(base["ZCTA5CE"].duplicated().sum())
+        dup_new = int(new["ZCTA5CE"].duplicated().sum())
+        errors.append(
+            "cannot compare frozen columns: row counts differ with equal ZCTA "
+            f"sets (duplicated ZCTA5CE rows: baseline={dup_base}, new={dup_new})"
+        )
+        return errors
 
     base = base.sort_values("ZCTA5CE").reset_index(drop=True)
     new = new.sort_values("ZCTA5CE").reset_index(drop=True)
