@@ -95,6 +95,44 @@ def run_single_metro(metro: str) -> tuple[bool, str]:
         return False, f"Unexpected error: {type(e).__name__}: {e}"
 
 
+def generate_manifests_offline() -> int:
+    """Offline: (re)write provenance manifests for existing final CSVs.
+
+    Regenerated manifests must not claim build provenance for data this
+    commit did not build (issue #3): build_manifest is invoked with
+    provenance="regenerated-offline", which nulls git_commit and records the
+    stamping commit in regenerated_at_commit instead.
+    """
+    from datetime import datetime, timezone
+
+    import polars as pl
+
+    from src.pipelines.config import DATA_FINAL, METRO_CONFIGS
+    from src.pipelines.manifest import build_manifest, get_git_commit, write_manifest
+
+    commit = get_git_commit()
+    ts = datetime.now(timezone.utc).isoformat()
+    count = 0
+    for metro_key in METRO_CONFIGS:
+        csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
+        if not csv.exists():
+            continue
+        df = pl.read_csv(csv)
+        zori_period = None
+        if "period" in df.columns and df["period"].drop_nulls().len() > 0:
+            zori_period = str(df["period"].drop_nulls().max())
+        write_manifest(
+            build_manifest(metro_key, csv, git_commit=commit, timestamp_utc=ts,
+                           zori_period=zori_period, steps=[],
+                           provenance="regenerated-offline"),
+            DATA_FINAL / f"{metro_key}.manifest.json",
+        )
+        count += 1
+        logger.info("wrote manifest for %s", metro_key)
+    logger.info("Generated %d manifests", count)
+    return 0
+
+
 def main():
     """Execute the data pipeline."""
     # Parse command line arguments
@@ -118,33 +156,7 @@ def main():
     logger.info("=" * 70)
 
     if args.generate_manifests:
-        from datetime import datetime, timezone
-
-        import polars as pl
-
-        from src.pipelines.config import DATA_FINAL, METRO_CONFIGS
-        from src.pipelines.manifest import build_manifest, get_git_commit, write_manifest
-
-        commit = get_git_commit()
-        ts = datetime.now(timezone.utc).isoformat()
-        count = 0
-        for metro_key in METRO_CONFIGS:
-            csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
-            if not csv.exists():
-                continue
-            df = pl.read_csv(csv)
-            zori_period = None
-            if "period" in df.columns and df["period"].drop_nulls().len() > 0:
-                zori_period = str(df["period"].drop_nulls().max())
-            write_manifest(
-                build_manifest(metro_key, csv, git_commit=commit, timestamp_utc=ts,
-                               zori_period=zori_period, steps=[]),
-                DATA_FINAL / f"{metro_key}.manifest.json",
-            )
-            count += 1
-            logger.info("wrote manifest for %s", metro_key)
-        logger.info("Generated %d manifests", count)
-        return 0
+        return generate_manifests_offline()
 
     if args.verify:
         from src.pipelines.config import DATA_FINAL
