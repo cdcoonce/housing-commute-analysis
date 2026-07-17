@@ -12,6 +12,7 @@ import polars as pl
 from src.pipelines.acs import DEFAULT_ACS_YEAR  # ACS commute vintage (2021)
 from src.pipelines.config import METRO_CONFIGS, ZORI_ZIP_CSV_URL
 from src.pipelines.lodes import LODES_YEAR
+from src.pipelines.tiger import CBSA_VINTAGE  # pinned CBSA delineation vintage
 
 _DEMOGRAPHICS_YEAR = 2023  # fetch_demographics_for_county default vintage
 _SOURCE_URLS = {
@@ -60,6 +61,11 @@ def _metro_config_snapshot(metro_key: str) -> dict[str, Any] | None:
     }
 
 
+PROVENANCE_PIPELINE_BUILD = "pipeline-build"
+PROVENANCE_REGENERATED_OFFLINE = "regenerated-offline"
+_PROVENANCE_MODES = (PROVENANCE_PIPELINE_BUILD, PROVENANCE_REGENERATED_OFFLINE)
+
+
 def build_manifest(
     metro_key: str,
     csv_path: Path,
@@ -68,16 +74,38 @@ def build_manifest(
     timestamp_utc: str,
     zori_period: str | None,
     steps: list[dict[str, Any]],
+    provenance: str = PROVENANCE_PIPELINE_BUILD,
 ) -> dict[str, Any]:
+    """Build a provenance manifest for a final CSV.
+
+    ``provenance`` distinguishes how the manifest came to exist (issue #3):
+
+    - ``"pipeline-build"`` (default): the pipeline built the data at
+      ``git_commit``, which is stamped as the build commit.
+    - ``"regenerated-offline"``: the manifest was rewritten from an existing
+      CSV the pipeline did NOT build at the current commit. ``git_commit`` is
+      recorded as null (no build commit can honestly be claimed) and the
+      stamping commit lands in ``regenerated_at_commit`` instead. This routing
+      happens here, not at call sites, so an offline caller cannot stamp false
+      build provenance even by passing the current commit.
+    """
+    if provenance not in _PROVENANCE_MODES:
+        raise ValueError(
+            f"unknown provenance mode {provenance!r}; expected one of {_PROVENANCE_MODES}"
+        )
+    is_build = provenance == PROVENANCE_PIPELINE_BUILD
     df = pl.read_csv(csv_path)
     return {
         "metro_key": metro_key,
         "metro_config": _metro_config_snapshot(metro_key),
-        "git_commit": git_commit,
+        "provenance": provenance,
+        "git_commit": git_commit if is_build else None,
+        "regenerated_at_commit": None if is_build else git_commit,
         "run_timestamp_utc": timestamp_utc,
         "acs_commute_year": DEFAULT_ACS_YEAR,
         "acs_demographics_year": _DEMOGRAPHICS_YEAR,
         "lodes_year": LODES_YEAR,
+        "cbsa_vintage": CBSA_VINTAGE,
         "source_urls": _SOURCE_URLS,
         "zori_period": zori_period,
         "output_csv": csv_path.name,

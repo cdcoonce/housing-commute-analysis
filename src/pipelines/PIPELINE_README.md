@@ -183,7 +183,7 @@ Output: /path/to/DAT490/data/final/final_zcta_dataset_phoenix.csv
 
 **API Endpoints**:
 
-- CBSAs: `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/CBSA/MapServer/15/query`
+- CBSAs: `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/CBSA/MapServer/{layer}/query` — the layer id is resolved at fetch time by pinned vintage (`CBSA_VINTAGE` in `tiger.py`), not hardcoded
 - ZCTAs: `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2024/MapServer/2/query`
 - Tracts: `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/7/query`
 
