@@ -44,6 +44,9 @@ def sample_zcta_df() -> pl.DataFrame:
         "pct_transit": np.random.uniform(0.0, 0.3, n).tolist(),
         "pct_drive_alone": np.random.uniform(0.4, 0.9, n).tolist(),
         "pct_car": np.random.uniform(0.5, 0.95, n).tolist(),
+        "job_density": np.random.uniform(10.0, 2000.0, n).tolist(),
+        "distance_to_cbd_km": np.random.uniform(1.0, 40.0, n).tolist(),
+        "job_accessibility": np.random.uniform(1_000.0, 200_000.0, n).tolist(),
     })
 
 

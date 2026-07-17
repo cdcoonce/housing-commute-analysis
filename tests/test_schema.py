@@ -48,3 +48,20 @@ def test_percent_out_of_range_rejected() -> None:
     data["pct_transit"] = [250.0]
     with pytest.raises(ValueError, match="out of range"):
         validate_final_dataset(pl.DataFrame(data))
+
+
+def test_duplicate_zcta_rejected() -> None:
+    """One row per ZCTA is the dataset's core invariant; duplicated ZCTA5CE values
+    (how a 76-row/52-unique memphis got committed) must fail validation loudly."""
+    data = {c: [1.0, 1.0] for c in REQUIRED_COLUMNS}
+    data["income_segment"] = ["Low", "Low"]
+    data["ZCTA5CE"] = ["38103", "38103"]
+    with pytest.raises(ValueError, match="ZCTA5CE.*duplicate"):
+        validate_final_dataset(pl.DataFrame(data))
+
+
+def test_unique_zcta_accepted() -> None:
+    data = {c: [1.0, 1.0] for c in REQUIRED_COLUMNS}
+    data["income_segment"] = ["Low", "High"]
+    data["ZCTA5CE"] = ["38103", "38104"]
+    validate_final_dataset(pl.DataFrame(data))

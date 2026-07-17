@@ -11,6 +11,7 @@ REQUIRED_COLUMNS: list[str] = [
     "renter_share", "vehicle_access", "total_pop", "pop_density", "pct_white",
     "pct_black", "pct_asian", "pct_hispanic", "pct_other", "median_income",
     "income_segment", "stops_per_km2", "period",
+    "job_density", "distance_to_cbd_km", "job_accessibility",
 ]
 
 # Columns expressed as 0-100 percentages/shares.
@@ -24,7 +25,10 @@ _PERCENT_COLUMNS = [
 ]
 # NOTE: median_income is EXCLUDED from non-negative checks — every committed dataset
 # carries the Census "jam" sentinel (down to -666666666) for suppressed tracts. Do not add it.
-_NON_NEGATIVE_COLUMNS = ["ttw_total", "total_pop", "pop_density", "stops_per_km2", "zori"]
+_NON_NEGATIVE_COLUMNS = [
+    "ttw_total", "total_pop", "pop_density", "stops_per_km2", "zori",
+    "job_density", "distance_to_cbd_km", "job_accessibility",
+]
 _LOADER_CRITICAL = ["ZCTA5CE", "rent_to_income", "commute_min_proxy", "median_income", "stops_per_km2"]
 _INCOME_SEGMENTS = {"Low", "Medium", "High"}
 _PERCENT_TOL = 1.0  # allow tiny rounding overshoot past 100
@@ -45,7 +49,7 @@ def _range_violation(df: pl.DataFrame, col: str, lo: float, hi: float) -> str | 
 def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True) -> None:
     """Raise ValueError if df violates the final-dataset contract. Nulls are ignored.
 
-    require_all_columns=True (default, pipeline write): all 32 REQUIRED_COLUMNS must exist.
+    require_all_columns=True (default, pipeline write): all 35 REQUIRED_COLUMNS must exist.
     require_all_columns=False (analysis load): only the loader-critical columns must exist;
       range checks apply to whichever bounded columns are present. This lets minimal test
       fixtures (fraction-unit shares, subset of columns) pass while still range-checking real data.
@@ -60,6 +64,19 @@ def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True
         missing = [c for c in _LOADER_CRITICAL if c not in df.columns]
         if missing:
             raise ValueError(f"Schema violation: missing critical columns {missing}")
+
+    # One row per ZCTA is the dataset's core invariant: duplicated ZCTA5CE values
+    # mean upstream row multiplication (e.g. double-fetched ZCTAs from overlapping
+    # zip prefixes) and must fail loudly rather than reach analysis.
+    if "ZCTA5CE" in df.columns:
+        zctas = df["ZCTA5CE"].drop_nulls()
+        n_dup_rows = zctas.len() - zctas.n_unique()
+        if n_dup_rows > 0:
+            dup_values = zctas.filter(zctas.is_duplicated()).unique().sort().to_list()
+            errors.append(
+                f"ZCTA5CE has {n_dup_rows} duplicate rows "
+                f"(duplicated values, first 10: {dup_values[:10]})"
+            )
 
     for col in _PERCENT_COLUMNS:
         errors.append(_range_violation(df, col, 0.0, 100.0 + _PERCENT_TOL))

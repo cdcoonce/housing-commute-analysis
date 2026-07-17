@@ -157,10 +157,12 @@ Output: /path/to/DAT490/data/final/final_zcta_dataset_phoenix.csv
    - Aggregate tract commute data to ZCTA level (mean)
    - Aggregate tract demographics to ZCTA level (population-weighted)
 
-5. **External Data** (`zori.py`, `osm.py`)
+5. **External Data** (`zori.py`, `osm.py`, `lodes.py`)
    - Fetch Zillow rent index by ZIP code
    - Query OpenStreetMap for transit stops
    - Compute transit density (stops per km²)
+   - Fetch LEHD LODES8 WAC job counts and compute employment features
+     (job density, CBD distance, gravity job accessibility)
 
 6. **Final Merge**
    - Left join all data sources on ZCTA5CE
@@ -340,10 +342,11 @@ METRO_CONFIGS = {
 8. Aggregate demographics to ZCTA level
 9. Fetch Zillow rent data
 10. Compute transit density
-11. Merge all data sources
-12. Create income segments
-13. Reorder columns for consistent output
-14. Write output CSV
+11. Fetch LODES employment data and compute employment features (job density, CBD distance, job accessibility)
+12. Merge all data sources
+13. Create income segments
+14. Reorder columns for consistent output
+15. Write output CSV
 
 **Multi-State Support**: The pipeline automatically handles metros spanning multiple states by iterating over the `COUNTIES` list of `(state_fips, county_fips)` tuples. Each state-county combination is queried separately from the Census API and then concatenated.
 
@@ -625,7 +628,7 @@ data/final/final_zcta_dataset_{metro}.csv
 
 ### Columns
 
-Columns are ordered logically: identifiers, affordability metrics, commute patterns, transportation modes, demographics, and transit access.
+The final dataset has 35 columns, ordered logically: identifiers, affordability metrics, commute patterns, transportation modes, demographics, transit access, and employment.
 
 | Column | Type | Description | Source |
 |--------|------|-------------|--------|
@@ -648,15 +651,21 @@ Columns are ordered logically: identifiers, affordability metrics, commute patte
 | `pct_transit` | float | % use public transit | ACS B08301 |
 | `pct_walk` | float | % walk to work | ACS B08301 |
 | `pct_wfh` | float | % work from home | ACS B08301 |
+| `renter_share` | float | % renter-occupied housing units | ACS B25003 |
+| `vehicle_access` | float | % households with 1+ vehicles | ACS B08201 |
 | `total_pop` | int | Total population | ACS B01001 |
+| `pop_density` | float | Population per square kilometer | Derived (geometry) |
+| `job_density` | float | Jobs per km² (LODES WAC C000 / ZCTA UTM area) | LEHD LODES |
 | `pct_white` | float | % Non-Hispanic White | ACS B03002 |
 | `pct_black` | float | % Non-Hispanic Black | ACS B03002 |
 | `pct_asian` | float | % Non-Hispanic Asian | ACS B03002 |
 | `pct_hispanic` | float | % Hispanic or Latino | ACS B03002 |
 | `pct_other` | float | % Other races | ACS B03002 |
 | `median_income` | float | Median household income ($) | ACS B19013 |
-| `income_segment` | string | Income quartile (Low/Medium/High) | Derived |
+| `income_segment` | string | Income tercile (Low/Medium/High) | Derived |
 | `stops_per_km2` | float | Transit stops per square kilometer | OSM (derived) |
+| `distance_to_cbd_km` | float | Km from ZCTA centroid to nearest metro CBD point (dual-CBD for DFW) | Derived (config CBD points) |
+| `job_accessibility` | float | Gravity index: Σ jobs·exp(−d/10 km) over metro tracts | LEHD LODES + TIGER |
 | `period` | string | ZORI data month (YYYY-MM-DD) | Zillow |
 
 ### Missing Value Handling

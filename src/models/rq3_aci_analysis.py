@@ -87,7 +87,8 @@ def analyze_rq3(df: pl.DataFrame) -> RQ3Results:
         feature_candidates.append('stops_per_km2')
     if 'zori' in df_model.columns:
         feature_candidates.append('zori')
-    for col in ['median_income', 'pct_transit', 'pct_drive_alone', 'total_pop']:
+    for col in ['median_income', 'pct_transit', 'pct_drive_alone', 'total_pop',
+                'job_density', 'distance_to_cbd_km', 'job_accessibility']:
         if col in df_model.columns:
             feature_candidates.append(col)
 

@@ -1,17 +1,46 @@
 {
   "metro_key": "miami",
-  "git_commit": "60d4769743a6dd13f8d62602d21d7d306546ec00",
-  "run_timestamp_utc": "2026-07-10T15:22:16.351532+00:00",
+  "metro_config": {
+    "cbsa_code": "33100",
+    "counties": [
+      [
+        "12",
+        "086"
+      ],
+      [
+        "12",
+        "011"
+      ],
+      [
+        "12",
+        "099"
+      ]
+    ],
+    "zip_prefixes": [
+      "33"
+    ],
+    "utm_zone": 32617,
+    "cbd_points": [
+      [
+        25.7743,
+        -80.1937
+      ]
+    ]
+  },
+  "git_commit": "0ecc9cec242d240e13b850ba30a88690f5f2983d",
+  "run_timestamp_utc": "2026-07-17T03:46:45.132979+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
+  "lodes_year": 2021,
   "source_urls": {
     "acs": "https://api.census.gov/data/2021/acs/acs5",
     "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
     "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
-    "osm": "https://overpass-api.de (via OSMnx)"
+    "osm": "https://overpass-api.de (via OSMnx)",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2021 + xwalk)"
   },
-  "zori_period": "2025-10-31",
+  "zori_period": "2026-05-31",
   "output_csv": "final_zcta_dataset_miami.csv",
   "row_count": 180,
   "columns": [
@@ -108,6 +137,10 @@
       "dtype": "Float64"
     },
     {
+      "name": "job_density",
+      "dtype": "Float64"
+    },
+    {
       "name": "pct_white",
       "dtype": "Float64"
     },
@@ -140,10 +173,18 @@
       "dtype": "Float64"
     },
     {
+      "name": "distance_to_cbd_km",
+      "dtype": "Float64"
+    },
+    {
+      "name": "job_accessibility",
+      "dtype": "Float64"
+    },
+    {
       "name": "period",
       "dtype": "String"
     }
   ],
-  "sha256": "d120d91e4cc76403bc9730798a8c2c02894c840df4c4f5a48b8bb518ae27f560",
+  "sha256": "512bcaadda59c682a2f5686e7d3a2dd5c0ef88f99010f8db07140bf3ec1b543f",
   "steps": []
 }

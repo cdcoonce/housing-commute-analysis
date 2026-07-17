@@ -1,17 +1,60 @@
 {
   "metro_key": "chicago",
-  "git_commit": "60d4769743a6dd13f8d62602d21d7d306546ec00",
-  "run_timestamp_utc": "2026-07-10T15:22:16.351532+00:00",
+  "metro_config": {
+    "cbsa_code": "16980",
+    "counties": [
+      [
+        "17",
+        "031"
+      ],
+      [
+        "17",
+        "043"
+      ],
+      [
+        "17",
+        "089"
+      ],
+      [
+        "17",
+        "097"
+      ],
+      [
+        "17",
+        "111"
+      ],
+      [
+        "17",
+        "197"
+      ]
+    ],
+    "zip_prefixes": [
+      "60",
+      "61",
+      "62"
+    ],
+    "utm_zone": 32616,
+    "cbd_points": [
+      [
+        41.8837,
+        -87.6318
+      ]
+    ]
+  },
+  "git_commit": "0ecc9cec242d240e13b850ba30a88690f5f2983d",
+  "run_timestamp_utc": "2026-07-17T03:46:10.318412+00:00",
   "acs_commute_year": 2021,
   "acs_demographics_year": 2023,
+  "lodes_year": 2021,
   "source_urls": {
     "acs": "https://api.census.gov/data/2021/acs/acs5",
     "acs_demographics": "https://api.census.gov/data/2023/acs/acs5",
     "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)",
-    "osm": "https://overpass-api.de (via OSMnx)"
+    "osm": "https://overpass-api.de (via OSMnx)",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2021 + xwalk)"
   },
-  "zori_period": "2025-10-31",
+  "zori_period": "2026-05-31",
   "output_csv": "final_zcta_dataset_chicago.csv",
   "row_count": 291,
   "columns": [
@@ -108,6 +151,10 @@
       "dtype": "Float64"
     },
     {
+      "name": "job_density",
+      "dtype": "Float64"
+    },
+    {
       "name": "pct_white",
       "dtype": "Float64"
     },
@@ -140,10 +187,18 @@
       "dtype": "Float64"
     },
     {
+      "name": "distance_to_cbd_km",
+      "dtype": "Float64"
+    },
+    {
+      "name": "job_accessibility",
+      "dtype": "Float64"
+    },
+    {
       "name": "period",
       "dtype": "String"
     }
   ],
-  "sha256": "09b99a3ef2e78769ffeb21d636f8f073fc67b741f9858b0de7729b4ed99208a4",
+  "sha256": "18707d04b1880805522fbcf2306eaaaff360bc01e2fce62e215f0010b0d23087",
   "steps": []
 }

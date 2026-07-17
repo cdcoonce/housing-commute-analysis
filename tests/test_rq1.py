@@ -30,3 +30,18 @@ def test_analyze_rq1_missing_column_raises(sample_zcta_df: pl.DataFrame) -> None
     df = sample_zcta_df.drop("renter_share")
     with pytest.raises(ValueError, match="Missing required columns"):
         analyze_rq1(df)
+
+
+def test_analyze_rq1_includes_employment_features(sample_zcta_df) -> None:
+    result = analyze_rq1(sample_zcta_df)
+    for name in ("job_density", "distance_to_cbd_km", "job_accessibility"):
+        assert name in result.feature_names
+    # positional contract: stored names are ['const', ...]; commute stays at
+    # index 1 and commute² at index 2, matching report_rq1's params/pvalues reads
+    assert result.model_quad["feature_names"][1] == "commute_min_proxy"
+    assert result.model_quad["feature_names"][2] == "commute_min_proxy²"
+
+
+def test_analyze_rq1_missing_employment_column_raises(sample_zcta_df) -> None:
+    with pytest.raises(ValueError, match="job_density"):
+        analyze_rq1(sample_zcta_df.drop("job_density"))

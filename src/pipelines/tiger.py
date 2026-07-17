@@ -10,6 +10,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
+import requests
 
 from .config import ZIP_PREFIXES
 from .utils import esri_geojson_to_gdf
@@ -77,16 +78,23 @@ def get_state_zctas(
                      
     Returns:
         GeoDataFrame with columns: ZCTA5CE (5-digit ZIP), GEOID, NAME, geometry.
-        Empty GeoDataFrame if no ZCTAs found.
-        
+        Each ZCTA5CE appears exactly once, even when prefixes overlap (e.g.
+        '38' and '386' both fetch 386xx ZCTAs).
+
     Raises:
-        requests.HTTPError: If the TIGER API request fails
-        
+        requests.RequestException: If any TIGER API request fails during any
+            prefix's pagination. Failures propagate so a wrapping retry layer
+            (e.g. a Prefect task) sees them — a swallowed failure here would
+            silently drop every ZCTA for that prefix and cache the truncated
+            result as a success.
+        ValueError: If any configured prefix contributes zero ZCTAs (guards
+            against any silent-truncation path).
+
     Note:
         - Uses pagination (100 records per batch) to avoid API timeouts
         - ZCTAs are approximations and don't perfectly match USPS ZIP codes
         - Some ZIP codes have no ZCTA (e.g., PO boxes, single buildings)
-        - Progress messages are printed for each batch fetched
+        - Progress messages are logged for each batch fetched
     """
     prefixes = zip_prefixes or ZIP_PREFIXES
     
@@ -103,10 +111,12 @@ def get_state_zctas(
     else:
         # Query by ZIP prefix with pagination to avoid timeouts
         zcta_chunks = []
+        empty_prefixes = []
         for prefix in prefixes:
             offset = 0
             max_records = 100  # Batch size to balance speed and API stability
-            
+            prefix_count = 0
+
             while True:
                 params = {
                     "where": f"ZCTA5 LIKE '{prefix}%'",
@@ -116,61 +126,57 @@ def get_state_zctas(
                     "resultOffset": offset,
                     "resultRecordCount": max_records
                 }
-                
+
+                # Fetch failures must propagate: swallowing one here would
+                # silently drop the rest of this prefix while the function
+                # "succeeds", defeating task-level retries and poisoning any
+                # downstream cache with a truncated result.
                 try:
                     chunk = esri_geojson_to_gdf(TIGER_ZCTA_URL, params)
-                    if chunk.empty:
-                        break
-                    
-                    zcta_chunks.append(chunk)
-                    logger.info(
-                        f"Fetched {len(chunk)} ZCTAs for prefix '{prefix}' (offset {offset})"
+                except requests.RequestException:
+                    logger.error(
+                        f"Request failed fetching ZCTAs for prefix '{prefix}' "
+                        f"at offset {offset}; propagating for retry"
                     )
-                    
-                    # Stop if we got fewer records than requested (last page)
-                    if len(chunk) < max_records:
-                        break
-                    
-                    offset += max_records
-                    
-                except ConnectionError as e:
-                    logger.warning(
-                        f"Network error fetching ZCTAs for prefix '{prefix}' at offset {offset}: {e}"
-                    )
+                    raise
+
+                if chunk.empty:
                     break
-                except TimeoutError:
-                    logger.warning(
-                        f"Timeout fetching ZCTAs for prefix '{prefix}' at offset {offset}. "
-                        "Try reducing max_records or checking network."
-                    )
+
+                zcta_chunks.append(chunk)
+                prefix_count += len(chunk)
+                logger.info(
+                    f"Fetched {len(chunk)} ZCTAs for prefix '{prefix}' (offset {offset})"
+                )
+
+                # Stop if we got fewer records than requested (last page)
+                if len(chunk) < max_records:
                     break
-                except ValueError as e:
-                    logger.warning(
-                        f"Invalid response data for prefix '{prefix}' at offset {offset}: {e}"
-                    )
-                    break
-                except Exception as e:
-                    logger.warning(
-                        f"Unexpected error fetching ZCTAs for prefix '{prefix}' at offset {offset}: "
-                        f"{type(e).__name__}: {e}"
-                    )
-                    break
-        
-        # Combine all fetched chunks
-        if zcta_chunks:
-            combined = pd.concat(zcta_chunks, ignore_index=True)
-            zcta_data = gpd.GeoDataFrame(combined, crs="EPSG:4326")
-        else:
-            zcta_data = gpd.GeoDataFrame(
-                columns=["ZCTA5", "GEOID", "NAME", "geometry"],
-                geometry="geometry",
-                crs="EPSG:4326"
+
+                offset += max_records
+
+            if prefix_count == 0:
+                empty_prefixes.append(prefix)
+
+        # Coverage guard: every configured prefix must contribute ZCTAs.
+        if empty_prefixes:
+            raise ValueError(
+                f"No ZCTAs returned for zip prefix(es) {empty_prefixes}; "
+                "refusing to return a truncated result"
             )
-    
+
+        combined = pd.concat(zcta_chunks, ignore_index=True)
+        zcta_data = gpd.GeoDataFrame(combined, crs="EPSG:4326")
+
     # Standardize column name to ZCTA5CE for consistency across modules
     if "ZCTA5" in zcta_data.columns:
         zcta_data = zcta_data.rename(columns={"ZCTA5": "ZCTA5CE"})
-    
+
+    # Overlapping prefixes (e.g. '38' and '386') refetch the same national-layer
+    # ZCTAs; duplicates are exact refetches, so keep the first of each.
+    if "ZCTA5CE" in zcta_data.columns:
+        zcta_data = zcta_data.drop_duplicates(subset="ZCTA5CE", ignore_index=True)
+
     return zcta_data
 
 def get_state_tracts(

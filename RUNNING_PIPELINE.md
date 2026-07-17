@@ -60,7 +60,7 @@ Get a free API key at: https://api.census.gov/data/key_signup.html
 
 ## Pipeline Steps
 
-The pipeline executes 8 main steps:
+The pipeline executes 9 main steps:
 
 ### 1. Fetch CBSA Boundary
 
@@ -122,6 +122,15 @@ The pipeline executes 8 main steps:
 - Filters: `public_transport=platform|stop|station` or `highway=bus_stop`
 - Computes `stops_per_km2` for each ZCTA
 
+### 9. LODES Employment Features (Step 6c)
+
+- Downloads LEHD LODES8 WAC (2021) job counts by census block, plus the block→ZCTA/tract crosswalk
+- Aggregates jobs to ZCTA and tract level and computes three features:
+  - `job_density`: jobs per km² (LODES WAC C000 / ZCTA UTM area)
+  - `distance_to_cbd_km`: km from ZCTA centroid to the nearest configured CBD point (dual-CBD for DFW)
+  - `job_accessibility`: gravity index Σ jobs·exp(−d/10 km) over metro tracts
+- Logged as `STEP 6c` in pipeline output
+
 ## Output
 
 The pipeline generates a CSV file in `data/final/`:
@@ -130,7 +139,9 @@ The pipeline generates a CSV file in `data/final/`:
 data/final/final_zcta_dataset_{metro}.csv
 ```
 
-### Output Schema (32 columns)
+### Output Schema (35 columns)
+
+Columns are listed in output order (the `column_order` list in `src/pipelines/build.py`):
 
 | Column | Description | Source |
 |--------|-------------|--------|
@@ -138,7 +149,7 @@ data/final/final_zcta_dataset_{metro}.csv
 | `rent_to_income` | Median gross rent / median income | ACS B25064, B19013 |
 | `pct_rent_burden_30` | % paying 30%+ of income on rent | ACS (derived) |
 | `pct_rent_burden_50` | % paying 50%+ of income on rent | ACS (derived) |
-| `zori` | Zillow Observed Rent Index | Zillow ZORI |
+| `zori` | Zillow Observed Rent Index ($) | Zillow ZORI |
 | `commute_min_proxy` | Weighted avg commute time (min) | ACS B08303 |
 | `pct_commute_lt10` | % commuting < 10 min | ACS B08303 |
 | `pct_commute_10_19` | % commuting 10-19 min | ACS B08303 |
@@ -157,6 +168,7 @@ data/final/final_zcta_dataset_{metro}.csv
 | `vehicle_access` | % households with 1+ vehicles | ACS B08201 |
 | `total_pop` | Total population | ACS B01001 |
 | `pop_density` | Population density (per km²) | Derived from geometry |
+| `job_density` | Jobs per km² (LODES WAC C000 / ZCTA UTM area) | LEHD LODES |
 | `pct_white` | % non-Hispanic white | ACS B03002 |
 | `pct_black` | % non-Hispanic Black | ACS B03002 |
 | `pct_asian` | % non-Hispanic Asian | ACS B03002 |
@@ -164,6 +176,10 @@ data/final/final_zcta_dataset_{metro}.csv
 | `pct_other` | % other race/ethnicity | ACS B03002 |
 | `median_income` | Median household income ($) | ACS B19013 |
 | `income_segment` | Income tercile (low/medium/high) | Derived |
+| `stops_per_km2` | Transit stops per km² | OpenStreetMap |
+| `distance_to_cbd_km` | Km from ZCTA centroid to nearest metro CBD point (dual-CBD for DFW) | Derived (config CBD points) |
+| `job_accessibility` | Gravity index: Σ jobs·exp(−d/10 km) over metro tracts | LEHD LODES + TIGER |
+| `period` | ZORI data month (YYYY-MM-DD) | Zillow ZORI |
 
 ## Running All Metros
 
@@ -180,9 +196,6 @@ Alternatively, you can use a loop with environment variables:
 ```bash
 for metro in phoenix memphis los_angeles dallas; do
     echo "Building $metro..."
-    METRO=$metro python run_pipeline.py
-done
-``` echo "Building $metro..."
     METRO=$metro python run_pipeline.py
 done
 ```
@@ -233,8 +246,8 @@ INFO - Fetching ZCTAs for state: 04
 Expected runtime per metro (with warm caches):
 
 - **Phoenix**: ~2-3 minutes (150 ZCTAs, 2 counties)
-- **Memphis**: ~3-4 minutes (100 ZCTAs, 4 counties)
-- **Los Angeles**: ~8-10 minutes (450 ZCTAs, 1 large county)
+- **Memphis**: ~3-4 minutes (52 ZCTAs, 4 counties)
+- **Los Angeles**: ~8-10 minutes (270 ZCTAs, 1 large county)
 - **Dallas**: ~5-6 minutes (190 ZCTAs, 4 counties)
 
 Factors affecting runtime:
@@ -323,12 +336,17 @@ python -c "import pandas as pd; df = pd.read_csv('data/final/final_zcta_dataset_
 python -c "import pandas as pd; df = pd.read_csv('data/final/final_zcta_dataset_phoenix.csv'); print(df.isnull().sum())"
 ```
 
-Expected outputs:
+Expected outputs (row counts from the committed `data/final/` datasets):
 
-- **Phoenix**: 150 ZCTAs × 32 columns
-- **Memphis**: ~100 ZCTAs × 32 columns
-- **Los Angeles**: ~450 ZCTAs × 32 columns
-- **Dallas**: ~190 ZCTAs × 32 columns
+- **Phoenix**: 150 ZCTAs × 35 columns
+- **Memphis**: 52 ZCTAs × 35 columns
+- **Los Angeles**: 270 ZCTAs × 35 columns
+- **Dallas**: 190 ZCTAs × 35 columns
+- **Denver**: 103 ZCTAs × 35 columns
+- **Atlanta**: 117 ZCTAs × 35 columns
+- **Chicago**: 291 ZCTAs × 35 columns
+- **Seattle**: 150 ZCTAs × 35 columns
+- **Miami**: 180 ZCTAs × 35 columns
 
 ## Next Steps
 

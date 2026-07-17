@@ -54,6 +54,7 @@ This project investigates how commute distance and transit access influence hous
 | **Census ACS 5-Year** | Commute patterns, rent, income, demographics, vehicle access | Census tract → ZCTA |
 | **Zillow ZORI** | Observed Rent Index by ZIP code | ZIP code |
 | **OpenStreetMap** | Public transit stop locations (bus, rail, platform) | Point → ZCTA density |
+| **LEHD LODES8 (WAC 2021)** | ZCTA job density, CBD distance, gravity job accessibility | Census block → ZCTA/tract |
 | **Census TIGER/Line** | CBSA boundaries, ZCTA & tract geometries | Geographic polygons |
 
 ---
@@ -68,6 +69,7 @@ graph TD
         ACS["Census ACS API"]
         ZORI["Zillow ZORI CSV"]
         OSM["OpenStreetMap Overpass"]
+        LODES["LEHD LODES8 WAC"]
         TIGER["Census TIGER/Line"]
     end
 
@@ -79,6 +81,7 @@ graph TD
         TIGER_MOD["tiger.py<br/>Boundaries"]
         ZORI_MOD["zori.py<br/>Rent index"]
         OSM_MOD["osm.py<br/>Transit density"]
+        LODES_MOD["lodes.py<br/>Employment features"]
         SPATIAL["spatial.py<br/>Spatial joins"]
     end
 
@@ -102,6 +105,7 @@ graph TD
     ACS --> ACS_MOD
     ZORI --> ZORI_MOD
     OSM --> OSM_MOD
+    LODES --> LODES_MOD
     TIGER --> TIGER_MOD
 
     CFG --> BUILD
@@ -110,6 +114,7 @@ graph TD
     TIGER_MOD --> BUILD
     ZORI_MOD --> BUILD
     OSM_MOD --> BUILD
+    LODES_MOD --> BUILD
     SPATIAL --> BUILD
 
     BUILD --> CSV
@@ -169,6 +174,7 @@ housing-commute-analysis/
 │   │   ├── tiger.py             # TIGER/Line boundary downloads
 │   │   ├── zori.py              # Zillow Observed Rent Index ingestion
 │   │   ├── osm.py               # OpenStreetMap transit stop density
+│   │   ├── lodes.py             # LEHD LODES employment features
 │   │   ├── spatial.py           # Spatial joins & ZCTA filtering
 │   │   └── utils.py             # HTTP retry utilities
 │   ├── models/                  # Statistical analysis modules
@@ -206,7 +212,8 @@ flowchart LR
     E --> F["6. Aggregate<br/>to ZCTA Level"]
     F --> G["7. Fetch Zillow<br/>ZORI Data"]
     G --> H["8. Compute Transit<br/>Stop Density"]
-    H --> I["Final ZCTA<br/>Dataset CSV"]
+    H --> L["9. LODES Employment<br/>Features"]
+    L --> I["Final ZCTA<br/>Dataset CSV"]
 ```
 
 ### Analysis Module Dependencies
@@ -366,7 +373,7 @@ make all
 
 ## Pipeline Output Schema
 
-Each final ZCTA CSV contains ~30 columns across five categories:
+Each final ZCTA CSV contains 35 columns across six categories:
 
 | Column | Description | Source |
 |--------|-------------|--------|
@@ -383,6 +390,10 @@ Each final ZCTA CSV contains ~30 columns across five categories:
 | `pct_transit`, `pct_walk`, `pct_wfh` | Alternative mode shares | ACS B08301 |
 | **Transit** | | |
 | `stops_per_km2` | Transit stops per km² | OpenStreetMap |
+| **Employment** | | |
+| `job_density` | Jobs per km² (LODES WAC C000 / ZCTA UTM area) | LEHD LODES |
+| `distance_to_cbd_km` | Km from ZCTA centroid to nearest metro CBD point (dual-CBD for DFW) | Derived (config CBD points) |
+| `job_accessibility` | Gravity index: Σ jobs·exp(−d/10 km) over metro tracts | LEHD LODES + TIGER |
 | **Demographics** | | |
 | `total_pop`, `pop_density` | Population and density (per km²) | ACS B01001 |
 | `pct_white`, `pct_black`, `pct_asian`, `pct_hispanic`, `pct_other` | Race/ethnicity | ACS B03002 |
