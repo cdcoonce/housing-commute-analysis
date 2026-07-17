@@ -1,4 +1,4 @@
-.PHONY: setup pipeline manifests analyze test lint verify-data all clean
+.PHONY: setup pipeline panel manifests analyze test lint verify-data all clean
 METROS := phoenix memphis los_angeles dallas denver atlanta chicago seattle miami
 
 setup:
@@ -6,6 +6,9 @@ setup:
 
 pipeline:      ## build all metros (Prefect resumes completed fetch steps from the 7-day result cache)
 	uv run python run_pipeline.py --all
+
+panel:         ## build RQ4 panel data products for all metros (shares the fetch cache with pipeline)
+	uv run python run_pipeline.py --panel --all
 
 manifests:     ## (re)generate provenance manifests for existing final CSVs (offline)
 	uv run python run_pipeline.py --generate-manifests

@@ -70,13 +70,16 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def run_single_metro(metro: str) -> tuple[bool, str]:
+def run_single_metro(metro: str, builder=build_final_dataset) -> tuple[bool, str]:
     """Run the pipeline for a single metro area.
 
     Parameters
     ----------
     metro : str
         Metro area key (e.g., 'phoenix', 'dallas', 'atlanta').
+    builder : callable
+        Flow entry point taking metro_key (default: the cross-sectional
+        build_final_dataset; --panel swaps in build_panel_flow).
 
     Returns
     -------
@@ -84,7 +87,7 @@ def run_single_metro(metro: str) -> tuple[bool, str]:
         (success, output_path or error_message)
     """
     try:
-        output_path = build_final_dataset(metro_key=metro)
+        output_path = builder(metro_key=metro)
         return True, str(output_path)
     except (ValueError, KeyError) as e:
         return False, f"Data validation error: {type(e).__name__}: {e}"
@@ -145,6 +148,9 @@ def main():
         action='store_true',
         help='Run pipeline for all metros sequentially (phoenix, memphis, los_angeles, dallas, denver, atlanta, chicago, seattle, miami)'
     )
+    parser.add_argument("--panel", action="store_true",
+                        help="Build the RQ4 panel data products (build_panel_flow) "
+                             "instead of the cross-sectional dataset; composes with --all")
     parser.add_argument("--generate-manifests", action="store_true",
                         help="Offline: (re)write provenance manifests for existing final CSVs")
     parser.add_argument("--verify", action="store_true",
@@ -178,6 +184,15 @@ def main():
                 logger.info("OK %s", metro_key)
         return 1 if any_drift else 0
 
+    # Select the flow: --panel builds the RQ4 panel data products instead of
+    # the cross-sectional dataset; no-flag behavior is unchanged.
+    if args.panel:
+        from src.pipelines.panel import build_panel_flow
+        builder = build_panel_flow
+        logger.info("Mode: RQ4 panel data products (--panel)")
+    else:
+        builder = build_final_dataset
+
     # Check if running all metros
     if args.all:
         all_metros = ["phoenix", "memphis", "los_angeles", "dallas", "denver", "atlanta", "chicago", "seattle", "miami"]
@@ -191,7 +206,7 @@ def main():
             logger.info(f"Processing: {metro}")
             logger.info("=" * 70)
             
-            success, message = run_single_metro(metro)
+            success, message = run_single_metro(metro, builder)
             results.append((metro, success, message))
             
             if success:
@@ -232,7 +247,7 @@ def main():
     
     try:
         # Run the pipeline
-        output_path = build_final_dataset(metro_key=metro)
+        output_path = builder(metro_key=metro)
         
         logger.info("\n" + "=" * 70)
         logger.info("Pipeline completed successfully!")

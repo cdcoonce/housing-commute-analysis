@@ -64,3 +64,33 @@ def test_zori_panel_url_is_non_sa() -> None:
     from src.pipelines.config import ZORI_PANEL_CSV_URL, ZORI_ZIP_CSV_URL
     assert ZORI_PANEL_CSV_URL.endswith("_sm_month.csv")        # no _sa_
     assert ZORI_ZIP_CSV_URL.endswith("_sm_sa_month.csv")       # cross-sectional untouched
+
+
+def test_zori_panel_task_renames_filters_sorts() -> None:
+    """zori_panel_task.fn: zip->ZCTA5CE rename, inner-filter to the metro ZCTA
+    set, stable-sort by (ZCTA5CE, period). Called via .fn to bypass the runner.
+    """
+    from src.pipelines.panel import zori_panel_task
+
+    zori_long = pd.DataFrame(
+        {
+            "zip": ["85002", "85002", "85001", "85001", "38103", "85099"],
+            "period": [
+                "2020-02-29", "2020-01-31", "2020-02-29", "2020-01-31",
+                "2020-01-31", "2020-01-31",
+            ],
+            "zori": [1210.0, 1200.0, 1510.0, 1500.0, 900.0, 1000.0],
+        }
+    )
+    # The task only touches the ZCTA5CE column, so a plain frame stands in for
+    # the zctas_in_metro GeoDataFrame. 38103/85099 are absent -> filtered out.
+    zctas_in_metro = pd.DataFrame({"ZCTA5CE": ["85001", "85002"]})
+
+    out = zori_panel_task.fn(zori_long, zctas_in_metro)
+
+    assert list(out.columns) == ["ZCTA5CE", "period", "zori"]
+    assert set(out["ZCTA5CE"]) == {"85001", "85002"}          # inner filter
+    assert out.equals(
+        out.sort_values(["ZCTA5CE", "period"], kind="stable", ignore_index=True)
+    )
+    assert len(out) == 4
