@@ -1,7 +1,7 @@
 # Cross-Metro Findings: Housing Affordability & Commute Trade-Off Analysis
 
 **Date:** 2026-03-07
-**Revised:** 2026-07 (employment variables)
+**Revised:** 2026-07 (employment variables; RQ4 ZORI dynamics)
 **Metros Analyzed:** Atlanta (ATL), Chicago (CHI), Dallas-Fort Worth (DFW), Denver (DEN), Los Angeles (LA), Memphis (MEM), Miami (MIA), Phoenix (PHX), Seattle (SEA)
 
 ---
@@ -9,6 +9,8 @@
 ## Executive Summary
 
 This analysis examines the relationship between housing affordability, commute time, and transit access across nine U.S. metropolitan areas at the ZCTA level. The central finding is that **affordability is primarily an income and renter-concentration problem** — renter share is a significant predictor of rent burden in 8 of 9 metros, while commute time is significant in 6 of 9 (revised up from 4 of 9 after the 2026-07 addition of employment-center variables; see §9). Racial disparities in housing cost burden are pervasive (8 of 9 metros), and transit access signals expensive, high-demand areas in dense cities; no metro shows a significant affordability-serving transit effect once employment structure is controlled.
+
+- **RQ4 (2026-07):** On the monthly ZORI panel, COVID-era repricing of the commute gradient registers in the covered rental submarkets of 8 of 9 metros (joint Wald p < 0.0001 everywhere except under-identified Memphis), predominantly in the periphery-favoring direction — long-commute, low-accessibility ZCTAs gained relative to job-rich cores — and nowhere fully reverses in the 2022+ return-to-office phase; but the honesty checks bite: pre-trend drift demotes Atlanta, Seattle, and Miami to "trend + break", and the coarse-cluster spatial bootstrap sustains only a subset of the conventional significance (§10).
 
 ---
 
@@ -258,3 +260,93 @@ Substantive shifts attributable to the re-run:
 - Phoenix is no longer unexplainable (ACI 0.017 → 0.335), and the Memphis best-RQ1/worst-ACI paradox is resolved (ACI 0.168 → 0.687) (§5, §7).
 - Job accessibility is income-stratified in 5 of 9 metros (RQ2 ANOVA: Los Angeles and Denver p < 0.0001, Miami p = 0.0006, Seattle p = 0.0018, Phoenix p = 0.018) (§4).
 - A drive-until-you-qualify threshold estimator (quadratic vertex, delta-method CI, guarded on significant concavity and in-range vertex) now runs alongside RQ1; on the re-run models it applies in only one metro — Denver, t\* = 36.5 min, 95% CI [31.9, 41.0] — with the other eight reporting convex or insignificant curvature (§3).
+
+---
+
+## 10. RQ4 — COVID and the Commute Gradient (ZORI Dynamics)
+
+Did COVID reprice the pre-existing commute gradient in each metro's covered rental submarket? RQ4 estimates a two-way fixed-effects structural break on the monthly Zillow ZORI panel: log rent on ZCTA and sample-month fixed effects plus interactions of three **pre-COVID-vintage** gradient measures — the ACS-2019 commute proxy (`commute_min_proxy_2019`), geometric distance to CBD, and log LODES-2019 job accessibility — with a disruption-phase dummy (Post1 = 2020-03 … 2021-12) and a partial-return-to-office dummy (Post2 = 2022-01 onward). SEs are clustered by ZCTA; every metro runs on 62 pre-break and 72 post-break months (endpoint trim + transition-window drop applied). A co-headline variant dropping the 2020-03…05 transition window leaves every headline coefficient essentially unchanged in all nine metros. Full per-metro tables, event-study figures, and the mandatory caveats block live in `data/processed/<METRO>/rq4_summary_<METRO>.md`.
+
+**Estimand statement (design §4, verbatim).** Unweighted ZCTA-level regression estimates the *average covered-ZCTA* repricing, not renter-weighted repricing; ZORI cells also have listing-volume-dependent precision. Results describe the covered rental submarket only: ZORI's minimum listing volume over-represents larger, denser rental submarkets (71–96% of metro ZCTAs covered cross-sectionally, far less pre-2020 — Chicago and Seattle start at 9% in 2015), so no claim extends to uncovered ZCTAs. "Repricing" means the listing index moved — an amalgam of price and composition change, with no hedonic adjustment possible at this altitude — and every estimate is a within-metro *relative* description, not a causal effect of COVID: every ZCTA is treated and no control group exists.
+
+**Inference conventions.** The clustered covariance is deliberately rescaled by (N−K)/(N−K−G_absorbed) — the conservative direction relative to the Cameron–Miller/reghdfe convention, inflating SEs slightly rather than shrinking them; a reviewer should read this as a choice, not an error. Because the three gradient regressors are mutually correlated and spatially smooth, each metro also reports single-interaction models (sign robustness) and wild cluster bootstrap (Webb) p-values re-clustered at the 3-digit ZIP prefix (4–15 spatial clusters per metro). **Memphis is flagged under-identified**: only 12 ZCTAs are observed on both sides of the break, so its conventional cluster t-statistics are oversized and ZCTA-level bootstrap p-values are reported beside them.
+
+### Spec A — Two-Phase Break Coefficients (joint model, 2019-vintage regressors)
+
+| Metro | n identifying | Commute × Post1 | Commute × Post2 | Distance × Post1 | Distance × Post2 | Access × Post1 | Access × Post2 | Wald p (P1 / P2) |
+|-------|--------------:|-----------------|-----------------|------------------|------------------|----------------|----------------|------------------|
+| Phoenix | 92 | 0.0037 (p = 0.0097) | 0.0048 (p = 0.0136) | −0.0021 (p < 0.0001) | −0.0025 (p = 0.0015) | −0.0259 (p = 0.0191) | −0.0259 (p = 0.1078) | <0.0001 / <0.0001 |
+| Los Angeles | 121 | 0.0016 (p = 0.2012) | 0.0002 (p = 0.9100) | 0.0001 (p = 0.9109) | 0.0006 (p = 0.7083) | −0.0582 (p = 0.0268) | −0.0876 (p = 0.0066) | <0.0001 / <0.0001 |
+| Dallas-Fort Worth | 80 | 0.0010 (p = 0.3299) | 0.0018 (p = 0.2716) | −0.0011 (p = 0.0008) | −0.0011 (p = 0.0334) | −0.0330 (p < 0.0001) | −0.0382 (p = 0.0009) | <0.0001 / <0.0001 |
+| Memphis † | 12 | 0.0035 (p = 0.7146) | 0.0008 (p = 0.9500) | 0.0006 (p = 0.7838) | 0.0008 (p = 0.8260) | 0.0575 (p = 0.2524) | 0.0246 (p = 0.7054) | 0.6034 / 0.9714 |
+| Denver | 66 | 0.0056 (p < 0.0001) | 0.0076 (p < 0.0001) | 0.0017 (p = 0.1418) | 0.0026 (p = 0.1380) | 0.0289 (p = 0.1044) | 0.0357 (p = 0.2091) | <0.0001 / <0.0001 |
+| Atlanta | 86 | 0.0077 (p < 0.0001) | 0.0136 (p < 0.0001) | −0.0032 (p < 0.0001) | −0.0042 (p < 0.0001) | −0.0460 (p < 0.0001) | −0.0711 (p < 0.0001) | <0.0001 / <0.0001 |
+| Chicago | 52 | 0.0025 (p = 0.0149) | 0.0045 (p = 0.0002) | 0.0003 (p = 0.7289) | 0.0023 (p = 0.0116) | −0.0585 (p = 0.0277) | −0.0308 (p = 0.3066) | <0.0001 / <0.0001 |
+| Seattle | 71 | 0.0015 (p = 0.1088) | 0.0039 (p = 0.0018) | 0.0061 (p < 0.0001) | 0.0063 (p < 0.0001) | 0.0714 (p = 0.0123) | 0.0600 (p = 0.0563) | <0.0001 / <0.0001 |
+| Miami | 73 | −0.0001 (p = 0.9469) | −0.0006 (p = 0.6970) | 0.0012 (p < 0.0001) | 0.0008 (p = 0.0372) | 0.0084 (p = 0.6349) | −0.0079 (p = 0.7327) | <0.0001 / <0.0001 |
+
+Units are natural: per commute-minute, per km of CBD distance, and per log-point of job accessibility, on log rent. p-values are conventional ZCTA-clustered; "n identifying" counts ZCTAs observed both pre and post break. † Memphis's row is reported for completeness only — see the under-identified flag above.
+
+**Read the joint model with the collinearity caveat in hand.** The three gradients are mutually correlated, so joint-model signs are conditional: where joint and single-interaction models disagree — Seattle's access interaction is +0.0714 joint but −0.1080 single at Post1; Phoenix's distance is −0.0021 joint but +0.0002 (n.s.) single — the disagreement is collinearity doing the talking, and the per-metro verdicts below lean on whichever pattern is stable across both.
+
+### Spatial Robustness — Wild Cluster Bootstrap (Webb weights, ZIP3 clusters)
+
+Re-clustering at the 3-digit ZIP prefix answers the Barrios–Diamond–Imbens–Kolesár concern that unit-clustered SEs are understated for spatially smooth regressors. It thins the significance map considerably:
+
+| Metro | Commute (P1 / P2) | Distance (P1 / P2) | Access (P1 / P2) |
+|-------|-------------------|--------------------|-------------------|
+| Phoenix | 0.1241 / 0.2222 | 0.0300 / 0.0511 | 0.1161 / 0.2232 |
+| Los Angeles | 0.3914 / 0.9099 | 0.9179 / 0.8539 | 0.1051 / 0.1321 |
+| Dallas-Fort Worth | 0.1942 / 0.1882 | 0.1141 / 0.1702 | 0.0260 / 0.0490 |
+| Memphis | 0.7518 / 0.9429 | 0.5996 / 0.3754 | 0.5305 / 0.6857 |
+| Denver | 0.0420 / 0.1381 | 0.0260 / 0.4324 | 0.0420 / 0.3554 |
+| Atlanta | 0.1652 / 0.0951 | 0.0320 / 0.0711 | 0.7818 / 0.7037 |
+| Chicago | 0.4765 / 0.7688 | 0.9219 / 0.6987 | 0.2152 / 0.3333 |
+| Seattle | 0.3964 / 0.2482 | 0.0140 / 0.0210 | 0.1762 / 0.2192 |
+| Miami | 0.9469 / 0.6777 | 0.1662 / 0.2012 | 0.6727 / 0.7728 |
+
+Survivors at p < 0.05: Seattle's distance interaction (both phases), DFW's access interaction (both phases), Denver's full phase-1 set, and the phase-1 distance interactions in Phoenix and Atlanta. Memphis's ZCTA-level bootstrap (the headline inference for an under-identified metro) confirms the null: commute 0.8068 / 0.9530, distance 0.8068 / 0.8228, access 0.2823 / 0.7497.
+
+### Event Study — Pre-Trend Verdicts (Spec B)
+
+The event study interacts the three gradients with event-time bins relative to 2020-03 (base bin 2019-03…2020-02); flat pre-break coefficients support the parallel-trends reading of Spec A, while a drifting pre-path demotes Spec A's coefficients to "trend + break". Per-bin identifying-ZCTA counts matter: the earliest bins are thin in several metros (Memphis 7, Denver 12, Seattle 17, Chicago 29, Los Angeles 30 ZCTAs).
+
+| Metro | Pre-trend verdict |
+|-------|-------------------|
+| Los Angeles | **Flat** — the cleanest pre-path in the study; all pre-bins statistically indistinguishable from base for all three regressors (the elevated pre4 points rest on 30 ZCTAs and stay inside their CIs). Parallel-trends reading supported. |
+| Chicago | **Flat for commute; drift for access** — commute pre-bins sit on zero (the post-break rise is a clean break); the access pre-path is elevated and declines into the break (pre1 +0.0335, CI excludes zero), so the access repricing partially reads as trend. |
+| Denver | **Drift for commute** — pre3/pre2 commute bins are significantly below base (−0.0052, −0.0026): the post-break rise partly continues a pre-existing steepening. Distance and access pre-paths are flat within (wide) CIs; earliest bin rests on 12 ZCTAs. |
+| Phoenix | **Drift for distance; commute borderline** — distance pre-bins are significantly positive and decline monotonically into the break (pre4 +0.0042 → pre1 +0.0006); the commute pre-path rises monotonically but no pre-bin individually excludes base. Access flat after a noisy pre4. |
+| Dallas-Fort Worth | **Drift for distance and access; commute flat** — distance and access pre4/pre3 bins are significantly positive and decline into base. |
+| Atlanta | **Drift on all three** — every regressor's pre-path is significantly non-zero and monotone into the break (distance +0.0043 at pre4 falling to +0.0012 at pre1, all four bins excluding base). Spec A's large Atlanta coefficients read as the acceleration of a pre-existing steepening — trend + break, not a clean break. |
+| Seattle | **Strongest drift in the study** — distance (−0.0152 → −0.0011) and access (−0.336 → −0.015) pre-paths are large, significant, and rising into base; the positive post-break distance coefficients continue that trajectory. Commute pre-path is flat. |
+| Miami | **Drift on all three** — commute, distance, and access pre-bins are significantly below base and rise into it; the small positive post-break distance coefficient sits on that pre-existing path. |
+| Memphis | **Uninformative** — pre-bins rest on 7–12 identifying ZCTAs with CIs spanning zero everywhere. |
+
+### Per-Metro Verdicts
+
+- **Phoenix:** commute gradient repriced upward in both phases (+0.0037 / +0.0048 per minute) with access down in the disruption phase; only the distance interaction survives the ZIP3 bootstrap, and the distance pre-path drifts. Moderate-confidence, persistent repricing.
+- **Los Angeles: access-only repricing, no commute effect** — the commute and distance interactions are null in both phases (p ≥ 0.20 everywhere), while the access interaction is −0.0582 in Post1, deepening to −0.0876 in Post2: rents in job-accessible ZCTAs fell relative to the rest of the covered submarket and kept falling into the RTO era. Pre-trends are flat (cleanest event study of the nine); the ZIP3 bootstrap narrowly misses (p ≈ 0.11–0.13).
+- **Dallas-Fort Worth:** access-led repricing (−0.0330 / −0.0382, the study's most bootstrap-robust access result: p = 0.0260 / 0.0490) with a smaller distance effect; commute itself never significant. Distance/access pre-paths drift.
+- **Memphis:** no evidence either way — under-identified (12 identifying ZCTAs), joint Wald p = 0.6034 / 0.9714, every bootstrap p ≥ 0.28.
+- **Denver:** the strongest commute repricing (+0.0056 / +0.0076, both p < 0.0001; full phase-1 set survives the ZIP3 bootstrap at p ≤ 0.042) — but the commute pre-path drifts, so part of the rise predates COVID.
+- **Atlanta:** the largest coefficients in the study on all three regressors, all p < 0.0001 and all *growing* in Post2 (commute +0.0077 → +0.0136) — and the clearest pre-trend drift on all three. Read as a pre-existing periphery-ward steepening that COVID accelerated, not a clean break.
+- **Chicago:** the cleanest commute break of the nine (flat pre-trend; +0.0025 in Post1 nearly doubling to +0.0045 in Post2), plus a disruption-phase access effect (−0.0585) that fades to insignificance in Post2 — the study's one clear partial reversal. Nothing survives the ZIP3 bootstrap.
+- **Seattle:** large positive distance repricing (+0.0061 / +0.0063; the most bootstrap-robust result in the study, p = 0.0140 / 0.0210) — but the steepest pre-trends of the nine run straight into it, and the joint access sign flips against the single-interaction model. Trend + break, direction periphery-favoring.
+- **Miami:** essentially no COVID-specific repricing — commute and access null throughout; the tiny distance effect (+0.0012 / +0.0008) sits on a significant pre-existing path and fails the bootstrap (p = 0.1662).
+
+### Cross-Metro Synthesis
+
+- **Where repricing happened, it favored the periphery.** Positive commute interactions (Phoenix, Denver, Atlanta, Chicago), negative access interactions (Phoenix, LA, DFW, Atlanta, Chicago-P1), and positive distance interactions (Seattle) all point the same way: covered ZCTAs far from jobs gained rent relative to job-rich cores. No metro shows core-favoring repricing that survives both the single-interaction check and the pre-trend check.
+- **The repricing did not reverse in the RTO era.** In no metro does a significant Post1 effect return to zero in Post2; in Atlanta, Chicago (commute), Denver, and LA the Post2 coefficient *exceeds* Post1. The one clean fade is Chicago's access effect (−0.0585 → −0.0308 n.s.). The disruption-phase reshuffle largely stuck or deepened through 2022–26.
+- **The honesty rails matter.** Pre-trend drift demotes Atlanta, Seattle, and Miami (and the distance channels in Phoenix and DFW, plus Denver's commute channel) to "trend + break"; the ZIP3 wild bootstrap sustains only Seattle distance, DFW access, Denver's phase-1 set, and Phoenix/Atlanta distance-P1 at p < 0.05. The strictly-clean-and-robust list is short; the *directional* consistency across nine metros is the stronger finding.
+- **Entry selection is signed, not just acknowledged.** Post-2019-12 entrants are more peripheral than incumbents on all three gradients (higher commute proxy and CBD distance, lower access) in seven of nine metros — Atlanta's entrants are *less* peripheral and Chicago's are mixed — so incumbent-identified estimates likely *understate* periphery repricing where entrants are peripheral; the balanced-subpanel bound (ZCTAs in-sample by 2019-01) sits close to the headline in every metro and changes no substantive conclusion.
+- **Secondary specs stay secondary.** Spec C (within-ZCTA annual accessibility) is significantly negative in LA, Chicago, and Seattle, positive in Miami, and null elsewhere on the headline window (Denver's positive theta reaches p = 0.0177 only when the noisy 2020/2021 LODES years are dropped). Spec D's lead-term falsification fails — the *lead* of accessibility is significant — in Phoenix, LA, Chicago, Seattle, Atlanta, and Miami, so the rents-and-jobs association reads as feedback, not "rents chase jobs", exactly the trap the design's predictive-association framing anticipated. Spec C-med mediation shares are unstable (−3.0 to +1.7 across metros) and are not leaned on.
+
+### Index-Choice Robustness (SA vs non-SA ZORI)
+
+The committed panel deliberately uses the **non-seasonally-adjusted** ZORI series (two-sided SA factors re-estimated each vintage would leak post-2020 information into pre-2020 values — an anticipation artifact at the break; the month FE already absorb seasonality). As the design's one-off check, RQ4 was re-run for Phoenix, Los Angeles, and Chicago against a local, uncommitted build of the SA series (`Zip_zori_uc_sfrcondomfr_sm_sa_month.csv`, pull vintage **2026-07-17**). Every Spec A interaction coefficient moves by well under one SE — the largest shift in all three metros is Phoenix's commute × Post1, 0.00366 → 0.00341 (≈ 0.18 SE) — with no sign change and no coefficient crossing the 0.05 boundary in either direction. The index choice is not driving the results.
+
+### Deferred
+
+The ACS-wave longitudinal panel (re-estimating RQ1/RQ3 across ACS vintages, §8.3) remains deferred, with a re-scope trigger at the 2022–2026 5-year ACS release (~Dec 2027) per issue #8. Also deferred per design §6: LODES 2024+ appends, dynamic-panel and spatial-lag estimators, Conley spatial-HAC SEs, ZORI tier/segment variants, and network travel-time distances.
