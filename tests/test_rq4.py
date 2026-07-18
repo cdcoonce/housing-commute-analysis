@@ -4,17 +4,29 @@ Task 16 scope: the frozen RQ4Results container and the synthetic
 sample_panel_fixtures quadruple that feeds the analysis tests (Tasks 17-19).
 Task 17 scope: analyze_rq4 Spec-A family (two-phase structural break on the
 pre-COVID gradient, vintage discipline, trims, thin-identification flagging).
+Task 18 scope: Spec B event study (event-time bins relative to 2020-03),
+Spec C time-varying access (truncated at the last LODES year, no
+carry-forward), Spec C-med mediation decomposition, and Spec D annual
+predictive-association models (>= 6 months per (i, y) cell, lead
+falsification, long differences).
 """
 from __future__ import annotations
 
 import dataclasses
 from datetime import date
 
+import numpy as np
 import polars as pl
 import pytest
 
 from src.models.results import RQ4Results
-from src.models.rq4_rent_dynamics import analyze_rq4
+from src.models.rq4_rent_dynamics import (
+    GRADIENT_X_2019,
+    MIN_MONTHS_PER_YEAR,
+    analyze_rq4,
+    collapse_annual,
+    event_time_bin,
+)
 from src.pipelines.schema import (
     validate_acs_commute_2019,
     validate_lodes_panel,
@@ -196,3 +208,161 @@ def test_rq4_flags_thin_identification(sample_panel_fixtures_thin) -> None:
     r = analyze_rq4(cross, zp, lp, acs)
     assert "under_identified" in r.flags
     assert "distance_to_cbd_km" in r.bootstrap_pvalues
+
+
+# ---------------------------------------------------------------------------
+# Task 18: event study + Specs C / C-med / D
+# ---------------------------------------------------------------------------
+
+
+class TestEventTimeBins:
+    """Bin-assignment grammar (design section 4, Spec B): event-time bins
+    relative to 2020-03, NOT calendar years."""
+
+    def test_2020_jan_feb_fall_in_base_bin(self) -> None:
+        """Calendar-year bins would put pre-break 2020-01/02 into the treated
+        bin; event-time bins must keep them in the base."""
+        assert event_time_bin(date(2020, 1, 31)) == (0, "base")
+        assert event_time_bin(date(2020, 2, 29)) == (0, "base")
+        # base bin spans 2019-03 .. 2020-02
+        assert event_time_bin(date(2019, 3, 31)) == (0, "base")
+        assert event_time_bin(date(2019, 12, 31)) == (0, "base")
+
+    def test_2020_march_starts_first_post_bin(self) -> None:
+        assert event_time_bin(date(2020, 3, 31)) == (1, "post1")
+        # 6-month post bins through 2022-02
+        assert event_time_bin(date(2020, 8, 31)) == (1, "post1")
+        assert event_time_bin(date(2020, 9, 30)) == (2, "post2")
+        assert event_time_bin(date(2022, 2, 28)) == (4, "post4")
+
+    def test_post_bins_widen_to_12_months_after_2022_02(self) -> None:
+        assert event_time_bin(date(2022, 3, 31)) == (5, "post5")
+        assert event_time_bin(date(2023, 2, 28)) == (5, "post5")
+        assert event_time_bin(date(2023, 3, 31)) == (6, "post6")
+
+    def test_pre_bins_count_back_12_months_from_base(self) -> None:
+        assert event_time_bin(date(2019, 2, 28)) == (-1, "pre1")
+        assert event_time_bin(date(2018, 3, 31)) == (-1, "pre1")
+        assert event_time_bin(date(2018, 2, 28)) == (-2, "pre2")
+        assert event_time_bin(date(2015, 3, 31)) == (-4, "pre4")
+
+    def test_2015_jan_feb_fold_into_earliest_pre_bin(self) -> None:
+        assert event_time_bin(date(2015, 1, 31)) == (-4, "pre4")
+        assert event_time_bin(date(2015, 2, 28)) == (-4, "pre4")
+
+
+def test_rq4_event_study_carries_per_bin_identifying_counts(
+    sample_panel_fixtures,
+) -> None:
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    es = r.event_study
+
+    required = {
+        "variable", "bin", "bin_order", "coef", "se",
+        "ci_lo", "ci_hi", "n_identifying",
+    }
+    assert required <= set(es.columns)
+    assert es.height > 0
+    assert (es["n_identifying"] > 0).all()
+
+    # the base bin is present as the zero reference row, one per variable
+    base = es.filter(pl.col("bin") == "base")
+    assert base.height == len(GRADIENT_X_2019)
+    assert (base["coef"] == 0.0).all()
+
+    # the planted donut effect shows in the first post bin for distance
+    d_post1 = es.filter(
+        (pl.col("variable") == "distance_to_cbd_km") & (pl.col("bin") == "post1")
+    )
+    assert d_post1.height == 1
+    assert d_post1["coef"][0] > 0
+
+
+def test_rq4_spec_c_truncates_at_last_lodes_year(sample_panel_fixtures) -> None:
+    """Spec C window ends at the last LODES year (2023-12): months beyond it
+    must NOT enter estimation via carried-forward access values."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    # extend the zori panel into 2024 (clone the 2023-12 rows) — LODES still
+    # ends 2023, so these months have no access data to merge
+    dec = zp.filter(pl.col("period") == "2023-12-31")
+    extra = [
+        dec.with_columns(pl.lit(iso).alias("period"))
+        for iso in (
+            "2024-01-31", "2024-02-29", "2024-03-31",
+            "2024-04-30", "2024-05-31", "2024-06-30",
+        )
+    ]
+    zp_extended = pl.concat([zp, *extra])
+
+    r = analyze_rq4(cross, zp_extended, lp, acs)
+    assert r.access_model["max_period"] == "2023-12-31"
+    assert np.isfinite(r.access_model["theta"])
+    assert np.isfinite(r.access_model["pvalue"])
+    assert {"avg2yr", "drop_covid_years"} <= r.access_model["robustness"].keys()
+
+
+def test_rq4_spec_d_drops_thin_annual_cells(sample_panel_fixtures) -> None:
+    """Annual collapse requires >= MIN_MONTHS_PER_YEAR months per (i, y);
+    plant a 5-month cell and assert it is dropped."""
+    _cross, zp, _lp, _acs = sample_panel_fixtures
+    zp_thin = zp.filter(
+        ~(
+            (pl.col("ZCTA5CE") == "85001")
+            & (pl.col("period") >= "2021-06-01")
+            & (pl.col("period") <= "2021-12-31")
+        )
+    )  # 85001 keeps only 2021-01..05 -> 5 months < 6
+    frame = zp_thin.with_columns(
+        pl.col("period").str.to_date("%Y-%m-%d").alias("period_date"),
+        pl.col("zori").log().alias("log_zori"),
+    )
+
+    collapsed = collapse_annual(frame)
+
+    planted = collapsed.filter(
+        (pl.col("ZCTA5CE") == "85001") & (pl.col("year") == 2021)
+    )
+    assert planted.height == 0
+    kept = collapsed.filter(
+        (pl.col("ZCTA5CE") == "85001") & (pl.col("year") == 2020)
+    )
+    assert kept.height == 1
+    assert (collapsed["n_months"] >= MIN_MONTHS_PER_YEAR).all()
+
+
+def test_rq4_chase_models_lead_falsification_and_long_differences(
+    sample_panel_fixtures,
+) -> None:
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+
+    # lagged headline: predictive association, never causal
+    assert np.isfinite(r.chase_model_lagged["phi"])
+    assert r.chase_model_lagged["n_cells"] > 0
+    # lead falsification model present, with the lead coefficient reported
+    assert np.isfinite(r.chase_model_lead["phi_lead"])
+    assert np.isfinite(r.chase_model_lead["pvalue_lead"])
+    # contemporaneous variant
+    assert np.isfinite(r.chase_model_contemp["phi"])
+
+    # long differences keyed by window; the fixture has no 2015 rent data,
+    # so 2015->2019 degrades to an insufficient-data note while 2019->2023
+    # estimates on the incumbent ZCTAs
+    assert set(r.long_difference) == {"2015_2019", "2019_2023"}
+    assert "note" in r.long_difference["2015_2019"]
+    assert np.isfinite(r.long_difference["2019_2023"]["coef"])
+    assert r.long_difference["2019_2023"]["n_zctas"] > 0
+
+
+def test_rq4_mediation_share_bounded_and_labeled(sample_panel_fixtures) -> None:
+    """Spec C-med: share of Post1 repricing absorbed by contemporaneous
+    access — labeled mediation, never robustness."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+
+    assert -1.5 <= r.mediation["share_mediated"] <= 1.5
+    assert "mediation" in r.mediation["label"].lower()
+    assert "robust" not in r.mediation["label"].lower()
+    # per-variable shares for the full headline set
+    assert set(r.mediation["share_by_x"]) == set(GRADIENT_X_2019)

@@ -111,7 +111,10 @@ def sample_panel_fixtures() -> tuple[
     - DIFFERENT 2019 and 2021 commute-proxy vintages (acs2019 vs cross_df's
       35-column commute_min_proxy differ by 2-4 minutes everywhere) so the
       headline-vintage test can detect which one a model loads on;
-    - LODES years 2015-2023 with a 2020/21 accessibility dip.
+    - LODES years 2015-2023 with a 2020/21 accessibility dip AND
+      idiosyncratic per-(ZCTA, year) variation — without it log access is
+      exactly unit-effect + common-year-factor, perfectly collinear with the
+      two-way FE, and Specs C/D (Task 18) would be unidentified.
 
     All three panel frames pass their src.pipelines.schema validators.
     """
@@ -167,7 +170,12 @@ def sample_panel_fixtures() -> tuple[
             lodes_rows["year"].append(year)
             lodes_rows["job_count"].append(int(base_jobs[i] * growth * covid_dip))
             lodes_rows["job_accessibility"].append(
-                float(base_access[i] * growth * covid_dip)
+                float(
+                    base_access[i]
+                    * growth
+                    * covid_dip
+                    * np.exp(rng.normal(0.0, 0.08))  # idiosyncratic (i, y) shock
+                )
             )
     lodes_panel = pl.DataFrame(lodes_rows)
 
