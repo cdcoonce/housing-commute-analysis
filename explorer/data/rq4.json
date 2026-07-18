@@ -1,0 +1,5840 @@
+{
+ "generated_from": "committed data products (see data/final manifests)",
+ "variables": {
+  "commute_min_proxy_2019": "Commute time (min, 2019)",
+  "distance_to_cbd_km": "Distance to CBD (km)",
+  "log_job_accessibility_2019": "Log job accessibility (2019)"
+ },
+ "metro_order": [
+  "PHX",
+  "LA",
+  "DFW",
+  "MEM",
+  "DEN",
+  "ATL",
+  "CHI",
+  "SEA",
+  "MIA"
+ ],
+ "metros": {
+  "PHX": {
+   "code": "PHX",
+   "name": "Phoenix",
+   "n_obs": 12853,
+   "n_zctas": 127,
+   "n_identifying": 92,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 147,
+    "n_covered": 131,
+    "share_covered": 0.891156462585034,
+    "share_by_year": {
+     "2015": 0.4965986394557823,
+     "2016": 0.54421768707483,
+     "2017": 0.564625850340136,
+     "2018": 0.6054421768707483,
+     "2019": 0.6258503401360545,
+     "2020": 0.6326530612244898,
+     "2021": 0.6666666666666666,
+     "2022": 0.7346938775510204,
+     "2023": 0.7482993197278912,
+     "2024": 0.8095238095238095,
+     "2025": 0.8231292517006803,
+     "2026": 0.891156462585034
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0036632754947983435,
+      "post1_se": 0.0013954021841572947,
+      "post1_pvalue": 0.009730485120423965,
+      "post2_coef": 0.0047634919012958885,
+      "post2_se": 0.001902413802896979,
+      "post2_pvalue": 0.013560437994834357
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": -0.0020756115158267283,
+      "post1_se": 0.00048034444190600935,
+      "post1_pvalue": 3.1200131527722646e-05,
+      "post2_coef": -0.002513987593809941,
+      "post2_se": 0.0007744917332841082,
+      "post2_pvalue": 0.0014995401468863548
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": -0.025893766358438732,
+      "post1_se": 0.01090280704225409,
+      "post1_pvalue": 0.019059209557619597,
+      "post2_coef": -0.0259417948994867,
+      "post2_se": 0.01601720423864689,
+      "post2_pvalue": 0.10781405202659813
+     }
+    },
+    "n_obs": 13129,
+    "n_units": 127,
+    "n_clusters": 127,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.003966507360510454,
+       "post1_se": 0.0014815510922067537,
+       "post1_pvalue": 0.008410948879981256,
+       "post2_coef": 0.004741562526659617,
+       "post2_se": 0.0018967868901334176,
+       "post2_pvalue": 0.013711916252227872
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.0020854826506562646,
+       "post1_se": 0.0004881319384229251,
+       "post1_pvalue": 3.778454624836019e-05,
+       "post2_coef": -0.002531513163826388,
+       "post2_se": 0.0007700560816808577,
+       "post2_pvalue": 0.0013103370314421537
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.02737486404613309,
+       "post1_se": 0.011339494553432687,
+       "post1_pvalue": 0.01721111613232716,
+       "post2_coef": -0.02624028280906811,
+       "post2_se": 0.01592517454727672,
+       "post2_pvalue": 0.1019010113729966
+      }
+     },
+     "n_obs": 12853,
+     "n_units": 127,
+     "n_clusters": 127,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.004535330206626862,
+       "post1_se": 0.0013517860458541948,
+       "post1_pvalue": 0.00104882208903633,
+       "post2_coef": 0.005797059699420099,
+       "post2_se": 0.0018460606363602714,
+       "post2_pvalue": 0.0021036289818687575
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.002296138012738454,
+       "post1_se": 0.0005183256447778668,
+       "post1_pvalue": 2.0237992482812574e-05,
+       "post2_coef": -0.0031614356342219126,
+       "post2_se": 0.0007950565181265762,
+       "post2_pvalue": 0.00011721963586180622
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.028338564306216618,
+       "post1_se": 0.01172467881427576,
+       "post1_pvalue": 0.017081472247818797,
+       "post2_coef": -0.03404409400943917,
+       "post2_se": 0.016873726853809428,
+       "post2_pvalue": 0.04575928364803811
+      }
+     },
+     "n_obs": 13129,
+     "n_units": 127,
+     "n_clusters": 127,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.003416400921047279,
+     "post1_se": 0.0005837101135955198,
+     "post1_pvalue": 3.928105583769901e-08,
+     "post2_coef": 0.0037268912224341097,
+     "post2_se": 0.0009531259613695392,
+     "post2_pvalue": 0.00014985370994788596,
+     "x_vintage": "2019",
+     "n_obs": 13129,
+     "n_units": 127,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.00017262453280289191,
+     "post1_se": 0.00031964939900633196,
+     "post1_pvalue": 0.5901203584697665,
+     "post2_coef": -4.3033422445172796e-05,
+     "post2_se": 0.0004251085569906172,
+     "post2_pvalue": 0.9195293827971782,
+     "x_vintage": "2019",
+     "n_obs": 13129,
+     "n_units": 127,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.011020015499109612,
+     "post1_se": 0.004087974115529787,
+     "post1_pvalue": 0.007983358947129255,
+     "post2_coef": -0.008835635314362874,
+     "post2_se": 0.005676860435523279,
+     "post2_pvalue": 0.12211414622574407,
+     "x_vintage": "2019",
+     "n_obs": 13129,
+     "n_units": 127,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 64.66345986335138,
+     "pvalue": 5.920311730098798e-14,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 34.44830962219713,
+     "pvalue": 1.5931903930985975e-07,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 42.9219266414369,
+     "pvalue": 2.556748153730393e-09,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.12412412412412413,
+      "post2": 0.2222222222222222
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.03003003003003003,
+      "post2": 0.05105105105105105
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.11611611611611612,
+      "post2": 0.22322322322322322
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.0033464210219938425,
+     "se": 0.0020876757177397632,
+     "ci_lo": -0.007477869893842012,
+     "ci_hi": 0.0007850278498543269,
+     "n_identifying": 74
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.004158274697985602,
+     "se": 0.0010074121129757742,
+     "ci_lo": 0.00216463574234069,
+     "ci_hi": 0.006151913653630513,
+     "n_identifying": 74
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.03155800760012806,
+     "se": 0.021014397850183827,
+     "ci_lo": -0.010028867963432525,
+     "ci_hi": 0.07314488316368864,
+     "n_identifying": 74
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.002667416974248658,
+     "se": 0.0018105782473670075,
+     "ci_lo": -0.006250498098349613,
+     "ci_hi": 0.0009156641498522969,
+     "n_identifying": 80
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0023627526593485576,
+     "se": 0.0007730737778411762,
+     "ci_lo": 0.0008328623798489981,
+     "ci_hi": 0.0038926429388481173,
+     "n_identifying": 80
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.009381235611809195,
+     "se": 0.016991459050138342,
+     "ci_lo": -0.02424436233294739,
+     "ci_hi": 0.04300683355656578,
+     "n_identifying": 80
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.002207510565146929,
+     "se": 0.001437002975415917,
+     "ci_lo": -0.0050512972084347015,
+     "ci_hi": 0.0006362760781408439,
+     "n_identifying": 86
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0012693654701541254,
+     "se": 0.0006308982529140299,
+     "ci_lo": 2.083637480467101e-05,
+     "ci_hi": 0.00251789456550358,
+     "n_identifying": 86
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.0022087827692876877,
+     "se": 0.013992188263209325,
+     "ci_lo": -0.029898911999372144,
+     "ci_hi": 0.025481346460796767,
+     "n_identifying": 86
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.0006559526165264817,
+     "se": 0.0006623306728666662,
+     "ci_lo": -0.001966685546910897,
+     "ci_hi": 0.0006547803138579334,
+     "n_identifying": 90
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0005600292851633052,
+     "se": 0.0003953223192047091,
+     "ci_lo": -0.00022230196284438403,
+     "ci_hi": 0.0013423605331709942,
+     "n_identifying": 90
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.00297413366205479,
+     "se": 0.006758243999238131,
+     "ci_lo": -0.010400232533360018,
+     "ci_hi": 0.016348499857469598,
+     "n_identifying": 90
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 92
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 92
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 92
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0017045685221566036,
+     "se": 0.0010244436376162249,
+     "ci_lo": -0.00032277532005844326,
+     "ci_hi": 0.0037319123643716505,
+     "n_identifying": 92
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.0007974816001938747,
+     "se": 0.00025222308560308786,
+     "ci_lo": -0.001296623671739891,
+     "ci_hi": -0.00029833952864785846,
+     "n_identifying": 92
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.010267854651576229,
+     "se": 0.006832367560036285,
+     "ci_lo": -0.023788909194723727,
+     "ci_hi": 0.00325319989157127,
+     "n_identifying": 92
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.002497646061243857,
+     "se": 0.0014027564392443013,
+     "ci_lo": -0.0002783676937410753,
+     "ci_hi": 0.005273659816228789,
+     "n_identifying": 93
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.0009011259997731445,
+     "se": 0.00034675496077632233,
+     "ci_lo": -0.001587343873235843,
+     "ci_hi": -0.00021490812631044603,
+     "n_identifying": 93
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.02875451960676111,
+     "se": 0.009327769122146869,
+     "ci_lo": -0.04721390048142896,
+     "ci_hi": -0.010295138732093256,
+     "n_identifying": 93
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.003405388418720595,
+     "se": 0.001649677231280872,
+     "ci_lo": 0.0001407256752807848,
+     "ci_hi": 0.0066700511621604055,
+     "n_identifying": 96
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.00019528835813649632,
+     "se": 0.0004601169995524974,
+     "ci_lo": -0.001105846373716333,
+     "ci_hi": 0.0007152696574433404,
+     "n_identifying": 96
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.013720106335871132,
+     "se": 0.011657655329190868,
+     "ci_lo": -0.03679026352020838,
+     "ci_hi": 0.009350050848466112,
+     "n_identifying": 96
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.001099188554080374,
+     "se": 0.0017546817890716495,
+     "ci_lo": -0.0023732751222999707,
+     "ci_hi": 0.004571652230460719,
+     "n_identifying": 99
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -5.787434308499624e-05,
+     "se": 0.000565676142840237,
+     "ci_lo": -0.0011773308000001333,
+     "ci_hi": 0.0010615821138301408,
+     "n_identifying": 99
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.006177121600523021,
+     "se": 0.012203176639863374,
+     "ci_lo": -0.030326849421427875,
+     "ci_hi": 0.017972606220381833,
+     "n_identifying": 99
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0024562796485559347,
+     "se": 0.0020890982792803403,
+     "ci_lo": -0.0016779844307605262,
+     "ci_hi": 0.006590543727872395,
+     "n_identifying": 110
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.0009597246531639667,
+     "se": 0.0005927012664561232,
+     "ci_lo": -0.0021326630352294772,
+     "ci_hi": 0.0002132137289015437,
+     "n_identifying": 110
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.009833103211677371,
+     "se": 0.015116311745530178,
+     "ci_lo": -0.039747839766256,
+     "ci_hi": 0.020081633342901264,
+     "n_identifying": 110
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.003747428880241783,
+     "se": 0.002037878010592974,
+     "ci_lo": -0.000285471793117509,
+     "ci_hi": 0.007780329553601075,
+     "n_identifying": 115
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.0012367109666526475,
+     "se": 0.0007334650361237029,
+     "ci_lo": -0.0026882167107124075,
+     "ci_hi": 0.00021479477740711278,
+     "n_identifying": 115
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.015992405314753197,
+     "se": 0.015646408889746773,
+     "ci_lo": -0.046956188533923346,
+     "ci_hi": 0.014971377904416949,
+     "n_identifying": 115
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.004172148394444211,
+     "se": 0.0018656329605130065,
+     "ci_lo": 0.00048011561152757655,
+     "ci_hi": 0.007864181177360846,
+     "n_identifying": 118
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.0009457909918144061,
+     "se": 0.0008134078971418733,
+     "ci_lo": -0.002555501307666291,
+     "ci_hi": 0.0006639193240374786,
+     "n_identifying": 118
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.015790653913824823,
+     "se": 0.015102684131887027,
+     "ci_lo": -0.04567842182162869,
+     "ci_hi": 0.014097113993979046,
+     "n_identifying": 118
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0038561710826245706,
+     "se": 0.001801104079920108,
+     "ci_lo": 0.00029183905737914604,
+     "ci_hi": 0.007420503107869995,
+     "n_identifying": 124
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.0009174717685958751,
+     "se": 0.0008283890673023367,
+     "ci_lo": -0.0025568293797783876,
+     "ci_hi": 0.0007218858425866376,
+     "n_identifying": 124
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.021200873384250404,
+     "se": 0.014687754091449115,
+     "ci_lo": -0.0502675069401545,
+     "ci_hi": 0.007865760171653694,
+     "n_identifying": 124
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0030448104209685432,
+     "se": 0.001998055776782238,
+     "ci_lo": -0.0009092832223746294,
+     "ci_hi": 0.006998904064311716,
+     "n_identifying": 127
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.0001655933918199265,
+     "se": 0.0009419017159404855,
+     "ci_lo": -0.00202958919760879,
+     "ci_hi": 0.001698402413968937,
+     "n_identifying": 127
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.013957295893510743,
+     "se": 0.016560239886950014,
+     "ci_lo": -0.04672952379131265,
+     "ci_hi": 0.018814932004291168,
+     "n_identifying": 127
+    }
+   ],
+   "editorial": {
+    "pretrend": "Drift for distance; commute borderline",
+    "verdict": "Moderate-confidence, persistent periphery repricing: the commute gradient repriced upward in both phases with access down in the disruption phase. Only the distance channel survives the coarse-cluster bootstrap, and its pre-path drifts."
+   }
+  },
+  "LA": {
+   "code": "LA",
+   "name": "Los Angeles",
+   "n_obs": 17360,
+   "n_zctas": 238,
+   "n_identifying": 121,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 264,
+    "n_covered": 246,
+    "share_covered": 0.9318181818181818,
+    "share_by_year": {
+     "2015": 0.10227272727272728,
+     "2016": 0.25,
+     "2017": 0.3371212121212121,
+     "2018": 0.4090909090909091,
+     "2019": 0.45075757575757575,
+     "2020": 0.4659090909090909,
+     "2021": 0.5303030303030303,
+     "2022": 0.6325757575757576,
+     "2023": 0.7272727272727273,
+     "2024": 0.7840909090909091,
+     "2025": 0.8522727272727273,
+     "2026": 0.9318181818181818
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0015783942532968582,
+      "post1_se": 0.0012314627921047106,
+      "post1_pvalue": 0.20119230301476432,
+      "post2_coef": 0.000216348719468126,
+      "post2_se": 0.001911167272006764,
+      "post2_pvalue": 0.9099659242146741
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.00011461832899778102,
+      "post1_se": 0.0010233836521561267,
+      "post1_pvalue": 0.9109187017378801,
+      "post2_coef": 0.0005691391878633469,
+      "post2_se": 0.0015195758665126698,
+      "post2_pvalue": 0.7083388562794789
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": -0.058214909391413806,
+      "post1_se": 0.026117244488212163,
+      "post1_pvalue": 0.026753286859683884,
+      "post2_coef": -0.0876073826249379,
+      "post2_se": 0.03195618867063567,
+      "post2_pvalue": 0.006582589933910278
+     }
+    },
+    "n_obs": 17723,
+    "n_units": 238,
+    "n_clusters": 238,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0017798645508604089,
+       "post1_se": 0.001300606855300282,
+       "post1_pvalue": 0.1724552868966742,
+       "post2_coef": 0.00023797400273511791,
+       "post2_se": 0.0019142126365816246,
+       "post2_pvalue": 0.9011676660722668
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.00016669310367059206,
+       "post1_se": 0.001082050844816051,
+       "post1_pvalue": 0.8776991004604195,
+       "post2_coef": 0.0005617258775077356,
+       "post2_se": 0.0015183221179486896,
+       "post2_pvalue": 0.7117390390769811
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.06322787545300637,
+       "post1_se": 0.027478723213987515,
+       "post1_pvalue": 0.022261856532234683,
+       "post2_coef": -0.0879625642676714,
+       "post2_se": 0.03191382135075497,
+       "post2_pvalue": 0.006301511323034145
+      }
+     },
+     "n_obs": 17360,
+     "n_units": 238,
+     "n_clusters": 238,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0019357708406567082,
+       "post1_se": 0.0010640782712946506,
+       "post1_pvalue": 0.0701428197923629,
+       "post2_coef": 0.0011604152374035568,
+       "post2_se": 0.0015019618222799948,
+       "post2_pvalue": 0.44052912082325535
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.0002579230976856945,
+       "post1_se": 0.0008777785877592241,
+       "post1_pvalue": 0.7691402582482665,
+       "post2_coef": 0.0002128530820101248,
+       "post2_se": 0.0014207431589368543,
+       "post2_pvalue": 0.8810355231223012
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.06750499468591054,
+       "post1_se": 0.02071237567799709,
+       "post1_pvalue": 0.0012813752638059408,
+       "post2_coef": -0.11080500625731983,
+       "post2_se": 0.030342794641976357,
+       "post2_pvalue": 0.00032051014826331724
+      }
+     },
+     "n_obs": 17723,
+     "n_units": 238,
+     "n_clusters": 238,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.00508825034150715,
+     "post1_se": 0.0013267852711166966,
+     "post1_pvalue": 0.00016098466045847668,
+     "post2_coef": 0.005492916691665904,
+     "post2_se": 0.002070224966023286,
+     "post2_pvalue": 0.00851010799880185,
+     "x_vintage": "2019",
+     "n_obs": 17723,
+     "n_units": 238,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.002920137282102531,
+     "post1_se": 0.000542774781373036,
+     "post1_pvalue": 1.7859153668452412e-07,
+     "post2_coef": 0.004612905822090711,
+     "post2_se": 0.000680135369473748,
+     "post2_pvalue": 9.347339165709561e-11,
+     "x_vintage": "2019",
+     "n_obs": 17723,
+     "n_units": 238,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.06360012770695603,
+     "post1_se": 0.011053171657683568,
+     "post1_pvalue": 2.679810116844782e-08,
+     "post2_coef": -0.09914653066918627,
+     "post2_se": 0.013369126153511811,
+     "post2_pvalue": 2.134183940069735e-12,
+     "x_vintage": "2019",
+     "n_obs": 17723,
+     "n_units": 238,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 36.31633343902251,
+     "pvalue": 6.41947110658074e-08,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 54.0846259432805,
+     "pvalue": 1.0763855900591227e-11,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 49.35286265024901,
+     "pvalue": 1.0972484568728431e-10,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.3913913913913914,
+      "post2": 0.9099099099099099
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.9179179179179179,
+      "post2": 0.8538538538538538
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.10510510510510511,
+      "post2": 0.13213213213213212
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.006256325943814446,
+     "se": 0.0038352388234356672,
+     "ci_lo": -0.0012991866239819095,
+     "ci_hi": 0.013811838511610802,
+     "n_identifying": 30
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.004540047311074335,
+     "se": 0.003338195894228503,
+     "ci_lo": -0.002036278751983084,
+     "ci_hi": 0.011116373374131754,
+     "n_identifying": 30
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.11825090452986936,
+     "se": 0.06196951182304581,
+     "ci_lo": -0.003830521674456633,
+     "ci_hi": 0.24033233073419535,
+     "n_identifying": 30
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0006717147272110387,
+     "se": 0.0020200882077100013,
+     "ci_lo": -0.0033079075451087517,
+     "ci_hi": 0.004651336999530829,
+     "n_identifying": 71
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.00058846733975199,
+     "se": 0.001615572456313642,
+     "ci_lo": -0.002594249189730937,
+     "ci_hi": 0.003771183869234917,
+     "n_identifying": 71
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.029087533123373983,
+     "se": 0.035991023705710314,
+     "ci_lo": -0.04181564773584331,
+     "ci_hi": 0.09999071398259127,
+     "n_identifying": 71
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -4.6920832129433194e-05,
+     "se": 0.0010993655818175429,
+     "ci_lo": -0.0022126974245201803,
+     "ci_hi": 0.0021188557602613138,
+     "n_identifying": 95
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.00012031663384307181,
+     "se": 0.0010509794435377266,
+     "ci_lo": -0.002190771372051922,
+     "ci_hi": 0.0019501381043657783,
+     "n_identifying": 95
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.009696730181465076,
+     "se": 0.023283495694955775,
+     "ci_lo": -0.03617231538370261,
+     "ci_hi": 0.05556577574663275,
+     "n_identifying": 95
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 4.719718837832885e-05,
+     "se": 0.0006183502279416129,
+     "ci_lo": -0.0011709676075045488,
+     "ci_hi": 0.0012653619842612066,
+     "n_identifying": 113
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0001899515521837423,
+     "se": 0.0007913293996871652,
+     "ci_lo": -0.0013689863653374226,
+     "ci_hi": 0.0017488894697049073,
+     "n_identifying": 113
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.010649211436012513,
+     "se": 0.01703117230699741,
+     "ci_lo": -0.022902606934075666,
+     "ci_hi": 0.04420102980610069,
+     "n_identifying": 113
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 121
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 121
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 121
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0007595646372766543,
+     "se": 0.0005125215197472973,
+     "ci_lo": -0.0002501150624735348,
+     "ci_hi": 0.0017692443370268434,
+     "n_identifying": 121
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0005476152153672113,
+     "se": 0.000475767778635972,
+     "ci_lo": -0.000389658731921547,
+     "ci_hi": 0.0014848891626559695,
+     "n_identifying": 121
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.003419402664257443,
+     "se": 0.009852673284142327,
+     "ci_lo": -0.02282940560066974,
+     "ci_hi": 0.015990600272154855,
+     "n_identifying": 121
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0026219983432891635,
+     "se": 0.0009060179000287463,
+     "ci_lo": 0.0008371213263780209,
+     "ci_hi": 0.004406875360200306,
+     "n_identifying": 129
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0008870881971070881,
+     "se": 0.0009317996647435251,
+     "ci_lo": -0.0009485795153227185,
+     "ci_hi": 0.002722755909536895,
+     "n_identifying": 129
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.029567730296058116,
+     "se": 0.018874664650636436,
+     "ci_lo": -0.06675127284610848,
+     "ci_hi": 0.0076158122539922435,
+     "n_identifying": 129
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.002171377445142965,
+     "se": 0.0010383781000725951,
+     "ci_lo": 0.00012574765612375282,
+     "ci_hi": 0.0042170072341621775,
+     "n_identifying": 136
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.00033116085299039657,
+     "se": 0.0008886829076149823,
+     "ci_lo": -0.001419565812645485,
+     "ci_hi": 0.002081887518626278,
+     "n_identifying": 136
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.06479986805358054,
+     "se": 0.019181083572903414,
+     "ci_lo": -0.10258706323773853,
+     "ci_hi": -0.027012672869422556,
+     "n_identifying": 136
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0017980213450689863,
+     "se": 0.0011569796708644578,
+     "ci_lo": -0.0004812563860816547,
+     "ci_hi": 0.004077299076219627,
+     "n_identifying": 145
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0005707486719536033,
+     "se": 0.0008236050721415846,
+     "ci_lo": -0.0010517730952546568,
+     "ci_hi": 0.0021932704391618633,
+     "n_identifying": 145
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.061200629873987424,
+     "se": 0.018597015204523754,
+     "ci_lo": -0.09783719634872082,
+     "ci_hi": -0.024564063399254023,
+     "n_identifying": 145
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0007549206447416395,
+     "se": 0.001322106870421246,
+     "ci_lo": -0.0018496616343064102,
+     "ci_hi": 0.003359502923789689,
+     "n_identifying": 172
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0009952074903744783,
+     "se": 0.0011214347362450304,
+     "ci_lo": -0.0012140458661277014,
+     "ci_hi": 0.0032044608468766583,
+     "n_identifying": 172
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.054370384046629194,
+     "se": 0.022487402244443563,
+     "ci_lo": -0.09867110639976359,
+     "ci_hi": -0.010069661693494797,
+     "n_identifying": 172
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.0009367068857187366,
+     "se": 0.0014918382472895316,
+     "ci_lo": -0.002002250281078523,
+     "ci_hi": 0.003875664052515996,
+     "n_identifying": 193
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.0009738179377200827,
+     "se": 0.0014109667202605633,
+     "ci_lo": -0.001805820379072189,
+     "ci_hi": 0.0037534562545123544,
+     "n_identifying": 193
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.06566989131746079,
+     "se": 0.026776605524032576,
+     "ci_lo": -0.11842044711688297,
+     "ci_hi": -0.012919335518038602,
+     "n_identifying": 193
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.0011236384853753325,
+     "se": 0.0017471804668336775,
+     "ci_lo": -0.002318348984793378,
+     "ci_hi": 0.0045656259555440434,
+     "n_identifying": 209
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.0008682289063573656,
+     "se": 0.001577114561251236,
+     "ci_lo": -0.0022387246464630793,
+     "ci_hi": 0.00397518245917781,
+     "n_identifying": 209
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.07866760780816973,
+     "se": 0.02965074927724253,
+     "ci_lo": -0.13708029581076409,
+     "ci_hi": -0.02025491980557538,
+     "n_identifying": 209
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.0003934232172965337,
+     "se": 0.002043820664362198,
+     "ci_lo": -0.00441979899904699,
+     "ci_hi": 0.003632952564453923,
+     "n_identifying": 231
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0009411554546089342,
+     "se": 0.0018106483791676302,
+     "ci_lo": -0.0026258653267477883,
+     "ci_hi": 0.004508176235965657,
+     "n_identifying": 231
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.08638913596028029,
+     "se": 0.03407857986466025,
+     "ci_lo": -0.15352475653408243,
+     "ci_hi": -0.01925351538647814,
+     "n_identifying": 231
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.000706851242556153,
+     "se": 0.0022032636301146853,
+     "ci_lo": -0.005047333495128803,
+     "ci_hi": 0.003633631010016497,
+     "n_identifying": 238
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0008806419273436285,
+     "se": 0.001871942838462527,
+     "ci_lo": -0.0028071304105286837,
+     "ci_hi": 0.00456841426521594,
+     "n_identifying": 238
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.09322716990380311,
+     "se": 0.035367149337428266,
+     "ci_lo": -0.16290130327803004,
+     "ci_hi": -0.023553036529576188,
+     "n_identifying": 238
+    }
+   ],
+   "editorial": {
+    "pretrend": "Flat \u2014 the cleanest pre-path in the study",
+    "verdict": "Access-only repricing: rents in job-accessible ZCTAs fell relative to the covered submarket and kept falling into the return-to-office era. The coarse-cluster bootstrap narrowly misses (p \u2248 0.11\u20130.13)."
+   }
+  },
+  "DFW": {
+   "code": "DFW",
+   "name": "Dallas-Fort Worth",
+   "n_obs": 12926,
+   "n_zctas": 169,
+   "n_identifying": 80,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 185,
+    "n_covered": 177,
+    "share_covered": 0.9567567567567568,
+    "share_by_year": {
+     "2015": 0.22162162162162163,
+     "2016": 0.3027027027027027,
+     "2017": 0.34594594594594597,
+     "2018": 0.41081081081081083,
+     "2019": 0.4540540540540541,
+     "2020": 0.4648648648648649,
+     "2021": 0.654054054054054,
+     "2022": 0.7513513513513513,
+     "2023": 0.7837837837837838,
+     "2024": 0.8378378378378378,
+     "2025": 0.8972972972972973,
+     "2026": 0.9567567567567568
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0009650373814660087,
+      "post1_se": 0.0009875511055018266,
+      "post1_pvalue": 0.3298739648930954,
+      "post2_coef": 0.001764889892090268,
+      "post2_se": 0.001600100503580609,
+      "post2_pvalue": 0.2716103360928978
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": -0.0011019043148906998,
+      "post1_se": 0.00032205495132048203,
+      "post1_pvalue": 0.0007821066481708873,
+      "post2_coef": -0.0011468891116318816,
+      "post2_se": 0.0005347822147850671,
+      "post2_pvalue": 0.03342286796458022
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": -0.03296346562596439,
+      "post1_se": 0.00816536252125681,
+      "post1_pvalue": 8.21311375780534e-05,
+      "post2_coef": -0.03822300794162391,
+      "post2_se": 0.011277165291080771,
+      "post2_pvalue": 0.0008728509118728735
+     }
+    },
+    "n_obs": 13166,
+    "n_units": 169,
+    "n_clusters": 169,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0011653788729332577,
+       "post1_se": 0.0010364920934873606,
+       "post1_pvalue": 0.26246890604935585,
+       "post2_coef": 0.0017646701179359684,
+       "post2_se": 0.0015981339107752305,
+       "post2_pvalue": 0.27108251451503124
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.0010959299374466078,
+       "post1_se": 0.0003368074253809406,
+       "post1_pvalue": 0.001376426755503478,
+       "post2_coef": -0.0011448054791759967,
+       "post2_se": 0.0005329397772764815,
+       "post2_pvalue": 0.03313897531820772
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.03481163445536381,
+       "post1_se": 0.008557221197877178,
+       "post1_pvalue": 7.27619754559272e-05,
+       "post2_coef": -0.03807963199637204,
+       "post2_se": 0.011238678564501796,
+       "post2_pvalue": 0.0008762828000969782
+      }
+     },
+     "n_obs": 12926,
+     "n_units": 169,
+     "n_clusters": 169,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0010782861107086032,
+       "post1_se": 0.0009517919700804052,
+       "post1_pvalue": 0.2588700475814807,
+       "post2_coef": 0.0016273709716583193,
+       "post2_se": 0.0014326335419780401,
+       "post2_pvalue": 0.25760384173243434
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.000865214644841698,
+       "post1_se": 0.00035158458382640557,
+       "post1_pvalue": 0.014870013559538505,
+       "post2_coef": -0.0009621787303958581,
+       "post2_se": 0.000512980455378006,
+       "post2_pvalue": 0.06243639795805584
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.03640380593376123,
+       "post1_se": 0.008204946532031647,
+       "post1_pvalue": 1.6463591648478312e-05,
+       "post2_coef": -0.04444256269694381,
+       "post2_se": 0.010579399093572696,
+       "post2_pvalue": 4.306929957125367e-05
+      }
+     },
+     "n_obs": 13166,
+     "n_units": 169,
+     "n_clusters": 169,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.0027452594171418544,
+     "post1_se": 0.0010548318158737028,
+     "post1_pvalue": 0.010080280431893246,
+     "post2_coef": 0.004003734434518954,
+     "post2_se": 0.0016165633081497376,
+     "post2_pvalue": 0.014250533851843925,
+     "x_vintage": "2019",
+     "n_obs": 13166,
+     "n_units": 169,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": -2.801883555793882e-05,
+     "post1_se": 0.00038728864655916445,
+     "post1_pvalue": 0.9424125105398844,
+     "post2_coef": 0.00021166691519462544,
+     "post2_se": 0.0005551510444068804,
+     "post2_pvalue": 0.7034786844279273,
+     "x_vintage": "2019",
+     "n_obs": 13166,
+     "n_units": 169,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.027092770001575936,
+     "post1_se": 0.007997614398212996,
+     "post1_pvalue": 0.0008782560729923537,
+     "post2_coef": -0.03607126848907151,
+     "post2_se": 0.011126477155228801,
+     "post2_pvalue": 0.0014318516144267968,
+     "x_vintage": "2019",
+     "n_obs": 13166,
+     "n_units": 169,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 32.10832854443956,
+     "pvalue": 4.965443738354315e-07,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 21.941640856289702,
+     "pvalue": 6.708061655317767e-05,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 26.54364664002526,
+     "pvalue": 7.337772348520134e-06,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.1941941941941942,
+      "post2": 0.1881881881881882
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.11411411411411411,
+      "post2": 0.17017017017017017
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.026026026026026026,
+      "post2": 0.04904904904904905
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.0022103193623206393,
+     "se": 0.001769490688719831,
+     "ci_lo": -0.001282982951206314,
+     "ci_hi": 0.005703621675847592,
+     "n_identifying": 41
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.002090098716047149,
+     "se": 0.0005304214227626949,
+     "ci_lo": 0.0010429485981667836,
+     "ci_hi": 0.0031372488339275143,
+     "n_identifying": 41
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.03122616636787018,
+     "se": 0.013608378226727186,
+     "ci_lo": 0.004360707597263012,
+     "ci_hi": 0.05809162513847735,
+     "n_identifying": 41
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.002365919203167038,
+     "se": 0.0013834859103454785,
+     "ci_lo": -0.00036533819318483205,
+     "ci_hi": 0.005097176599518909,
+     "n_identifying": 54
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0013946634658243925,
+     "se": 0.0004903469265751935,
+     "ci_lo": 0.0004266278248597012,
+     "ci_hi": 0.002362699106789084,
+     "n_identifying": 54
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.022962092594357685,
+     "se": 0.01093036779245809,
+     "ci_lo": 0.0013835223647971316,
+     "ci_hi": 0.044540662823918234,
+     "n_identifying": 54
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0011486945306327353,
+     "se": 0.0009669074839514312,
+     "ci_lo": -0.00076015990538451,
+     "ci_hi": 0.0030575489666499808,
+     "n_identifying": 63
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0007667601785593951,
+     "se": 0.0004135455903396177,
+     "ci_lo": -4.965540174942584e-05,
+     "ci_hi": 0.0015831757588682161,
+     "n_identifying": 63
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.01311588549204878,
+     "se": 0.00866203688161664,
+     "ci_lo": -0.0039845794447284175,
+     "ci_hi": 0.030216350428825978,
+     "n_identifying": 63
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0002656498886130966,
+     "se": 0.0005789728339249917,
+     "ci_lo": -0.0008773497061927189,
+     "ci_hi": 0.0014086494834189122,
+     "n_identifying": 76
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0001701598603777414,
+     "se": 0.00022825323225478448,
+     "ci_lo": -0.00028045429056899564,
+     "ci_hi": 0.0006207740113244784,
+     "n_identifying": 76
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0007662405105427789,
+     "se": 0.005109340162807334,
+     "ci_lo": -0.00932054317535716,
+     "ci_hi": 0.010853024196442719,
+     "n_identifying": 76
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 80
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 80
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 80
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0013676848137784883,
+     "se": 0.0006563628658116008,
+     "ci_lo": 7.190296408044546e-05,
+     "ci_hi": 0.0026634666634765313,
+     "n_identifying": 80
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.0005218026489859273,
+     "se": 0.00021964388634378,
+     "ci_lo": -0.0009554203567297764,
+     "ci_hi": -8.818494124207825e-05,
+     "n_identifying": 80
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.013652642424448008,
+     "se": 0.005419135864450081,
+     "ci_lo": -0.02435102019680921,
+     "ci_hi": -0.0029542646520868063,
+     "n_identifying": 80
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.002772614112047156,
+     "se": 0.0009100818906884087,
+     "ci_lo": 0.0009759439207273905,
+     "ci_hi": 0.004569284303366922,
+     "n_identifying": 87
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.0008857073598338321,
+     "se": 0.0003325806505977836,
+     "ci_lo": -0.0015422831551029582,
+     "ci_hi": -0.000229131564564706,
+     "n_identifying": 87
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.029580613672020244,
+     "se": 0.007213612674510744,
+     "ci_lo": -0.04382162098864344,
+     "ci_hi": -0.015339606355397047,
+     "n_identifying": 87
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.002159433871945792,
+     "se": 0.0012116531869252583,
+     "ci_lo": -0.0002325939064769982,
+     "ci_hi": 0.0045514616503685825,
+     "n_identifying": 101
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.0003964719483182951,
+     "se": 0.0003665038680887916,
+     "ci_lo": -0.0011200184571939168,
+     "ci_hi": 0.0003270745605573266,
+     "n_identifying": 101
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.028952042780364014,
+     "se": 0.01015498199873783,
+     "ci_lo": -0.04899985785854338,
+     "ci_hi": -0.008904227702184641,
+     "n_identifying": 101
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0028705943377141316,
+     "se": 0.0013194151699577174,
+     "ci_lo": 0.00026582444822101543,
+     "ci_hi": 0.005475364227207248,
+     "n_identifying": 121
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0006184151957028255,
+     "se": 0.00044538207443514406,
+     "ci_lo": -0.0002608515000452784,
+     "ci_hi": 0.0014976818914509294,
+     "n_identifying": 121
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.0024906316396980633,
+     "se": 0.010293466617007333,
+     "ci_lo": -0.02281184100046546,
+     "ci_hi": 0.017830577721069336,
+     "n_identifying": 121
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0022336157067895193,
+     "se": 0.0013960818403654291,
+     "ci_lo": -0.0005225083880763459,
+     "ci_hi": 0.004989739801655384,
+     "n_identifying": 137
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.000564961607792558,
+     "se": 0.00047813349549175445,
+     "ci_lo": -0.0003789624583942255,
+     "ci_hi": 0.0015088856739793417,
+     "n_identifying": 137
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.0015027175597391229,
+     "se": 0.010507042744671609,
+     "ci_lo": -0.022245565748921895,
+     "ci_hi": 0.019240130629443648,
+     "n_identifying": 137
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.0028383004414011636,
+     "se": 0.0016069291913686531,
+     "ci_lo": -0.0003340753714059044,
+     "ci_hi": 0.006010676254208232,
+     "n_identifying": 143
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 7.95899047584485e-05,
+     "se": 0.0005890990190688275,
+     "ci_lo": -0.0010834006548010474,
+     "ci_hi": 0.0012425804643179442,
+     "n_identifying": 143
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.018221000010274123,
+     "se": 0.012740805488275803,
+     "ci_lo": -0.043373709528395685,
+     "ci_hi": 0.006931709507847435,
+     "n_identifying": 143
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.003442047426868308,
+     "se": 0.0019774363829798674,
+     "ci_lo": -0.0004617781968276821,
+     "ci_hi": 0.007345873050564298,
+     "n_identifying": 152
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.0007230820100685498,
+     "se": 0.0007159883224166345,
+     "ci_lo": -0.002136575553211081,
+     "ci_hi": 0.0006904115330739812,
+     "n_identifying": 152
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.03698023370696968,
+     "se": 0.015572109594707667,
+     "ci_lo": -0.06772246186361672,
+     "ci_hi": -0.0062380055503226325,
+     "n_identifying": 152
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.003282994466454569,
+     "se": 0.002080867024744485,
+     "ci_lo": -0.0008250223985230101,
+     "ci_hi": 0.0073910113314321485,
+     "n_identifying": 162
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.0013441035505489158,
+     "se": 0.0007235319405398584,
+     "ci_lo": -0.0027724895928779142,
+     "ci_hi": 8.428249178008256e-05,
+     "n_identifying": 162
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.04577730111625676,
+     "se": 0.01567631662081232,
+     "ci_lo": -0.07672525324065213,
+     "ci_hi": -0.014829348991861394,
+     "n_identifying": 162
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0029773873320035164,
+     "se": 0.0022094386344795017,
+     "ci_lo": -0.0013844537009136838,
+     "ci_hi": 0.007339228364920717,
+     "n_identifying": 169
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.0016467114084594398,
+     "se": 0.0007543895251211438,
+     "ci_lo": -0.003136016037303095,
+     "ci_hi": -0.00015740677961578482,
+     "n_identifying": 169
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.04905015542211779,
+     "se": 0.016661674957899712,
+     "ci_lo": -0.08194338738355528,
+     "ci_hi": -0.01615692346068031,
+     "n_identifying": 169
+    }
+   ],
+   "editorial": {
+    "pretrend": "Drift for distance and access; commute flat",
+    "verdict": "Access-led repricing \u2014 the study's most bootstrap-robust access result; commute itself never significant."
+   }
+  },
+  "MEM": {
+   "code": "MEM",
+   "name": "Memphis",
+   "n_obs": 2587,
+   "n_zctas": 38,
+   "n_identifying": 12,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 51,
+    "n_covered": 39,
+    "share_covered": 0.7647058823529411,
+    "share_by_year": {
+     "2015": 0.11764705882352941,
+     "2016": 0.21568627450980393,
+     "2017": 0.23529411764705882,
+     "2018": 0.23529411764705882,
+     "2019": 0.23529411764705882,
+     "2020": 0.2549019607843137,
+     "2021": 0.45098039215686275,
+     "2022": 0.5490196078431373,
+     "2023": 0.6078431372549019,
+     "2024": 0.6666666666666666,
+     "2025": 0.6666666666666666,
+     "2026": 0.7647058823529411
+    }
+   },
+   "flags": [
+    "under_identified"
+   ],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0034581224574275053,
+      "post1_se": 0.00938461508485597,
+      "post1_pvalue": 0.7146090878498838,
+      "post2_coef": 0.0008251139381027179,
+      "post2_se": 0.013077907768063413,
+      "post2_pvalue": 0.9500327066323758
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.0005652618723240145,
+      "post1_se": 0.0020452796211253978,
+      "post1_pvalue": 0.7837988980851894,
+      "post2_coef": 0.0008317302644926312,
+      "post2_se": 0.0037572827358520115,
+      "post2_pvalue": 0.8260255448038717
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": 0.05752105241640231,
+      "post1_se": 0.049467668421266764,
+      "post1_pvalue": 0.2523552982957755,
+      "post2_coef": 0.024558996397898825,
+      "post2_se": 0.06445723512168834,
+      "post2_pvalue": 0.7053732040851525
+     }
+    },
+    "n_obs": 2622,
+    "n_units": 38,
+    "n_clusters": 38,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.003949875206191653,
+       "post1_se": 0.009950615678254471,
+       "post1_pvalue": 0.693686424847288,
+       "post2_coef": 0.0009008435374569814,
+       "post2_se": 0.013236336745515394,
+       "post2_pvalue": 0.9461056366967755
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.000698900947671165,
+       "post1_se": 0.002169851121062681,
+       "post1_pvalue": 0.7491926315082407,
+       "post2_coef": 0.0008327797356543753,
+       "post2_se": 0.0037836903428723596,
+       "post2_pvalue": 0.8270053347948847
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.06219829166196783,
+       "post1_se": 0.05135547691153263,
+       "post1_pvalue": 0.23352373827492193,
+       "post2_coef": 0.02515952228388982,
+       "post2_se": 0.06468232450357052,
+       "post2_pvalue": 0.6995274765982782
+      }
+     },
+     "n_obs": 2587,
+     "n_units": 38,
+     "n_clusters": 38,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.003834341159782603,
+       "post1_se": 0.008086652131622539,
+       "post1_pvalue": 0.6381744386029187,
+       "post2_coef": 0.0025467439969060097,
+       "post2_se": 0.013677218533515419,
+       "post2_pvalue": 0.8533024420885663
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.00018222019554913746,
+       "post1_se": 0.0019718235568981775,
+       "post1_pvalue": 0.9268692516137543,
+       "post2_coef": -0.0013054459392812675,
+       "post2_se": 0.0037377592823718353,
+       "post2_pvalue": 0.7288748756526293
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.06338347927633382,
+       "post1_se": 0.053151625656359607,
+       "post1_pvalue": 0.24065589704061185,
+       "post2_coef": 0.013538151122797748,
+       "post2_se": 0.06992293789872739,
+       "post2_pvalue": 0.8475361281741057
+      }
+     },
+     "n_obs": 2622,
+     "n_units": 38,
+     "n_clusters": 38,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": -0.0015736269658633375,
+     "post1_se": 0.002671763900535886,
+     "post1_pvalue": 0.5594508711329802,
+     "post2_coef": 0.00036364664576881556,
+     "post2_se": 0.004778869437921749,
+     "post2_pvalue": 0.9397537309995742,
+     "x_vintage": "2019",
+     "n_obs": 2622,
+     "n_units": 38,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": -0.00021724019733094678,
+     "post1_se": 0.000900359889075057,
+     "post1_pvalue": 0.8106690896779394,
+     "post2_coef": 0.0003067649729297348,
+     "post2_se": 0.0018806113619886699,
+     "post2_pvalue": 0.8713118002637403,
+     "x_vintage": "2019",
+     "n_obs": 2622,
+     "n_units": 38,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": 0.02251635966215876,
+     "post1_se": 0.02071620776623059,
+     "post1_pvalue": 0.2841130289115281,
+     "post2_coef": 0.002669634313265204,
+     "post2_se": 0.02654644857082419,
+     "post2_pvalue": 0.920439020807307,
+     "x_vintage": "2019",
+     "n_obs": 2622,
+     "n_units": 38,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 1.8534487532195156,
+     "pvalue": 0.6033735232205295,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 0.23686041479087122,
+     "pvalue": 0.9714302168075916,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 0.6309872974103705,
+     "pvalue": 0.8893033248986796,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.7517517517517518,
+      "post2": 0.9429429429429429
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.5995995995995996,
+      "post2": 0.37537537537537535
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.5305305305305306,
+      "post2": 0.6856856856856857
+     }
+    },
+    "commute_min_proxy_2019": {
+     "post1": 0.8068068068068068,
+     "post2": 0.9529529529529529
+    },
+    "distance_to_cbd_km": {
+     "post1": 0.8068068068068068,
+     "post2": 0.8228228228228228
+    },
+    "log_job_accessibility_2019": {
+     "post1": 0.2822822822822823,
+     "post2": 0.7497497497497497
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.0071241616473706314,
+     "se": 0.0107489232459806,
+     "ci_lo": -0.014655225619313648,
+     "ci_hi": 0.02890354891405491,
+     "n_identifying": 7
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.003777190663597243,
+     "se": 0.0024113912847302304,
+     "ci_lo": -0.0011087521829372306,
+     "ci_hi": 0.008663133510131716,
+     "n_identifying": 7
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.003351933699899168,
+     "se": 0.0522845658896328,
+     "ci_lo": -0.10929052703822201,
+     "ci_hi": 0.10258665963842367,
+     "n_identifying": 7
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0049470139476971405,
+     "se": 0.006858241505080525,
+     "ci_lo": -0.008949103299530435,
+     "ci_hi": 0.018843131194924714,
+     "n_identifying": 11
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0040894701797052025,
+     "se": 0.002040610967256444,
+     "ci_lo": -4.520038212434477e-05,
+     "ci_hi": 0.00822414074153475,
+     "n_identifying": 11
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.05647299334102038,
+     "se": 0.038048221090432516,
+     "ci_lo": -0.020620025464079178,
+     "ci_hi": 0.13356601214611993,
+     "n_identifying": 11
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0030073080010303227,
+     "se": 0.003888824912612834,
+     "ci_lo": -0.004872199726945637,
+     "ci_hi": 0.010886815729006283,
+     "n_identifying": 12
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0012553743398345824,
+     "se": 0.0007528814972072475,
+     "ci_lo": -0.0002701084753608139,
+     "ci_hi": 0.0027808571550299787,
+     "n_identifying": 12
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0140272620710286,
+     "se": 0.024998314109330597,
+     "ci_lo": -0.0366241335657313,
+     "ci_hi": 0.0646786577077885,
+     "n_identifying": 12
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.0026464331828183613,
+     "se": 0.0033558261135604754,
+     "ci_lo": -0.009445982761350865,
+     "ci_hi": 0.004153116395714142,
+     "n_identifying": 12
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0003220802424312993,
+     "se": 0.0006178799150255066,
+     "ci_lo": -0.0009298633844504488,
+     "ci_hi": 0.0015740238693130472,
+     "n_identifying": 12
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.021010759020647477,
+     "se": 0.02153033226006033,
+     "ci_lo": -0.0646353559724942,
+     "ci_hi": 0.02261383793119925,
+     "n_identifying": 12
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 12
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 12
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 12
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0038970519725511194,
+     "se": 0.004283498802385144,
+     "ci_lo": -0.004782141016235874,
+     "ci_hi": 0.012576244961338114,
+     "n_identifying": 12
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.00011724622217017689,
+     "se": 0.0009602587112501529,
+     "ci_lo": -0.0020629151854632826,
+     "ci_hi": 0.0018284227411229288,
+     "n_identifying": 12
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.031054616712505905,
+     "se": 0.023227101260602075,
+     "ci_lo": -0.01600796079973994,
+     "ci_hi": 0.07811719422475175,
+     "n_identifying": 12
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.00812969174082643,
+     "se": 0.006394294875279762,
+     "ci_lo": -0.004826380341851082,
+     "ci_hi": 0.02108576382350394,
+     "n_identifying": 15
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0012861680894611857,
+     "se": 0.0011258947805213612,
+     "ci_lo": -0.0009951114289950096,
+     "ci_hi": 0.003567447607917381,
+     "n_identifying": 15
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.07485579592787886,
+     "se": 0.04399735345376162,
+     "ci_lo": -0.01429131003336069,
+     "ci_hi": 0.16400290188911842,
+     "n_identifying": 15
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.009823847083391329,
+     "se": 0.011812171753104126,
+     "ci_lo": -0.014109886294753592,
+     "ci_hi": 0.03375758046153625,
+     "n_identifying": 19
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0016793305511607491,
+     "se": 0.0023807513475414023,
+     "ci_lo": -0.0031445298855740356,
+     "ci_hi": 0.0065031909878955334,
+     "n_identifying": 19
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.08946641466433675,
+     "se": 0.054534795549429665,
+     "ci_lo": -0.021031577050751052,
+     "ci_hi": 0.19996440637942453,
+     "n_identifying": 19
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.007154388803078154,
+     "se": 0.014451652942388519,
+     "ci_lo": -0.022127441467101914,
+     "ci_hi": 0.036436219073258225,
+     "n_identifying": 25
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.002295512040671201,
+     "se": 0.0032222632585709203,
+     "ci_lo": -0.004233413487740816,
+     "ci_hi": 0.008824437569083219,
+     "n_identifying": 25
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.08231599906634318,
+     "se": 0.05591195382486946,
+     "ci_lo": -0.030972380366838886,
+     "ci_hi": 0.19560437849952525,
+     "n_identifying": 25
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0018926821767366062,
+     "se": 0.014240308750462418,
+     "ci_lo": -0.026960924084657816,
+     "ci_hi": 0.03074628843813103,
+     "n_identifying": 29
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0020467157224051853,
+     "se": 0.0035070333596267647,
+     "ci_lo": -0.005059208838462221,
+     "ci_hi": 0.009152640283272591,
+     "n_identifying": 29
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.035962206662011525,
+     "se": 0.053693959050908846,
+     "ci_lo": -0.0728320884771336,
+     "ci_hi": 0.14475650180115665,
+     "n_identifying": 29
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.004375109235871198,
+     "se": 0.014472645645240513,
+     "ci_lo": -0.024949256290606188,
+     "ci_hi": 0.03369947476234859,
+     "n_identifying": 33
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.002150816683051833,
+     "se": 0.003725465546805203,
+     "ci_lo": -0.005397693529159489,
+     "ci_hi": 0.009699326895263155,
+     "n_identifying": 33
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.05018230516871662,
+     "se": 0.06058790544426679,
+     "ci_lo": -0.07258045219317708,
+     "ci_hi": 0.17294506253061032,
+     "n_identifying": 33
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.00663421917132887,
+     "se": 0.015104752094911108,
+     "ci_lo": -0.023970915679303165,
+     "ci_hi": 0.03723935402196091,
+     "n_identifying": 34
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.00139707956793991,
+     "se": 0.0040209404842936084,
+     "ci_lo": -0.006750119735624415,
+     "ci_hi": 0.009544278871504235,
+     "n_identifying": 34
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.05212268871618081,
+     "se": 0.07351489551032314,
+     "ci_lo": -0.09683263848720844,
+     "ci_hi": 0.20107801591957006,
+     "n_identifying": 34
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.007560401485302336,
+     "se": 0.015398395560798115,
+     "ci_lo": -0.023639711542727697,
+     "ci_hi": 0.03876051451333237,
+     "n_identifying": 36
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0009458156613292162,
+     "se": 0.004096469878847286,
+     "ci_lo": -0.007354420732216923,
+     "ci_hi": 0.009246052054875355,
+     "n_identifying": 36
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.04221089305812245,
+     "se": 0.0766668587573284,
+     "ci_lo": -0.11313091832009362,
+     "ci_hi": 0.19755270443633852,
+     "n_identifying": 36
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.008733477596346538,
+     "se": 0.01576100192586251,
+     "ci_lo": -0.02320134571562335,
+     "ci_hi": 0.040668300908316427,
+     "n_identifying": 38
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0007230721239079438,
+     "se": 0.004065663165019905,
+     "ci_lo": -0.007514743938270461,
+     "ci_hi": 0.008960888186086348,
+     "n_identifying": 38
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.04606455425213422,
+     "se": 0.07874475645551082,
+     "ci_lo": -0.11348747778108462,
+     "ci_hi": 0.20561658628535304,
+     "n_identifying": 38
+    }
+   ],
+   "editorial": {
+    "pretrend": "Uninformative (7\u201312 identifying ZCTAs per pre-bin)",
+    "verdict": "Under-identified \u2014 only 12 ZCTAs observed on both sides of the break. No evidence either way."
+   }
+  },
+  "DEN": {
+   "code": "DEN",
+   "name": "Denver",
+   "n_obs": 7930,
+   "n_zctas": 90,
+   "n_identifying": 66,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 102,
+    "n_covered": 90,
+    "share_covered": 0.8823529411764706,
+    "share_by_year": {
+     "2015": 0.09803921568627451,
+     "2016": 0.2549019607843137,
+     "2017": 0.39215686274509803,
+     "2018": 0.5784313725490197,
+     "2019": 0.6274509803921569,
+     "2020": 0.6568627450980392,
+     "2021": 0.7450980392156863,
+     "2022": 0.7843137254901961,
+     "2023": 0.803921568627451,
+     "2024": 0.8235294117647058,
+     "2025": 0.8529411764705882,
+     "2026": 0.8823529411764706
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.005587218545957354,
+      "post1_se": 0.0007579307503755387,
+      "post1_pvalue": 8.287783517371844e-11,
+      "post2_coef": 0.00755068340485953,
+      "post2_se": 0.001376639580026727,
+      "post2_pvalue": 3.8376136169152824e-07
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.001660070438591329,
+      "post1_se": 0.0011198645644380607,
+      "post1_pvalue": 0.14177019236730548,
+      "post2_coef": 0.0026249412618006723,
+      "post2_se": 0.0017535753065547135,
+      "post2_pvalue": 0.1379552455043936
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": 0.028929658623489195,
+      "post1_se": 0.017632247666759353,
+      "post1_pvalue": 0.10438428092715944,
+      "post2_coef": 0.035736116001919165,
+      "post2_se": 0.028245035714873693,
+      "post2_pvalue": 0.2090958918376455
+     }
+    },
+    "n_obs": 8128,
+    "n_units": 90,
+    "n_clusters": 90,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.005922747404336058,
+       "post1_se": 0.0007891746938868829,
+       "post1_pvalue": 4.4496785728271e-11,
+       "post2_coef": 0.007556050226628468,
+       "post2_se": 0.0013741597853279485,
+       "post2_pvalue": 3.620080958582236e-07
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.0019899393932567406,
+       "post1_se": 0.0011772386097583843,
+       "post1_pvalue": 0.09446170508433725,
+       "post2_coef": 0.0026469517917472305,
+       "post2_se": 0.0017532898770047523,
+       "post2_pvalue": 0.13466070936227773
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.032233462189869666,
+       "post1_se": 0.01865630574926403,
+       "post1_pvalue": 0.08750127824989619,
+       "post2_coef": 0.03600589174725056,
+       "post2_se": 0.028226258527435138,
+       "post2_pvalue": 0.20541040108644956
+      }
+     },
+     "n_obs": 7930,
+     "n_units": 90,
+     "n_clusters": 90,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0060799601756364365,
+       "post1_se": 0.0007702852681239755,
+       "post1_pvalue": 7.193802692355088e-12,
+       "post2_coef": 0.008650077100151561,
+       "post2_se": 0.0015650103636540792,
+       "post2_pvalue": 3.2085225466067303e-07
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.001300266034251938,
+       "post1_se": 0.0009479459976040852,
+       "post1_pvalue": 0.17361527169773067,
+       "post2_coef": 0.0023188730541449376,
+       "post2_se": 0.0015940575375105498,
+       "post2_pvalue": 0.14927063250978495
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.02578660244268013,
+       "post1_se": 0.015777529304514086,
+       "post1_pvalue": 0.10570992200442365,
+       "post2_coef": 0.032667953600032607,
+       "post2_se": 0.028556658832138215,
+       "post2_pvalue": 0.2557036891951739
+      }
+     },
+     "n_obs": 8128,
+     "n_units": 90,
+     "n_clusters": 90,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.005489418927026587,
+     "post1_se": 0.0008030322546666639,
+     "post1_pvalue": 9.836027069084421e-10,
+     "post2_coef": 0.00841207610286782,
+     "post2_se": 0.0013553702600185816,
+     "post2_pvalue": 1.6792648333727117e-08,
+     "x_vintage": "2019",
+     "n_obs": 8128,
+     "n_units": 90,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.0010799695869875333,
+     "post1_se": 0.0004051781103204827,
+     "post1_pvalue": 0.009130618644714579,
+     "post2_coef": 0.001983470115788982,
+     "post2_se": 0.0006269062855948336,
+     "post2_pvalue": 0.0021304590425253156,
+     "x_vintage": "2019",
+     "n_obs": 8128,
+     "n_units": 90,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.019158973995602225,
+     "post1_se": 0.0069391277287559,
+     "post1_pvalue": 0.0069978999495915835,
+     "post2_coef": -0.035140367232615766,
+     "post2_se": 0.01097562206181936,
+     "post2_pvalue": 0.0018952888783542764,
+     "x_vintage": "2019",
+     "n_obs": 8128,
+     "n_units": 90,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 70.42897037622267,
+     "pvalue": 3.454612049899183e-15,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 55.45403458586193,
+     "pvalue": 5.49346065743313e-12,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 62.72192502737504,
+     "pvalue": 1.5400061030456266e-13,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.042042042042042045,
+      "post2": 0.13813813813813813
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.026026026026026026,
+      "post2": 0.43243243243243246
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.042042042042042045,
+      "post2": 0.35535535535535534
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.002431263017213137,
+     "se": 0.005271814620567696,
+     "ci_lo": -0.012906246376026935,
+     "ci_hi": 0.008043720341600662,
+     "n_identifying": 12
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.002641646603952378,
+     "se": 0.001776538050244021,
+     "ci_lo": -0.0008882966607449108,
+     "ci_hi": 0.006171589868649666,
+     "n_identifying": 12
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.04216766115543788,
+     "se": 0.03215919133101675,
+     "ci_lo": -0.02173196701263945,
+     "ci_hi": 0.10606728932351521,
+     "n_identifying": 12
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.005215188702363489,
+     "se": 0.0017500768073714756,
+     "ci_lo": -0.008692554041110568,
+     "ci_hi": -0.0017378233636164107,
+     "n_identifying": 27
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.0009118996841996559,
+     "se": 0.0017914506568437584,
+     "ci_lo": -0.00447147398056474,
+     "ci_hi": 0.0026476746121654278,
+     "n_identifying": 27
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.03610826747214642,
+     "se": 0.02736989305546927,
+     "ci_lo": -0.09049166198112873,
+     "ci_hi": 0.018275127036835898,
+     "n_identifying": 27
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.002581819058648927,
+     "se": 0.0009643444646447333,
+     "ci_lo": -0.004497950968884799,
+     "ci_hi": -0.0006656871484130541,
+     "n_identifying": 48
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.00026478111032948173,
+     "se": 0.0011377378824274185,
+     "ci_lo": -0.00199587982767518,
+     "ci_hi": 0.0025254420483341432,
+     "n_identifying": 48
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.00914618102411693,
+     "se": 0.01889832070384582,
+     "ci_lo": -0.04669674171909713,
+     "ci_hi": 0.028404379670863265,
+     "n_identifying": 48
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.00032394486698053223,
+     "se": 0.00047370590375656524,
+     "ci_lo": -0.0012651884075751997,
+     "ci_hi": 0.0006172986736141351,
+     "n_identifying": 62
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.00018849805246944778,
+     "se": 0.0005385352314333684,
+     "ci_lo": -0.0008815599813223404,
+     "ci_hi": 0.001258556086261236,
+     "n_identifying": 62
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.003668621789414658,
+     "se": 0.008983367624393822,
+     "ci_lo": -0.021518381908919523,
+     "ci_hi": 0.014181138330090205,
+     "n_identifying": 62
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 66
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 66
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 66
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0027112464359111636,
+     "se": 0.0006572488424944569,
+     "ci_lo": 0.0014053069855995191,
+     "ci_hi": 0.004017185886222808,
+     "n_identifying": 66
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.00012823896033917914,
+     "se": 0.0005665975927527214,
+     "ci_lo": -0.001254056308330371,
+     "ci_hi": 0.0009975783876520125,
+     "n_identifying": 66
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.005069592245279736,
+     "se": 0.010012313852920951,
+     "ci_lo": -0.014824662113245856,
+     "ci_hi": 0.024963846603805327,
+     "n_identifying": 66
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.006019146082202584,
+     "se": 0.0008380533528506103,
+     "ci_lo": 0.0043539519210385996,
+     "ci_hi": 0.007684340243366568,
+     "n_identifying": 75
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0016812082160429847,
+     "se": 0.0009573414731831309,
+     "ci_lo": -0.00022100889932585984,
+     "ci_hi": 0.0035834253314118293,
+     "n_identifying": 75
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.02119358638222197,
+     "se": 0.01537285122915879,
+     "ci_lo": -0.009351941560795496,
+     "ci_hi": 0.051739114325239435,
+     "n_identifying": 75
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.003976584710120218,
+     "se": 0.0007856450699136224,
+     "ci_lo": 0.0024155246908297272,
+     "ci_hi": 0.0055376447294107085,
+     "n_identifying": 75
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0021300608708463018,
+     "se": 0.0008502945745200113,
+     "ci_lo": 0.00044054366296928326,
+     "ci_hi": 0.00381957807872332,
+     "n_identifying": 75
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.02119073715042291,
+     "se": 0.015332819276835417,
+     "ci_lo": -0.009275248156028357,
+     "ci_hi": 0.05165672245687418,
+     "n_identifying": 75
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.004480123291486136,
+     "se": 0.0008213395027488798,
+     "ci_lo": 0.002848139194461032,
+     "ci_hi": 0.006112107388511241,
+     "n_identifying": 77
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0029958611437137794,
+     "se": 0.0009333281821148335,
+     "ci_lo": 0.0011413579262026863,
+     "ci_hi": 0.004850364361224872,
+     "n_identifying": 77
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.044812756425756786,
+     "se": 0.017565047763027513,
+     "ci_lo": 0.00991138066481067,
+     "ci_hi": 0.0797141321867029,
+     "n_identifying": 77
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.004369303255887152,
+     "se": 0.0010846788348730862,
+     "ci_lo": 0.00221406951518904,
+     "ci_hi": 0.006524536996585265,
+     "n_identifying": 82
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.002363231507225461,
+     "se": 0.0011851029064522426,
+     "ci_lo": 8.457275381870428e-06,
+     "ci_hi": 0.0047180057390690516,
+     "n_identifying": 82
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.03527024556836063,
+     "se": 0.020614270022856873,
+     "ci_lo": -0.005689869872926828,
+     "ci_hi": 0.07623036100964808,
+     "n_identifying": 82
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.005676316607759927,
+     "se": 0.0014057463882787267,
+     "ci_lo": 0.0028831284773422118,
+     "ci_hi": 0.008469504738177643,
+     "n_identifying": 82
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.003006071864332548,
+     "se": 0.0013708404520371327,
+     "ci_lo": 0.00028224108571320424,
+     "ci_hi": 0.005729902642951892,
+     "n_identifying": 82
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.04094573924383657,
+     "se": 0.024510366218462188,
+     "ci_lo": -0.007755836349346103,
+     "ci_hi": 0.08964731483701924,
+     "n_identifying": 82
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.007914738451402226,
+     "se": 0.0015931811604905995,
+     "ci_lo": 0.004749121421052707,
+     "ci_hi": 0.011080355481751744,
+     "n_identifying": 85
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.0031614073325142676,
+     "se": 0.0016391758261130793,
+     "ci_lo": -9.56001187180323e-05,
+     "ci_hi": 0.0064184147837465675,
+     "n_identifying": 85
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.04016711492354662,
+     "se": 0.02818419698925153,
+     "ci_lo": -0.01583428415678522,
+     "ci_hi": 0.09616851400387846,
+     "n_identifying": 85
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.00658917233332654,
+     "se": 0.001953330034929865,
+     "ci_lo": 0.0027079471608150384,
+     "ci_hi": 0.010470397505838041,
+     "n_identifying": 89
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0019816737085876068,
+     "se": 0.0019301379027727096,
+     "ci_lo": -0.0018534691913314923,
+     "ci_hi": 0.005816816608506706,
+     "n_identifying": 89
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.00020539957357098822,
+     "se": 0.03320712074118233,
+     "ci_lo": -0.06577644201109152,
+     "ci_hi": 0.0661872411582335,
+     "n_identifying": 89
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.007627837312858762,
+     "se": 0.0020839052293597296,
+     "ci_lo": 0.0034871620103312283,
+     "ci_hi": 0.011768512615386296,
+     "n_identifying": 90
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0010137974535641072,
+     "se": 0.0020355269744158273,
+     "ci_lo": -0.0030307512868706075,
+     "ci_hi": 0.005058346193998822,
+     "n_identifying": 90
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.018661824254676534,
+     "se": 0.035102837472271456,
+     "ci_lo": -0.08841041460431082,
+     "ci_hi": 0.05108676609495774,
+     "n_identifying": 90
+    }
+   ],
+   "editorial": {
+    "pretrend": "Drift for commute",
+    "verdict": "The strongest commute repricing of the nine, larger in the return-to-office phase; its disruption-phase commute channel survives the coarse-cluster bootstrap \u2014 but part of the rise predates COVID."
+   }
+  },
+  "ATL": {
+   "code": "ATL",
+   "name": "Atlanta",
+   "n_obs": 11768,
+   "n_zctas": 112,
+   "n_identifying": 86,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 117,
+    "n_covered": 112,
+    "share_covered": 0.9572649572649573,
+    "share_by_year": {
+     "2015": 0.452991452991453,
+     "2016": 0.5897435897435898,
+     "2017": 0.6495726495726496,
+     "2018": 0.6923076923076923,
+     "2019": 0.7350427350427351,
+     "2020": 0.7692307692307693,
+     "2021": 0.811965811965812,
+     "2022": 0.8888888888888888,
+     "2023": 0.9316239316239316,
+     "2024": 0.9401709401709402,
+     "2025": 0.9487179487179487,
+     "2026": 0.9572649572649573
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.007694260998640141,
+      "post1_se": 0.0014078143712755828,
+      "post1_pvalue": 2.8688940533279497e-07,
+      "post2_coef": 0.01357070724740053,
+      "post2_se": 0.0022668073655048165,
+      "post2_pvalue": 2.6841135485881665e-08
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": -0.0032463311888248645,
+      "post1_se": 0.000516370337492856,
+      "post1_pvalue": 6.557567666842745e-09,
+      "post2_coef": -0.00424401868538797,
+      "post2_se": 0.0008321044908483659,
+      "post2_pvalue": 1.409414187196609e-06
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": -0.04599691057046516,
+      "post1_se": 0.011020396440336385,
+      "post1_pvalue": 5.977390990031903e-05,
+      "post2_coef": -0.0711090517830941,
+      "post2_se": 0.017485189018354084,
+      "post2_pvalue": 8.93908254406065e-05
+     }
+    },
+    "n_obs": 12025,
+    "n_units": 112,
+    "n_clusters": 112,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.008141578314286246,
+       "post1_se": 0.0014640136223351232,
+       "post1_pvalue": 1.8718010187169604e-07,
+       "post2_coef": 0.01357141991864589,
+       "post2_se": 0.002268900594601326,
+       "post2_pvalue": 2.7498177535065342e-08
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.00328313117157634,
+       "post1_se": 0.0005390944528142187,
+       "post1_pvalue": 1.6576374891573803e-08,
+       "post2_coef": -0.004246729148563897,
+       "post2_se": 0.0008326245215381566,
+       "post2_pvalue": 1.4089932925708341e-06
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.0485323580085852,
+       "post1_se": 0.011574220521756282,
+       "post1_pvalue": 5.553897100744281e-05,
+       "post2_coef": -0.07115640397965046,
+       "post2_se": 0.017517469270865373,
+       "post2_pvalue": 9.100215487416785e-05
+      }
+     },
+     "n_obs": 11768,
+     "n_units": 112,
+     "n_clusters": 112,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.007987020351203942,
+       "post1_se": 0.0015642486903279188,
+       "post1_pvalue": 1.3758316396019178e-06,
+       "post2_coef": 0.0139783798205467,
+       "post2_se": 0.00252003852572246,
+       "post2_pvalue": 1.9950601659609043e-07
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": -0.003294125485087841,
+       "post1_se": 0.0005617076545682689,
+       "post1_pvalue": 4.7217564639594313e-08,
+       "post2_coef": -0.0044402708211459824,
+       "post2_se": 0.0008692027895746484,
+       "post2_pvalue": 1.3614054669725915e-06
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.04814239410003482,
+       "post1_se": 0.01187827390523069,
+       "post1_pvalue": 9.412081680684918e-05,
+       "post2_coef": -0.07419400159663674,
+       "post2_se": 0.019251104487278476,
+       "post2_pvalue": 0.0001950442465440211
+      }
+     },
+     "n_obs": 12025,
+     "n_units": 112,
+     "n_clusters": 112,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.006838847164400599,
+     "post1_se": 0.0010380152355199369,
+     "post1_pvalue": 1.5450761854592665e-09,
+     "post2_coef": 0.013514466828239828,
+     "post2_se": 0.001637371671222143,
+     "post2_pvalue": 3.5277310041506896e-13,
+     "x_vintage": "2019",
+     "n_obs": 12025,
+     "n_units": 112,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": -0.00010334046182332567,
+     "post1_se": 0.000543486524824839,
+     "post1_pvalue": 0.8495439380028769,
+     "post2_coef": 0.0010831156464708096,
+     "post2_se": 0.0008452453881797256,
+     "post2_pvalue": 0.2027160937465499,
+     "x_vintage": "2019",
+     "n_obs": 12025,
+     "n_units": 112,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.02852980684077767,
+     "post1_se": 0.009349065116443017,
+     "post1_pvalue": 0.0028479610683257318,
+     "post2_coef": -0.06617027099862888,
+     "post2_se": 0.014889864745533561,
+     "post2_pvalue": 2.1009028526375853e-05,
+     "x_vintage": "2019",
+     "n_obs": 12025,
+     "n_units": 112,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 92.42212674915544,
+     "pvalue": 6.610636156164514e-20,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 96.05670627648027,
+     "pvalue": 1.0944799767021964e-20,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 96.99637315088705,
+     "pvalue": 6.874374020058593e-21,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.16516516516516516,
+      "post2": 0.09509509509509509
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.03203203203203203,
+      "post2": 0.07107107107107107
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.7817817817817818,
+      "post2": 0.7037037037037037
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.0009408312312043231,
+     "se": 0.002992657577516773,
+     "ci_lo": -0.006870982001988695,
+     "ci_hi": 0.004989319539580048,
+     "n_identifying": 55
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.004310078389272141,
+     "se": 0.0006433327116463899,
+     "ci_lo": 0.003035271674162999,
+     "ci_hi": 0.005584885104381283,
+     "n_identifying": 55
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.02457475328498083,
+     "se": 0.011091819279642517,
+     "ci_lo": 0.0025955729254448986,
+     "ci_hi": 0.04655393364451676,
+     "n_identifying": 55
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.0033264051743958486,
+     "se": 0.0016094562884581946,
+     "ci_lo": -0.006515650252499217,
+     "ci_hi": -0.00013716009629248039,
+     "n_identifying": 70
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.003389963183825336,
+     "se": 0.0004986448507621717,
+     "ci_lo": 0.0024018651239902976,
+     "ci_hi": 0.004378061243660375,
+     "n_identifying": 70
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.026347009925596365,
+     "se": 0.008434959816254061,
+     "ci_lo": 0.009632573956814407,
+     "ci_hi": 0.043061445894378325,
+     "n_identifying": 70
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.0034702254734758284,
+     "se": 0.0009598614078460394,
+     "ci_lo": -0.005372254930620582,
+     "ci_hi": -0.0015681960163310743,
+     "n_identifying": 79
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.002437269082938923,
+     "se": 0.0003708306281409074,
+     "ci_lo": 0.0017024434377259502,
+     "ci_hi": 0.0031720947281518954,
+     "n_identifying": 79
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.024954112924610975,
+     "se": 0.006473637275011388,
+     "ci_lo": 0.012126168503371202,
+     "ci_hi": 0.037782057345850745,
+     "n_identifying": 79
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.0025693897344800745,
+     "se": 0.000503675683010464,
+     "ci_lo": -0.003567456724258529,
+     "ci_hi": -0.0015713227447016198,
+     "n_identifying": 84
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0011729146939957603,
+     "se": 0.0002115288380505587,
+     "ci_lo": 0.0007537561803613643,
+     "ci_hi": 0.0015920732076301564,
+     "n_identifying": 84
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.01137394725637824,
+     "se": 0.004671465888703602,
+     "ci_lo": 0.002117125744718576,
+     "ci_hi": 0.020630768768037905,
+     "n_identifying": 84
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 86
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 86
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 86
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0031894563493213303,
+     "se": 0.0005093583300770275,
+     "ci_lo": 0.002180128815023833,
+     "ci_hi": 0.004198783883618828,
+     "n_identifying": 86
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.0013182016500305805,
+     "se": 0.00024092302368180956,
+     "ci_lo": -0.0017956067047618638,
+     "ci_hi": -0.0008407965952992973,
+     "n_identifying": 86
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": -0.02170649670749719,
+     "se": 0.005110882292151697,
+     "ci_lo": -0.031834051156723754,
+     "ci_hi": -0.011578942258270629,
+     "n_identifying": 86
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.005757109348500367,
+     "se": 0.0007801880338076972,
+     "ci_lo": 0.004211114676473601,
+     "ci_hi": 0.007303104020527133,
+     "n_identifying": 90
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.0016956751043394145,
+     "se": 0.0003483917024306371,
+     "ci_lo": -0.002386036520301426,
+     "ci_hi": -0.0010053136883774031,
+     "n_identifying": 90
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.04204843873662057,
+     "se": 0.007822469772857103,
+     "ci_lo": -0.05754918479639459,
+     "ci_hi": -0.026547692676846545,
+     "n_identifying": 90
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0066121506366616,
+     "se": 0.001010314885023451,
+     "ci_lo": 0.004610144246365461,
+     "ci_hi": 0.008614157026957739,
+     "n_identifying": 91
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.0014393488254520383,
+     "se": 0.0004181360089711956,
+     "ci_lo": -0.002267913240747005,
+     "ci_hi": -0.0006107844101570717,
+     "n_identifying": 91
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.03963057166812824,
+     "se": 0.009692458583459275,
+     "ci_lo": -0.058836825391011593,
+     "ci_hi": -0.020424317945244876,
+     "n_identifying": 91
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.005605515977671227,
+     "se": 0.0011803924632065258,
+     "ci_lo": 0.0032664895123311545,
+     "ci_hi": 0.0079445424430113,
+     "n_identifying": 99
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0001694402356650967,
+     "se": 0.0004917267763365503,
+     "ci_lo": -0.0008049491978654639,
+     "ci_hi": 0.0011438296691956573,
+     "n_identifying": 99
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.008050852965323678,
+     "se": 0.009732075749774312,
+     "ci_lo": -0.027335610747984684,
+     "ci_hi": 0.011233904817337331,
+     "n_identifying": 99
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.007240111663319494,
+     "se": 0.0014900508147793323,
+     "ci_lo": 0.004287476502465708,
+     "ci_hi": 0.01019274682417328,
+     "n_identifying": 105
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.0012169178706012375,
+     "se": 0.0005855075637486758,
+     "ci_lo": -0.0023771401949158636,
+     "ci_hi": -5.669554628661127e-05,
+     "n_identifying": 105
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.03416933565263992,
+     "se": 0.012697198746279004,
+     "ci_lo": -0.059329682595682984,
+     "ci_hi": -0.009008988709596863,
+     "n_identifying": 105
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.010112847223308123,
+     "se": 0.0016914183950437428,
+     "ci_lo": 0.006761188759458595,
+     "ci_hi": 0.013464505687157652,
+     "n_identifying": 109
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.0017028711768748775,
+     "se": 0.0006498322358779906,
+     "ci_lo": -0.002990557133137877,
+     "ci_hi": -0.00041518522061187793,
+     "n_identifying": 109
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.04581816543194044,
+     "se": 0.014263122696692294,
+     "ci_lo": -0.07408149521916124,
+     "ci_hi": -0.017554835644719637,
+     "n_identifying": 109
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.012865519687470194,
+     "se": 0.0018223384987838974,
+     "ci_lo": 0.009254434298222116,
+     "ci_hi": 0.016476605076718272,
+     "n_identifying": 110
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.002436885643754675,
+     "se": 0.0007126996876614189,
+     "ci_lo": -0.00384914765257097,
+     "ci_hi": -0.0010246236349383804,
+     "n_identifying": 110
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.06285279500952505,
+     "se": 0.015600665208062579,
+     "ci_lo": -0.09376655457339307,
+     "ci_hi": -0.03193903544565703,
+     "n_identifying": 110
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.014467361774942223,
+     "se": 0.0018572823929889958,
+     "ci_lo": 0.010787032726576112,
+     "ci_hi": 0.018147690823308332,
+     "n_identifying": 111
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.003428497423800799,
+     "se": 0.0007606709311809104,
+     "ci_lo": -0.00493581765406876,
+     "ci_hi": -0.0019211771935328376,
+     "n_identifying": 111
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.07723399950913999,
+     "se": 0.01654124935956911,
+     "ci_lo": -0.11001158935982364,
+     "ci_hi": -0.044456409658456354,
+     "n_identifying": 111
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.014791668548261638,
+     "se": 0.001895332206600054,
+     "ci_lo": 0.011035941254132627,
+     "ci_hi": 0.01854739584239065,
+     "n_identifying": 112
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.003795942829566858,
+     "se": 0.0008030577989297122,
+     "ci_lo": -0.0053872554679005175,
+     "ci_hi": -0.0022046301912331985,
+     "n_identifying": 112
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.07923707726073073,
+     "se": 0.017378480867507356,
+     "ci_lo": -0.11367369723548379,
+     "ci_hi": -0.044800457285977674,
+     "n_identifying": 112
+    }
+   ],
+   "editorial": {
+    "pretrend": "Drift on all three gradients",
+    "verdict": "The largest coefficients in the study, all growing in the return-to-office phase \u2014 read as COVID accelerating a pre-existing periphery-ward steepening, not a clean break."
+   }
+  },
+  "CHI": {
+   "code": "CHI",
+   "name": "Chicago",
+   "n_obs": 9577,
+   "n_zctas": 192,
+   "n_identifying": 52,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 287,
+    "n_covered": 204,
+    "share_covered": 0.710801393728223,
+    "share_by_year": {
+     "2015": 0.08710801393728224,
+     "2016": 0.12195121951219512,
+     "2017": 0.13240418118466898,
+     "2018": 0.14634146341463414,
+     "2019": 0.17770034843205576,
+     "2020": 0.1951219512195122,
+     "2021": 0.27177700348432055,
+     "2022": 0.3344947735191638,
+     "2023": 0.3693379790940767,
+     "2024": 0.40418118466898956,
+     "2025": 0.49477351916376305,
+     "2026": 0.710801393728223
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0024930756602087045,
+      "post1_se": 0.0010148816025886092,
+      "post1_pvalue": 0.014922231563644531,
+      "post2_coef": 0.004452208167106068,
+      "post2_se": 0.001151969854023939,
+      "post2_pvalue": 0.00015222307206488268
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.000275496811950577,
+      "post1_se": 0.0007935993398074313,
+      "post1_pvalue": 0.7288619705890385,
+      "post2_coef": 0.0023082825873347963,
+      "post2_se": 0.0009058496553322605,
+      "post2_pvalue": 0.011614924494538227
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": -0.05853789797457005,
+      "post1_se": 0.026383922135568276,
+      "post1_pvalue": 0.02768517000016687,
+      "post2_coef": -0.030845147744187833,
+      "post2_se": 0.03008909232847111,
+      "post2_pvalue": 0.306599714574421
+     }
+    },
+    "n_obs": 9736,
+    "n_units": 192,
+    "n_clusters": 192,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.002731960023013582,
+       "post1_se": 0.0010902332607439099,
+       "post1_pvalue": 0.013051168877157935,
+       "post2_coef": 0.004413053514396012,
+       "post2_se": 0.0011528642846534542,
+       "post2_pvalue": 0.00017507620105497142
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.0003392973453209872,
+       "post1_se": 0.0008334943812766737,
+       "post1_pvalue": 0.6844064273365832,
+       "post2_coef": 0.0022840079737679294,
+       "post2_se": 0.0009098539300170046,
+       "post2_pvalue": 0.012893035925773897
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.06437036203212254,
+       "post1_se": 0.02783875014438438,
+       "post1_pvalue": 0.021829570173478672,
+       "post2_coef": -0.03240912643251091,
+       "post2_se": 0.030177990712595495,
+       "post2_pvalue": 0.2842077863785317
+      }
+     },
+     "n_obs": 9577,
+     "n_units": 192,
+     "n_clusters": 192,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0016073443281901503,
+       "post1_se": 0.001109516259400219,
+       "post1_pvalue": 0.14906407482160225,
+       "post2_coef": 0.003909705409792871,
+       "post2_se": 0.0011395721450446674,
+       "post2_pvalue": 0.0007373759941114703
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.00025947935616745844,
+       "post1_se": 0.0008674637966858514,
+       "post1_pvalue": 0.7651705552520081,
+       "post2_coef": 0.0024681904626695254,
+       "post2_se": 0.0009096049099204902,
+       "post2_pvalue": 0.007267052514876069
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": -0.06206213944994274,
+       "post1_se": 0.02740668831415693,
+       "post1_pvalue": 0.024667461445523522,
+       "post2_coef": -0.026571827555242455,
+       "post2_se": 0.027533097947524888,
+       "post2_pvalue": 0.33572170549022873
+      }
+     },
+     "n_obs": 9736,
+     "n_units": 192,
+     "n_clusters": 192,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.005557649412936614,
+     "post1_se": 0.0007710848413811117,
+     "post1_pvalue": 1.2879083288590018e-11,
+     "post2_coef": 0.006218724163718383,
+     "post2_se": 0.0011313620032743052,
+     "post2_pvalue": 1.2278183543476465e-07,
+     "x_vintage": "2019",
+     "n_obs": 9736,
+     "n_units": 192,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.002500852245034194,
+     "post1_se": 0.0006146501181456904,
+     "post1_pvalue": 6.911422298650622e-05,
+     "post2_coef": 0.0036651659827726325,
+     "post2_se": 0.0006344950198859178,
+     "post2_pvalue": 3.051612838587152e-08,
+     "x_vintage": "2019",
+     "n_obs": 9736,
+     "n_units": 192,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.0831911969892764,
+     "post1_se": 0.012065684372081924,
+     "post1_pvalue": 7.660228385657858e-11,
+     "post2_coef": -0.11887462304180757,
+     "post2_se": 0.012820073827368174,
+     "post2_pvalue": 3.934462017210045e-17,
+     "x_vintage": "2019",
+     "n_obs": 9736,
+     "n_units": 192,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 81.34316270984657,
+     "pvalue": 1.5808881267813123e-17,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 139.18799770516466,
+     "pvalue": 5.656379385885258e-30,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 134.15746804116756,
+     "pvalue": 6.871083221909061e-29,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.47647647647647645,
+      "post2": 0.7687687687687688
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.9219219219219219,
+      "post2": 0.6986986986986987
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.21521521521521522,
+      "post2": 0.3333333333333333
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.0007259843911822149,
+     "se": 0.0016589050816451154,
+     "ci_lo": -0.003998111609354072,
+     "ci_hi": 0.002546142826989642,
+     "n_identifying": 29
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.0024122056369071665,
+     "se": 0.0012545268592068176,
+     "ci_lo": -6.230090801668912e-05,
+     "ci_hi": 0.004886712181831022,
+     "n_identifying": 29
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.07396907025931834,
+     "se": 0.04787579638015873,
+     "ci_lo": -0.020464118330240713,
+     "ci_hi": 0.16840225884887738,
+     "n_identifying": 29
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.00014520667663589298,
+     "se": 0.0015297342653386337,
+     "ci_lo": -0.0031625493694563862,
+     "ci_hi": 0.0028721360161846005,
+     "n_identifying": 37
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.0011183907124925774,
+     "se": 0.0011647699776682798,
+     "ci_lo": -0.0011790737952767339,
+     "ci_hi": 0.0034158552202618888,
+     "n_identifying": 37
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.04068525798844598,
+     "se": 0.03950357023201266,
+     "ci_lo": -0.03723403275418406,
+     "ci_hi": 0.11860454873107602,
+     "n_identifying": 37
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.00034900119068200777,
+     "se": 0.001067236329163441,
+     "ci_lo": -0.0017560819026884757,
+     "ci_hi": 0.002454084284052491,
+     "n_identifying": 39
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.0012995336757712131,
+     "se": 0.0009014779664308723,
+     "ci_lo": -0.0004785973476237131,
+     "ci_hi": 0.0030776646991661394,
+     "n_identifying": 39
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 0.045879810242299084,
+     "se": 0.02744778761634438,
+     "ci_lo": -0.008259907534063866,
+     "ci_hi": 0.10001952801866204,
+     "n_identifying": 39
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0005931042918226861,
+     "se": 0.0005686380555561796,
+     "ci_lo": -0.0005285126586953666,
+     "ci_hi": 0.0017147212423407388,
+     "n_identifying": 49
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.001235538644618721,
+     "se": 0.0005075138824484846,
+     "ci_lo": 0.00023448680221137058,
+     "ci_hi": 0.0022365904870260715,
+     "n_identifying": 49
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.033538636391358304,
+     "se": 0.0159780908448275,
+     "ci_lo": 0.0020224595309348767,
+     "ci_hi": 0.06505481325178172,
+     "n_identifying": 49
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 52
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 52
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 52
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0021823711607403757,
+     "se": 0.00045780960971575693,
+     "ci_lo": 0.0012793591070272095,
+     "ci_hi": 0.003085383214453542,
+     "n_identifying": 54
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.00042912470632269306,
+     "se": 0.0004312854325806955,
+     "ci_lo": -0.0004215694161817887,
+     "ci_hi": 0.0012798188288271747,
+     "n_identifying": 54
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.012397481350800627,
+     "se": 0.011938614748731266,
+     "ci_lo": -0.01115098245151144,
+     "ci_hi": 0.035945945153112696,
+     "n_identifying": 54
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.004875764285562427,
+     "se": 0.0011466384652484903,
+     "ci_lo": 0.0026140634968580905,
+     "ci_hi": 0.007137465074266764,
+     "n_identifying": 64
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0010838118821403604,
+     "se": 0.0008630168090809044,
+     "ci_lo": -0.0006184559702994098,
+     "ci_hi": 0.0027860797345801306,
+     "n_identifying": 64
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": -0.04686298194210567,
+     "se": 0.029341444923429296,
+     "ci_lo": -0.10473786677833306,
+     "ci_hi": 0.011011902894121725,
+     "n_identifying": 64
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0026869833953456117,
+     "se": 0.0008644682127240635,
+     "ci_lo": 0.0009818527043879046,
+     "ci_hi": 0.004392114086303319,
+     "n_identifying": 70
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0015018212903332951,
+     "se": 0.000637081720260133,
+     "ci_lo": 0.0002452018127465209,
+     "ci_hi": 0.0027584407679200696,
+     "n_identifying": 70
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.026033081788014525,
+     "se": 0.022059475846037273,
+     "ci_lo": -0.06954455940844705,
+     "ci_hi": 0.017478395832417993,
+     "n_identifying": 70
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0010177418387273302,
+     "se": 0.001101131799841232,
+     "ci_lo": -0.0011541987821802675,
+     "ci_hi": 0.003189682459634928,
+     "n_identifying": 86
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.001369879778887252,
+     "se": 0.0008182409129316546,
+     "ci_lo": -0.00024406932034048848,
+     "ci_hi": 0.0029838288781149926,
+     "n_identifying": 86
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.04287769352720795,
+     "se": 0.028133833598240062,
+     "ci_lo": -0.09837061092609067,
+     "ci_hi": 0.012615223871674762,
+     "n_identifying": 86
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0024933946676889704,
+     "se": 0.0010874051147584832,
+     "ci_lo": 0.00034852941135255985,
+     "ci_hi": 0.004638259924025381,
+     "n_identifying": 101
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.002568365644783968,
+     "se": 0.0008467446338097754,
+     "ci_lo": 0.0008981940395572825,
+     "ci_hi": 0.004238537250010653,
+     "n_identifying": 101
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.014334325775860262,
+     "se": 0.029485785482978314,
+     "ci_lo": -0.07249391687937941,
+     "ci_hi": 0.04382526532765889,
+     "n_identifying": 101
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.004144337054137465,
+     "se": 0.0011251324432017184,
+     "ci_lo": 0.0019250560764714187,
+     "ci_hi": 0.006363618031803511,
+     "n_identifying": 110
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.004175012766325279,
+     "se": 0.0008890738031508761,
+     "ci_lo": 0.0024213484835149753,
+     "ci_hi": 0.005928677049135583,
+     "n_identifying": 110
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.029751199504656538,
+     "se": 0.030466349104467223,
+     "ci_lo": -0.030342516070795127,
+     "ci_hi": 0.0898449150801082,
+     "n_identifying": 110
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.005173908365786289,
+     "se": 0.0012834042545430415,
+     "ci_lo": 0.0026424422561983343,
+     "ci_hi": 0.0077053744753742435,
+     "n_identifying": 122
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.0041385924662288385,
+     "se": 0.0009634700014586153,
+     "ci_lo": 0.002238184510073551,
+     "ci_hi": 0.006039000422384126,
+     "n_identifying": 122
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.017397394827786523,
+     "se": 0.03252858227861384,
+     "ci_lo": -0.04676399729770036,
+     "ci_hi": 0.0815587869532734,
+     "n_identifying": 122
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.00583682082290571,
+     "se": 0.0013485613200444684,
+     "ci_lo": 0.003176834878251607,
+     "ci_hi": 0.008496806767559813,
+     "n_identifying": 162
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0024521999366813145,
+     "se": 0.0009987433405710937,
+     "ci_lo": 0.0004822166598745965,
+     "ci_hi": 0.0044221832134880325,
+     "n_identifying": 162
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.03075044405854979,
+     "se": 0.0334843869092068,
+     "ci_lo": -0.096797124487522,
+     "ci_hi": 0.03529623637042241,
+     "n_identifying": 162
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.005785431538593238,
+     "se": 0.0014186847878992915,
+     "ci_lo": 0.002987129719005037,
+     "ci_hi": 0.008583733358181439,
+     "n_identifying": 192
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0016203228643616764,
+     "se": 0.0010462371403691278,
+     "ci_lo": -0.00044334012729613974,
+     "ci_hi": 0.0036839858560194926,
+     "n_identifying": 192
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.04537083542229724,
+     "se": 0.03460051904891902,
+     "ci_lo": -0.11361904407240611,
+     "ci_hi": 0.022877373227811637,
+     "n_identifying": 192
+    }
+   ],
+   "editorial": {
+    "pretrend": "Flat for commute; drift for access",
+    "verdict": "The cleanest commute break of the nine, nearly doubling in the return-to-office phase; the access effect fades \u2014 the study's one clear partial reversal. Nothing survives the coarse-cluster bootstrap."
+   }
+  },
+  "SEA": {
+   "code": "SEA",
+   "name": "Seattle",
+   "n_obs": 9979,
+   "n_zctas": 122,
+   "n_identifying": 71,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 150,
+    "n_covered": 125,
+    "share_covered": 0.8333333333333334,
+    "share_by_year": {
+     "2015": 0.09333333333333334,
+     "2016": 0.20666666666666667,
+     "2017": 0.2866666666666667,
+     "2018": 0.3933333333333333,
+     "2019": 0.4533333333333333,
+     "2020": 0.5,
+     "2021": 0.6133333333333333,
+     "2022": 0.7133333333333334,
+     "2023": 0.74,
+     "2024": 0.7533333333333333,
+     "2025": 0.78,
+     "2026": 0.8333333333333334
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": 0.0015449033355542734,
+      "post1_se": 0.0009562657548805976,
+      "post1_pvalue": 0.10879429880566195,
+      "post2_coef": 0.0038651813890377756,
+      "post2_se": 0.001209571664472042,
+      "post2_pvalue": 0.001780606132244382
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.006080154067150805,
+      "post1_se": 0.0009676980664978755,
+      "post1_pvalue": 5.431454321522621e-09,
+      "post2_coef": 0.0062964985805228305,
+      "post2_se": 0.0011422198416989999,
+      "post2_pvalue": 2.0336802899430283e-07
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": 0.07135826648687756,
+      "post1_se": 0.028061166445755983,
+      "post1_pvalue": 0.01225309691024993,
+      "post2_coef": 0.06003488386731911,
+      "post2_se": 0.031147891261941552,
+      "post2_pvalue": 0.056271995077245236
+     }
+    },
+    "n_obs": 10198,
+    "n_units": 122,
+    "n_clusters": 122,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0019500838888951131,
+       "post1_se": 0.0010075159387211566,
+       "post1_pvalue": 0.05525741276732263,
+       "post2_coef": 0.0038181428330235296,
+       "post2_se": 0.0012147137502799663,
+       "post2_pvalue": 0.002101829454012539
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.006557441170417555,
+       "post1_se": 0.0010023816629507736,
+       "post1_pvalue": 1.5303886177705503e-09,
+       "post2_coef": 0.006289965528566463,
+       "post2_se": 0.0011505180526828417,
+       "post2_pvalue": 2.49854074189127e-07
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.07655426016554241,
+       "post1_se": 0.028942942180912045,
+       "post1_pvalue": 0.009252824085024168,
+       "post2_coef": 0.05919637141836608,
+       "post2_se": 0.031475356488594626,
+       "post2_pvalue": 0.06241364590428181
+      }
+     },
+     "n_obs": 9979,
+     "n_units": 122,
+     "n_clusters": 122,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.0022538652644456016,
+       "post1_se": 0.000994171675663545,
+       "post1_pvalue": 0.02516058370083986,
+       "post2_coef": 0.00447961411306717,
+       "post2_se": 0.0012161408359428073,
+       "post2_pvalue": 0.0003452978606728117
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.0067763627557034,
+       "post1_se": 0.0012835613873006598,
+       "post1_pvalue": 5.790436738331956e-07,
+       "post2_coef": 0.0074515110645253305,
+       "post2_se": 0.0013908334725229608,
+       "post2_pvalue": 4.08730358681348e-07
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.08996743316141234,
+       "post1_se": 0.03606850851369439,
+       "post1_pvalue": 0.013968020994109149,
+       "post2_coef": 0.08730990345849504,
+       "post2_se": 0.03806645020206244,
+       "post2_pvalue": 0.02353773372450312
+      }
+     },
+     "n_obs": 10198,
+     "n_units": 122,
+     "n_clusters": 122,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": 0.009377120224047674,
+     "post1_se": 0.0012940857629454969,
+     "post1_pvalue": 4.378496084643258e-11,
+     "post2_coef": 0.013078443684604334,
+     "post2_se": 0.0016888953565716701,
+     "post2_pvalue": 3.2847556443944387e-12,
+     "x_vintage": "2019",
+     "n_obs": 10198,
+     "n_units": 122,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.003938088784734698,
+     "post1_se": 0.00023352066309904196,
+     "post1_pvalue": 1.469191278931901e-33,
+     "post2_coef": 0.004885767496374219,
+     "post2_se": 0.00031125028800599807,
+     "post2_pvalue": 5.781755911075986e-31,
+     "x_vintage": "2019",
+     "n_obs": 10198,
+     "n_units": 122,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.10797432679276706,
+     "post1_se": 0.00901397937947896,
+     "post1_pvalue": 2.77155852296657e-22,
+     "post2_coef": -0.13334851665386532,
+     "post2_se": 0.010239449259380107,
+     "post2_pvalue": 8.98102623935559e-25,
+     "x_vintage": "2019",
+     "n_obs": 10198,
+     "n_units": 122,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 336.95533056898364,
+     "pvalue": 9.956095632278109e-73,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 260.5311896003884,
+     "pvalue": 3.450629922646881e-56,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 291.86102469646283,
+     "pvalue": 5.74370734944182e-63,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.3963963963963964,
+      "post2": 0.24824824824824826
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.014014014014014014,
+      "post2": 0.021021021021021023
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.17617617617617617,
+      "post2": 0.21921921921921922
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": 0.004256627053548759,
+     "se": 0.0036261786543166892,
+     "ci_lo": -0.002922350042534781,
+     "ci_hi": 0.011435604149632298,
+     "n_identifying": 17
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.015150520680071796,
+     "se": 0.002499982517709111,
+     "ci_lo": -0.020099895475458134,
+     "ci_hi": -0.010201145884685459,
+     "n_identifying": 17
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.33568648716131116,
+     "se": 0.08255905451968491,
+     "ci_lo": -0.49913391156374054,
+     "ci_hi": -0.17223906275888176,
+     "n_identifying": 17
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": 0.001057998517078116,
+     "se": 0.0017421243700567652,
+     "ci_lo": -0.0023909961804882175,
+     "ci_hi": 0.00450699321464445,
+     "n_identifying": 36
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.0077858362483021575,
+     "se": 0.0019337069107018578,
+     "ci_lo": -0.011614119117360908,
+     "ci_hi": -0.003957553379243407,
+     "n_identifying": 36
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.14950980473866787,
+     "se": 0.05936136245115591,
+     "ci_lo": -0.2670312790107251,
+     "ci_hi": -0.031988330466610676,
+     "n_identifying": 36
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": 9.301731335962087e-05,
+     "se": 0.0009620660875043172,
+     "ci_lo": -0.0018116462637893856,
+     "ci_hi": 0.0019976808905086273,
+     "n_identifying": 52
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.003316729975522793,
+     "se": 0.0011825079793461562,
+     "ci_lo": -0.0056578164218721305,
+     "ci_hi": -0.0009756435291734546,
+     "n_identifying": 52
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.05104661656176408,
+     "se": 0.03565859570069751,
+     "ci_lo": -0.12164221215082067,
+     "ci_hi": 0.01954897902729251,
+     "n_identifying": 52
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 0.0005689244739164001,
+     "se": 0.0006625584323865057,
+     "ci_lo": -0.0007427847010459252,
+     "ci_hi": 0.0018806336488787255,
+     "n_identifying": 64
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.0011115789615793851,
+     "se": 0.0006115865537608868,
+     "ci_lo": -0.0023223758583333374,
+     "ci_hi": 9.921793517456731e-05,
+     "n_identifying": 64
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.014691450545665823,
+     "se": 0.016902159064677912,
+     "ci_lo": -0.04815373256953612,
+     "ci_hi": 0.018770831478204474,
+     "n_identifying": 64
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 71
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 71
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 71
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0010050130128973207,
+     "se": 0.0005859624850939101,
+     "ci_lo": -0.00015505428126253102,
+     "ci_hi": 0.0021650803070571724,
+     "n_identifying": 75
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0015101912754766997,
+     "se": 0.00041630908330178226,
+     "ci_lo": 0.0006859976383658416,
+     "ci_hi": 0.0023343849125875577,
+     "n_identifying": 75
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.033555441318824875,
+     "se": 0.013808169385576816,
+     "ci_lo": 0.006218527943116555,
+     "ci_hi": 0.06089235469453319,
+     "n_identifying": 75
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0033504935874377065,
+     "se": 0.0011349628835307637,
+     "ci_lo": 0.0011035351988671759,
+     "ci_hi": 0.005597451976008238,
+     "n_identifying": 81
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0038009382678687092,
+     "se": 0.0008145683122948,
+     "ci_lo": 0.002188285441125473,
+     "ci_hi": 0.005413591094611946,
+     "n_identifying": 81
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.029201937975327573,
+     "se": 0.024877881248388703,
+     "ci_lo": -0.020050389807436717,
+     "ci_hi": 0.07845426575809186,
+     "n_identifying": 81
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.0019709350785908387,
+     "se": 0.0010140274796865702,
+     "ci_lo": -3.659977984844451e-05,
+     "ci_hi": 0.003978469937030122,
+     "n_identifying": 90
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.004892263938682792,
+     "se": 0.0007379108753600943,
+     "ci_lo": 0.0034313747277072465,
+     "ci_hi": 0.006353153149658338,
+     "n_identifying": 90
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.04066930270252801,
+     "se": 0.021296245406156045,
+     "ci_lo": -0.0014922322293955195,
+     "ci_hi": 0.08283083763445154,
+     "n_identifying": 90
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.002070633296388032,
+     "se": 0.0009284650330843439,
+     "ci_lo": 0.00023249186916070373,
+     "ci_hi": 0.00390877472361536,
+     "n_identifying": 100
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.0052653177936286336,
+     "se": 0.000763642532892007,
+     "ci_lo": 0.003753485979522941,
+     "ci_hi": 0.006777149607734326,
+     "n_identifying": 100
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": 0.06283872590658662,
+     "se": 0.021546703153779243,
+     "ci_lo": 0.02018134380188709,
+     "ci_hi": 0.10549610801128616,
+     "n_identifying": 100
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.0034492142229710743,
+     "se": 0.0011689201562614352,
+     "ci_lo": 0.001135028456375814,
+     "ci_hi": 0.005763399989566334,
+     "n_identifying": 107
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.00451081588420498,
+     "se": 0.0008727937992633696,
+     "ci_lo": 0.0027828903483087964,
+     "ci_hi": 0.006238741420101163,
+     "n_identifying": 107
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": 0.04564392697845644,
+     "se": 0.02375285395787794,
+     "ci_lo": -0.0013811125427570306,
+     "ci_hi": 0.09266896649966991,
+     "n_identifying": 107
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.004444030352983226,
+     "se": 0.0011936751354743938,
+     "ci_lo": 0.0020808355756012807,
+     "ci_hi": 0.006807225130365171,
+     "n_identifying": 111
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.00359874033840465,
+     "se": 0.0009075345245673291,
+     "ci_lo": 0.0018020363734695222,
+     "ci_hi": 0.005395444303339778,
+     "n_identifying": 111
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 0.016964486536908373,
+     "se": 0.024616880516128734,
+     "ci_lo": -0.031771121454147684,
+     "ci_hi": 0.06570009452796444,
+     "n_identifying": 111
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.00440416372127243,
+     "se": 0.0013212415835250997,
+     "ci_lo": 0.001788417512731801,
+     "ci_hi": 0.0070199099298130585,
+     "n_identifying": 114
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.0035429430367768804,
+     "se": 0.0009511140353177793,
+     "ci_lo": 0.0016599619356715378,
+     "ci_hi": 0.005425924137882223,
+     "n_identifying": 114
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": 0.011793036070572943,
+     "se": 0.0252622613400167,
+     "ci_lo": -0.038220273488614016,
+     "ci_hi": 0.0618063456297599,
+     "n_identifying": 114
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.003524932774384133,
+     "se": 0.001301090590852359,
+     "ci_lo": 0.0009490807709149345,
+     "ci_hi": 0.006100784777853332,
+     "n_identifying": 118
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.0037164406769577578,
+     "se": 0.0009895431811838557,
+     "ci_lo": 0.001757378945443817,
+     "ci_hi": 0.005675502408471698,
+     "n_identifying": 118
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 0.005513532243024442,
+     "se": 0.0258310108940325,
+     "ci_lo": -0.04562576707312791,
+     "ci_hi": 0.056652831559176796,
+     "n_identifying": 118
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0035858159367501193,
+     "se": 0.0014405313114757594,
+     "ci_lo": 0.0007339042475770431,
+     "ci_hi": 0.006437727625923196,
+     "n_identifying": 122
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.0034414122511160355,
+     "se": 0.0010347936533455422,
+     "ci_lo": 0.0013927652745814169,
+     "ci_hi": 0.005490059227650654,
+     "n_identifying": 122
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.006577119195196871,
+     "se": 0.026777576425859824,
+     "ci_lo": -0.05959039465007067,
+     "ci_hi": 0.046436156259676925,
+     "n_identifying": 122
+    }
+   ],
+   "editorial": {
+    "pretrend": "Strongest drift in the study",
+    "verdict": "Large positive distance repricing \u2014 the study's most bootstrap-robust result \u2014 but the steepest pre-trends run straight into it. Trend + break, direction periphery-favoring."
+   }
+  },
+  "MIA": {
+   "code": "MIA",
+   "name": "Miami",
+   "n_obs": 13893,
+   "n_zctas": 170,
+   "n_identifying": 73,
+   "n_pre_months": 62,
+   "n_post_months": 72,
+   "coverage": {
+    "n_universe": 178,
+    "n_covered": 171,
+    "share_covered": 0.9606741573033708,
+    "share_by_year": {
+     "2015": 0.37640449438202245,
+     "2016": 0.38202247191011235,
+     "2017": 0.39325842696629215,
+     "2018": 0.4044943820224719,
+     "2019": 0.4101123595505618,
+     "2020": 0.4101123595505618,
+     "2021": 0.5898876404494382,
+     "2022": 0.848314606741573,
+     "2023": 0.8707865168539326,
+     "2024": 0.8820224719101124,
+     "2025": 0.9213483146067416,
+     "2026": 0.9606741573033708
+    }
+   },
+   "flags": [],
+   "spec_a_joint": {
+    "x_vars": [
+     "commute_min_proxy_2019",
+     "distance_to_cbd_km",
+     "log_job_accessibility_2019"
+    ],
+    "x_vintage": "2019",
+    "sample": "full",
+    "coefs": {
+     "commute_min_proxy_2019": {
+      "post1_coef": -8.836981423184867e-05,
+      "post1_se": 0.0013256691934431938,
+      "post1_pvalue": 0.9469307498679322,
+      "post2_coef": -0.0005913798311113505,
+      "post2_se": 0.001516062183388744,
+      "post2_pvalue": 0.696971363097566
+     },
+     "distance_to_cbd_km": {
+      "post1_coef": 0.0011787718173881516,
+      "post1_se": 0.000247604527200921,
+      "post1_pvalue": 4.12488244911943e-06,
+      "post2_coef": 0.0008099428124273001,
+      "post2_se": 0.0003855910410127118,
+      "post2_pvalue": 0.03716697551765164
+     },
+     "log_job_accessibility_2019": {
+      "post1_coef": 0.008390436325071802,
+      "post1_se": 0.0176361420622495,
+      "post1_pvalue": 0.6348651999057542,
+      "post2_coef": -0.007909287223194098,
+      "post2_se": 0.023116146410550962,
+      "post2_pvalue": 0.7326599573060737
+     }
+    },
+    "n_obs": 14112,
+    "n_units": 170,
+    "n_clusters": 170,
+    "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+    "transition_drop": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "transition_dropped",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": -0.00046201829557711326,
+       "post1_se": 0.0013839374275834587,
+       "post1_pvalue": 0.7389116537370655,
+       "post2_coef": -0.0006146095304009349,
+       "post2_se": 0.0015180468039633166,
+       "post2_pvalue": 0.6860860732324165
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.001180293350278112,
+       "post1_se": 0.00026020541735748544,
+       "post1_pvalue": 1.08293986273008e-05,
+       "post2_coef": 0.0008050957906074736,
+       "post2_se": 0.0003849886672951053,
+       "post2_pvalue": 0.03800393207754292
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.003597437448565541,
+       "post1_se": 0.01848719949671475,
+       "post1_pvalue": 0.8459470922074143,
+       "post2_coef": -0.008295380290567823,
+       "post2_se": 0.02311763542730004,
+       "post2_pvalue": 0.7201675948325705
+      }
+     },
+     "n_obs": 13893,
+     "n_units": 170,
+     "n_clusters": 170,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "weighted_renter": {
+     "x_vars": [
+      "commute_min_proxy_2019",
+      "distance_to_cbd_km",
+      "log_job_accessibility_2019"
+     ],
+     "x_vintage": "2019",
+     "sample": "full",
+     "coefs": {
+      "commute_min_proxy_2019": {
+       "post1_coef": 0.000923116307902564,
+       "post1_se": 0.0012110674449943956,
+       "post1_pvalue": 0.44698309135805525,
+       "post2_coef": 0.0005449138518030175,
+       "post2_se": 0.0014457856344537426,
+       "post2_pvalue": 0.7067221554697936
+      },
+      "distance_to_cbd_km": {
+       "post1_coef": 0.001325904597380418,
+       "post1_se": 0.0002266886203518875,
+       "post1_pvalue": 2.496805746984465e-08,
+       "post2_coef": 0.0009819340457702878,
+       "post2_se": 0.0003661335509707714,
+       "post2_pvalue": 0.008046886662162266
+      },
+      "log_job_accessibility_2019": {
+       "post1_coef": 0.017429937990784093,
+       "post1_se": 0.015088758343337477,
+       "post1_pvalue": 0.2496553461710529,
+       "post2_coef": -0.002258884474643532,
+       "post2_se": 0.02052513233282208,
+       "post2_pvalue": 0.9124966815202553
+      }
+     },
+     "n_obs": 14112,
+     "n_units": 170,
+     "n_clusters": 170,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead.",
+     "weight_spec": "renter_share x total_pop (cross-sectional renter counts from the 35-column file; time-invariant per ZCTA)",
+     "estimand_note": "renter-prevalence-weighted estimand: repricing as experienced by the average renter across covered ZCTAs, versus the unweighted headline's average covered-ZCTA repricing"
+    }
+   },
+   "spec_a_single": {
+    "commute_min_proxy_2019": {
+     "post1_coef": -0.003279044554717557,
+     "post1_se": 0.0011957667209254435,
+     "post1_pvalue": 0.0067603191322647815,
+     "post2_coef": -0.0026577236490504933,
+     "post2_se": 0.0012708528677330766,
+     "post2_pvalue": 0.03799739984041314,
+     "x_vintage": "2019",
+     "n_obs": 14112,
+     "n_units": 170,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "distance_to_cbd_km": {
+     "post1_coef": 0.0010931017331352222,
+     "post1_se": 0.00013878455243308284,
+     "post1_pvalue": 3.906738068808825e-13,
+     "post2_coef": 0.000936374378935322,
+     "post2_se": 0.00018813565681437947,
+     "post2_pvalue": 1.5795019627041349e-06,
+     "x_vintage": "2019",
+     "n_obs": 14112,
+     "n_units": 170,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    },
+    "log_job_accessibility_2019": {
+     "post1_coef": -0.05113820523275897,
+     "post1_se": 0.014125967890917183,
+     "post1_pvalue": 0.00038882309866337364,
+     "post2_coef": -0.04813143699184007,
+     "post2_se": 0.014309525400530631,
+     "post2_pvalue": 0.0009518383956221258,
+     "x_vintage": "2019",
+     "n_obs": 14112,
+     "n_units": 170,
+     "dof_note": "Deliberately conservative dof convention: the clustered covariance from the within regression is rescaled by (N-K)/(N-K-G_absorbed), matching two-way LSDV which counts absorbed fixed effects in K. The Cameron-Miller/reghdfe convention omits nested absorbed FE from K; we inflate instead."
+    }
+   },
+   "wald_break": {
+    "phase1": {
+     "stat": 73.22444931675072,
+     "pvalue": 8.701517648381746e-16,
+     "df": 3
+    },
+    "phase2": {
+     "stat": 24.59313822856829,
+     "pvalue": 1.8780396337297295e-05,
+     "df": 3
+    },
+    "pooled": {
+     "stat": 35.672163661020946,
+     "pvalue": 8.784003151687838e-08,
+     "df": 3
+    }
+   },
+   "bootstrap_pvalues": {
+    "zip3": {
+     "commute_min_proxy_2019": {
+      "post1": 0.9469469469469469,
+      "post2": 0.6776776776776777
+     },
+     "distance_to_cbd_km": {
+      "post1": 0.16616616616616617,
+      "post2": 0.2012012012012012
+     },
+     "log_job_accessibility_2019": {
+      "post1": 0.6726726726726727,
+      "post2": 0.7727727727727728
+     }
+    }
+   },
+   "event_study": [
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.006672415092362245,
+     "se": 0.0015891363543959812,
+     "ci_lo": -0.00980952988054484,
+     "ci_hi": -0.0035353003041796506,
+     "n_identifying": 67
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.0022611202507542665,
+     "se": 0.000380203064719908,
+     "ci_lo": -0.0030116792909182675,
+     "ci_hi": -0.0015105612105902654,
+     "n_identifying": 67
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre4",
+     "bin_order": -4,
+     "coef": -0.07775742475160471,
+     "se": 0.02531855669229261,
+     "ci_lo": -0.12773879884522063,
+     "ci_hi": -0.0277760506579888,
+     "n_identifying": 67
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.0030492261995532727,
+     "se": 0.0012283684589712927,
+     "ci_lo": -0.00547414892397273,
+     "ci_hi": -0.0006243034751338156,
+     "n_identifying": 68
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.001418514092110427,
+     "se": 0.0002771096300951871,
+     "ci_lo": -0.00196555633685842,
+     "ci_hi": -0.0008714718473624339,
+     "n_identifying": 68
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre3",
+     "bin_order": -3,
+     "coef": -0.04053537945788762,
+     "se": 0.018946100642219757,
+     "ci_lo": -0.07793688521205845,
+     "ci_hi": -0.0031338737037167885,
+     "n_identifying": 68
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.000401387439584635,
+     "se": 0.0007406465228953257,
+     "ci_lo": -0.0018634980717928365,
+     "ci_hi": 0.0010607231926235666,
+     "n_identifying": 71
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.0005314903361074931,
+     "se": 0.00019213257305849613,
+     "ci_lo": -0.0009107793345411602,
+     "ci_hi": -0.00015220133767382594,
+     "n_identifying": 71
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre2",
+     "bin_order": -2,
+     "coef": -0.012277219654956468,
+     "se": 0.011571375551061235,
+     "ci_lo": -0.035120277307266204,
+     "ci_hi": 0.010565837997353266,
+     "n_identifying": 71
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": 5.067088285313234e-06,
+     "se": 0.00043948034853531033,
+     "ci_lo": -0.0008625112643789528,
+     "ci_hi": 0.0008726454409495794,
+     "n_identifying": 72
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.0003871863914150055,
+     "se": 0.00012269731647717008,
+     "ci_lo": -0.0006294032187665852,
+     "ci_hi": -0.00014496956406342585,
+     "n_identifying": 72
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "pre1",
+     "bin_order": -1,
+     "coef": -0.009098391681124854,
+     "se": 0.0075036186692066225,
+     "ci_lo": -0.023911288653076866,
+     "ci_hi": 0.005714505290827161,
+     "n_identifying": 72
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 73
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 73
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "base",
+     "bin_order": 0,
+     "coef": 0.0,
+     "se": 0.0,
+     "ci_lo": 0.0,
+     "ci_hi": 0.0,
+     "n_identifying": 73
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0010308836184737815,
+     "se": 0.0004854083285509547,
+     "ci_lo": 7.263881991274597e-05,
+     "ci_hi": 0.001989128417034817,
+     "n_identifying": 73
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.0004554451672941983,
+     "se": 0.0001098245461334325,
+     "ci_lo": 0.00023864048163738647,
+     "ci_hi": 0.0006722498529510101,
+     "n_identifying": 73
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post1",
+     "bin_order": 1,
+     "coef": 0.016984981531419537,
+     "se": 0.007030114197415654,
+     "ci_lo": 0.0031068299490729593,
+     "ci_hi": 0.030863133113766116,
+     "n_identifying": 73
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.000779087048020793,
+     "se": 0.0007896275579121757,
+     "ci_lo": -0.0007797170673279751,
+     "ci_hi": 0.002337891163369561,
+     "n_identifying": 73
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.0008818769898927398,
+     "se": 0.0002060522633823829,
+     "ci_lo": 0.00047510912456310693,
+     "ci_hi": 0.0012886448552223728,
+     "n_identifying": 73
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post2",
+     "bin_order": 2,
+     "coef": 0.004332152950155891,
+     "se": 0.011799834994347816,
+     "ci_lo": -0.018961906591357186,
+     "ci_hi": 0.027626212491668967,
+     "n_identifying": 73
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.0030952796707967804,
+     "se": 0.0011379078139126951,
+     "ci_lo": -0.005341623995334543,
+     "ci_hi": -0.0008489353462590174,
+     "n_identifying": 80
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": 0.00013850520172674816,
+     "se": 0.00028475778900733946,
+     "ci_lo": -0.00042363527695146253,
+     "ci_hi": 0.0007006456804049589,
+     "n_identifying": 80
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post3",
+     "bin_order": 3,
+     "coef": -0.02564667673131764,
+     "se": 0.015651094584507485,
+     "ci_lo": -0.05654350955279394,
+     "ci_hi": 0.005250156090158661,
+     "n_identifying": 80
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.008150015499859978,
+     "se": 0.0013913285129205832,
+     "ci_lo": -0.01089663773968802,
+     "ci_hi": -0.005403393260031936,
+     "n_identifying": 136
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.0006518078381590887,
+     "se": 0.0003332924519269952,
+     "ci_lo": -0.001309760616621091,
+     "ci_hi": 6.144940302913577e-06,
+     "n_identifying": 136
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post4",
+     "bin_order": 4,
+     "coef": -0.0862499338790786,
+     "se": 0.01986384052260937,
+     "ci_lo": -0.12546315034171754,
+     "ci_hi": -0.04703671741643966,
+     "n_identifying": 136
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.004342488843946975,
+     "se": 0.0011793763509522978,
+     "ci_lo": -0.006670696226007377,
+     "ci_hi": -0.002014281461886573,
+     "n_identifying": 150
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.00046351682699696036,
+     "se": 0.0003773554076726442,
+     "ci_lo": -0.0012084543061099341,
+     "ci_hi": 0.0002814206521160134,
+     "n_identifying": 150
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post5",
+     "bin_order": 5,
+     "coef": -0.04835728691051676,
+     "se": 0.018192282673044582,
+     "ci_lo": -0.0842706802744855,
+     "ci_hi": -0.012443893546548006,
+     "n_identifying": 150
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.0018493426827081362,
+     "se": 0.0011321180065714293,
+     "ci_lo": -0.004084257345983183,
+     "ci_hi": 0.0003855719805669108,
+     "n_identifying": 155
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": 1.4229678261307011e-06,
+     "se": 0.00036312188002135125,
+     "ci_lo": -0.000715416097982436,
+     "ci_hi": 0.0007182620336346975,
+     "n_identifying": 155
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post6",
+     "bin_order": 6,
+     "coef": -0.0265916977266693,
+     "se": 0.017771416541411025,
+     "ci_lo": -0.06167425907188742,
+     "ci_hi": 0.008490863618548825,
+     "n_identifying": 155
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.0016585802041142797,
+     "se": 0.0011862626576394474,
+     "ci_lo": -0.004000381847286674,
+     "ci_hi": 0.0006832214390581142,
+     "n_identifying": 156
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -3.188916578375766e-05,
+     "se": 0.0003781859448309542,
+     "ci_lo": -0.0007784662086725283,
+     "ci_hi": 0.0007146878771050131,
+     "n_identifying": 156
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post7",
+     "bin_order": 7,
+     "coef": -0.033262069609174216,
+     "se": 0.018725109480009175,
+     "ci_lo": -0.0702273166111551,
+     "ci_hi": 0.003703177392806664,
+     "n_identifying": 156
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.0019613260313213485,
+     "se": 0.0012636098899615313,
+     "ci_lo": -0.004455818880425427,
+     "ci_hi": 0.0005331668177827303,
+     "n_identifying": 165
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": 9.324899206763162e-05,
+     "se": 0.0003904317882867626,
+     "ci_lo": -0.0006775025758659628,
+     "ci_hi": 0.000864000560001226,
+     "n_identifying": 165
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post8",
+     "bin_order": 8,
+     "coef": -0.03160220351527985,
+     "se": 0.018817483045478072,
+     "ci_lo": -0.06874980521418023,
+     "ci_hi": 0.0055453981836205285,
+     "n_identifying": 165
+    },
+    {
+     "variable": "commute_min_proxy_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.0026471873901261133,
+     "se": 0.0014138067516740141,
+     "ci_lo": -0.005438183931133924,
+     "ci_hi": 0.0001438091508816977,
+     "n_identifying": 170
+    },
+    {
+     "variable": "distance_to_cbd_km",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": 0.00015714426598666242,
+     "se": 0.00042664134811412445,
+     "ci_lo": -0.0006850886102020536,
+     "ci_hi": 0.0009993771421753785,
+     "n_identifying": 170
+    },
+    {
+     "variable": "log_job_accessibility_2019",
+     "bin": "post9",
+     "bin_order": 9,
+     "coef": -0.02876527706946649,
+     "se": 0.019896739544232968,
+     "ci_lo": -0.06804343950541139,
+     "ci_hi": 0.010512885366478406,
+     "n_identifying": 170
+    }
+   ],
+   "editorial": {
+    "pretrend": "Drift on all three gradients",
+    "verdict": "Essentially no COVID-specific repricing."
+   }
+  }
+ }
+}

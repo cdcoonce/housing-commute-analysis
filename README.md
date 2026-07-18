@@ -67,7 +67,7 @@ This project investigates how commute distance and transit access influence hous
 
 ## Findings at a Glance
 
-Full results — per-metro tables, event studies, and the complete robustness story — live in **[docs/findings.md](docs/findings.md)**. Per-metro RQ4 reports with every specification table are at `data/processed/<METRO>/rq4_summary_<METRO>.md`.
+Full results — per-metro tables, event studies, and the complete robustness story — live in **[docs/findings.md](docs/findings.md)**. Per-metro RQ4 reports with every specification table are at `data/processed/<METRO>/rq4_summary_<METRO>.md`. The RQ4 results are also explorable interactively at **[housing-commute-explorer.pages.dev](https://housing-commute-explorer.pages.dev)** (per-metro event studies, two-phase coefficients, and bootstrap survival — built from the committed data via `scripts/export_rq4_explorer.py`), and a working-paper writeup lives at [docs/paper/](docs/paper/covid-commute-gradient-repricing.md).
 
 - **COVID repriced rents toward the periphery — and it stuck.** On the monthly ZORI panel, covered ZCTAs far from jobs gained rent relative to job-rich cores after March 2020, and in no metro does a significant disruption-phase effect fully reverse in the 2022+ return-to-office phase (RQ4). The honesty rails matter: event-study pre-trend checks demote Atlanta, Seattle, and Miami to "trend + break," and a coarse-cluster wild bootstrap sustains only a subset of the conventional significance — the directional consistency across nine metros is the stronger finding.
 - **Affordability is an income problem, not a commute problem.** Income segment stratifies rent burden in 9 of 9 metros and renter share predicts it in 8 of 9; commute time is significant in 6 of 9 and never leads (RQ1, RQ2).

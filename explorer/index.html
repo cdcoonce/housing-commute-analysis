@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Did COVID Reprice the Commute? — Nine-Metro Event-Study Explorer</title>
+<meta name="description" content="Interactive explorer for a nine-metro panel study of COVID-era commute-gradient repricing in U.S. rental markets: two-phase fixed-effects estimates, event studies, and robustness — honesty rails included.">
+<link rel="stylesheet" href="app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>">
+</head>
+<body>
+<div class="viz-root">
+  <header class="masthead">
+    <p class="eyebrow">Housing Affordability &amp; Commute Trade-Off Analysis · RQ4</p>
+    <h1>Did COVID reprice the commute?</h1>
+    <p class="lede">
+      Where repricing happened, it favored the periphery — long-commute, low-job-access
+      ZIP-code areas gained rent relative to job-rich cores — and it did not reverse in the
+      return-to-office era. Explore the per-metro evidence and the honesty rails that
+      discipline it: pre-trend checks, coarse-cluster bootstrap inference, and
+      identification flags.
+    </p>
+    <p class="links">
+      <a href="https://github.com/cdcoonce/housing-commute-analysis">Repository</a>
+      <a href="https://github.com/cdcoonce/housing-commute-analysis/blob/main/docs/findings.md">Full findings</a>
+      <a href="https://github.com/cdcoonce/housing-commute-analysis/blob/main/docs/paper/covid-commute-gradient-repricing.pdf">Working paper (PDF)</a>
+      <button id="theme-toggle" type="button" aria-label="Toggle dark mode">◐ Theme</button>
+    </p>
+  </header>
+
+  <nav class="metro-switch" id="metro-switch" aria-label="Choose a metro"></nav>
+
+  <section class="verdict" id="verdict-card" aria-live="polite"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Two-phase repricing of the gradient</h2>
+        <p class="sub">Interaction of each pre-COVID (2019-vintage) gradient measure with the disruption phase
+        (Post1, 2020-03…2021-12) and the return-to-office phase (Post2, 2022-01+), on log rent with
+        ZCTA and month fixed effects. Whiskers are ±1.96 clustered SE.</p>
+      </div>
+      <div class="controls" role="radiogroup" aria-label="Model">
+        <button class="chip model-chip is-on" data-model="joint" type="button">Joint model</button>
+        <button class="chip model-chip" data-model="single" type="button">Single-interaction</button>
+      </div>
+    </div>
+    <div id="coef-plot"></div>
+    <details class="tableview"><summary>View as table</summary><div id="coef-table"></div></details>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Event study — was it a break, or a trend?</h2>
+        <p class="sub">Gradient × event-time bins relative to 2020-03 (shaded bin = reference, 2019-03…2020-02).
+        Flat pre-break coefficients mean the post-break movement is not the continuation of a pre-existing
+        path. The strip beneath each panel counts identifying ZCTAs per bin — thin early bins mean
+        wide early uncertainty.</p>
+      </div>
+    </div>
+    <div id="event-study"></div>
+    <details class="tableview"><summary>View as table</summary><div id="es-table"></div></details>
+  </section>
+
+  <section class="panel estimand">
+    <h2>Read this honestly</h2>
+    <ul>
+      <li><strong>Covered submarket only.</strong> Zillow's rent index publishes only where listing volume clears a threshold (70–96% of ZCTAs per metro, far fewer pre-2020); nothing here speaks to uncovered areas.</li>
+      <li><strong>Relative, not causal.</strong> Every ZCTA is treated by COVID and there is no control group — estimates are within-metro relative descriptions.</li>
+      <li><strong>“Repricing” = the listing index moved</strong> — an amalgam of price and listing-composition change; no hedonic adjustment is possible at this altitude.</li>
+      <li><strong>Joint coefficients are conditional.</strong> The three gradients are correlated; where joint and single-interaction models disagree, collinearity is doing the talking. Toggle both above.</li>
+      <li><strong>Memphis is under-identified</strong> (12 ZCTAs on both sides of the break) and reads as uninformative, not as a zero.</li>
+    </ul>
+    <p class="colophon">Estimates recomputed from the repository's committed data products
+      (<code>scripts/export_rq4_explorer.py</code>). Methods, robustness, and per-metro reports:
+      <a href="https://github.com/cdcoonce/housing-commute-analysis/blob/main/docs/findings.md">findings §10</a> ·
+      built by Charles Coonce.</p>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
