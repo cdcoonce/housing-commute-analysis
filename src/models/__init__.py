@@ -3,6 +3,7 @@
 __all__ = [
     "data_loader",
     "models",
+    "panel_fe",
     "preprocessing",
     "reporting",
     "visualization",
@@ -10,4 +11,5 @@ __all__ = [
     "rq2_equity_analysis",
     "results",
     "rq3_aci_analysis",
+    "rq4_rent_dynamics",
 ]

@@ -1,7 +1,7 @@
 [project]
-name = "dat490"
+name = "housing-commute-analysis"
 version = "0.1.0"
-description = "DAT490 Capstone: Housing-Commute Trade-Off Analysis"
+description = "Housing Affordability & Commute Trade-Off Analysis: nine-metro pipeline + econometrics"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

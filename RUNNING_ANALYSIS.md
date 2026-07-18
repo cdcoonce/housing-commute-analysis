@@ -1,84 +1,49 @@
 # Running the Analysis
 
+Statistical analysis of the pipeline's ZCTA datasets: RQ1 (housing-commute trade-off), RQ2 (equity), RQ3 (Affordability-Commute Index), and RQ4 (COVID and the commute gradient, when the metro's panel products are present).
+
 ## Quick Start
 
-The main analysis script is now located at the project root for easier access:
-
 ```bash
-# From the project root directory
-python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed --fig-dir figures
+# Single metro
+uv run python run_analysis.py --metro PHX
+
+# All nine metros (equivalent: make analyze)
+uv run python run_analysis.py --all
 ```
 
 ## Available Metro Codes
 
-- `PHX` - Phoenix-Mesa-Chandler, AZ
-- `LA` - Los Angeles-Long Beach-Anaheim, CA
-- `DFW` - Dallas-Fort Worth-Arlington, TX
-- `MEM` - Memphis, TN-MS-AR
-- `DEN` - Denver-Aurora-Lakewood, CO
-- `ATL` - Atlanta-Sandy Springs-Alpharetta, GA
-- `CHI` - Chicago-Naperville-Elgin, IL-IN-WI
-- `SEA` - Seattle-Tacoma-Bellevue, WA
-- `MIA` - Miami-Fort Lauderdale-Pompano Beach, FL
+`PHX`, `LA`, `DFW`, `MEM`, `DEN`, `ATL`, `CHI`, `SEA`, `MIA` — see the [metro table in the README](README.md#available-metro-areas) for full names.
 
 ## Command Options
 
-```bash
-python run_analysis.py --help
-```
-
-Options:
-- `--metro` (required): Metro area code (PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA)
-- `--raw-dir`: Directory containing input CSV files (default: `data/raw`)
-- `--out-dir`: Output directory for results (default: `data/processed`)
-- `--fig-dir`: Output directory for figures (default: `figures`)
-- `--zcta-shp`: Path to ZCTA shapefile for mapping (optional, auto-detected)
-
-## Examples
-
-### Run Phoenix Analysis
-```bash
-python run_analysis.py --metro PHX --raw-dir data/final --out-dir data/processed --fig-dir figures
-```
-
-### Run All Metros
-```bash
-for metro in PHX LA DFW MEM DEN ATL CHI SEA MIA; do
-    python run_analysis.py --metro $metro --raw-dir data/final --out-dir data/processed --fig-dir figures
-done
-```
-
-### With Custom Output Locations
-```bash
-python run_analysis.py --metro PHX --raw-dir data/final --out-dir results/phoenix --fig-dir plots/phoenix
-```
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--metro` | Metro area code (or use `--all`) | — |
+| `--all` | Run analysis for all metros | — |
+| `--raw-dir` | Directory containing pipeline output CSVs | `data/final` |
+| `--out-dir` | Output directory for processed data and reports | `data/processed` |
+| `--fig-dir` | Output directory for figures | `figures` |
+| `--zcta-shp` | Path to ZCTA shapefile for choropleth maps (optional) | Auto-detected |
 
 ## Outputs
 
 Each metro analysis creates:
 
-1. **Cleaned Data**: `data/processed/{METRO}/cleaned_data_{metro}.csv`
-2. **Model Results**: `data/processed/{METRO}/rq1_model_data_{metro}.csv`
-3. **Analysis Report**: `data/processed/{METRO}/analysis_summary_{metro}.md`
-4. **Diagnostic Plots**: `figures/{METRO}/rq1_{metro}_*.png` (4 plots)
+1. **Cleaned data:** `data/processed/{METRO}/cleaned_data_{metro}.csv`
+2. **Model data:** `data/processed/{METRO}/rq1_model_data_{metro}.csv`, `rq3_aci_data_{metro}.csv`
+3. **Reports:** `data/processed/{METRO}/analysis_summary_{metro}.md` (RQ1–RQ3) and `rq4_summary_{METRO}.md` (RQ4)
+4. **Figures:** `figures/{METRO}/` — RQ1 diagnostics (observed-vs-fitted scatter, residuals-vs-fitted, Q-Q, residual histogram), RQ2 boxplots and clusters, RQ3 ACI plots, RQ4 event study and gradient phases
 
-### Key Changes:
-- **Old location**: `src/models/run_analysis.py` (with relative imports)
-- **New location**: `run_analysis.py` (with `src.models.*` imports)
-- **Old command**: `python src/models/run_analysis.py ...`
-- **New command**: `python run_analysis.py ...`
+## RQ4 Prerequisites
 
-### Updated Imports in src/models/rq1_housing_commute_tradeoff.py:
-Changed from:
-```python
-from data_loader import METRO_NAMES
-from models import calculate_vif, cv_rmse, fit_ols_robust
+RQ4 needs the committed panel data products in `--raw-dir` (`zori_panel_<metro>.csv`, `lodes_panel_<metro>.csv`, `acs_commute_2019_<metro>.csv`). Build them with:
+
+```bash
+uv run python run_pipeline.py --panel --all   # or: make panel
 ```
 
-To explicit relative imports:
-```python
-from .data_loader import METRO_NAMES
-from .models import calculate_vif, cv_rmse, fit_ols_robust
-```
+If they are absent, the analysis logs a skip message and runs RQ1–RQ3 only.
 
-This ensures the modules can be imported from outside the `src/models` directory.
+See [RUNNING_PIPELINE.md](RUNNING_PIPELINE.md) for pipeline usage, panel-product details, and the revision-gate procedure. Cross-metro results live in [docs/findings.md](docs/findings.md).

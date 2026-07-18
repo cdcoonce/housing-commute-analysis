@@ -11,6 +11,7 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
 - [Overview](#overview)
   - [Research Questions](#research-questions)
   - [Data Sources](#data-sources)
+- [Findings at a Glance](#findings-at-a-glance)
 - [Architecture](#architecture)
   - [High-Level Architecture](#high-level-architecture)
   - [Folder Structure](#folder-structure)
@@ -32,6 +33,7 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
   - [RQ1: Housing-Commute Trade-Off](#rq1-housing-commute-trade-off)
   - [RQ2: Equity Analysis](#rq2-equity-analysis)
   - [RQ3: Affordability-Commute Index](#rq3-affordability-commute-index)
+  - [RQ4: COVID and the Commute Gradient](#rq4-covid-and-the-commute-gradient)
 - [Continuous Integration](#continuous-integration)
 - [Troubleshooting](#troubleshooting)
 - [Contact](#contact)
@@ -60,6 +62,24 @@ This project investigates how commute distance and transit access influence hous
 | **OpenStreetMap** | Public transit stop locations (bus, rail, platform) | Point → ZCTA density |
 | **LEHD LODES8 (WAC 2021 cross-section; WAC 2015–2023 panel)** | ZCTA job density, CBD distance, gravity job accessibility; annual job-count/accessibility panel for RQ4 | Census block → ZCTA/tract |
 | **Census TIGER/Line** | CBSA boundaries, ZCTA & tract geometries | Geographic polygons |
+
+---
+
+## Findings at a Glance
+
+Full results — per-metro tables, event studies, and the complete robustness story — live in **[docs/findings.md](docs/findings.md)**. Per-metro RQ4 reports with every specification table are at `data/processed/<METRO>/rq4_summary_<METRO>.md`.
+
+- **COVID repriced rents toward the periphery — and it stuck.** On the monthly ZORI panel, covered ZCTAs far from jobs gained rent relative to job-rich cores after March 2020, and in no metro does a significant disruption-phase effect fully reverse in the 2022+ return-to-office phase (RQ4). The honesty rails matter: event-study pre-trend checks demote Atlanta, Seattle, and Miami to "trend + break," and a coarse-cluster wild bootstrap sustains only a subset of the conventional significance — the directional consistency across nine metros is the stronger finding.
+- **Affordability is an income problem, not a commute problem.** Income segment stratifies rent burden in 9 of 9 metros and renter share predicts it in 8 of 9; commute time is significant in 6 of 9 and never leads (RQ1, RQ2).
+- **Racial rent-burden disparities appear in 8 of 9 metros.** Seattle is the lone exception — an open research question (RQ2).
+- **No metro shows an affordability-serving transit effect** once employment structure is controlled; in Chicago, Miami, and Phoenix, transit density marks expensive, high-demand areas (RQ3).
+- **"Drive until you qualify" has a statistically supported limit in exactly one metro:** Denver, where the affordability payoff of a longer commute turns over at a 36.5-minute commute (95% CI [31.9, 41.0]) (RQ1).
+
+| Los Angeles — event study | Denver — two-phase repricing |
+|---|---|
+| ![Los Angeles RQ4 event study](figures/LA/rq4_la_event_study.png) | ![Denver RQ4 gradient phases](figures/DEN/rq4_den_gradient_phases.png) |
+
+*Left: the cleanest pre-trend in the study — LA's gradient coefficients sit on zero before the break, then job-accessibility repricing emerges post-2020 and deepens. Right: Denver's commute-gradient interaction is positive in the disruption phase and larger in the return-to-office phase — the study's strongest commute repricing.*
 
 ---
 
@@ -97,6 +117,8 @@ graph TD
         RQ1["rq1_housing_commute_tradeoff.py"]
         RQ2["rq2_equity_analysis.py"]
         RQ3["rq3_aci_analysis.py"]
+        PFE["panel_fe.py<br/>Within-FE, wild bootstrap"]
+        RQ4A["rq4_rent_dynamics.py"]
         VIZ["visualization.py"]
         REPORT["reporting.py"]
     end
@@ -133,15 +155,19 @@ graph TD
     PREPROC --> RQ1
     PREPROC --> RQ2
     PREPROC --> RQ3
+    PREPROC --> RQ4A
     MODELS --> RQ1
     MODELS --> RQ2
     MODELS --> RQ3
+    PFE --> RQ4A
     RQ1 --> VIZ
     RQ2 --> VIZ
     RQ3 --> VIZ
     RQ1 --> REPORT
     RQ2 --> REPORT
     RQ3 --> REPORT
+    RQ4A --> FIGS
+    RQ4A --> PROC
     REPORT --> PROC
     VIZ --> FIGS
 ```
@@ -159,22 +185,21 @@ housing-commute-analysis/
 ├── data/
 │   ├── raw/                     # Raw downloaded data & shapefiles
 │   │   └── shapefiles/          # ZCTA shapefiles for choropleth mapping
-│   ├── final/                   # Pipeline output: one CSV per metro area
-│   ├── processed/               # Analysis output: cleaned data & reports per metro
-│   │   ├── ATL/                 # cleaned_data, rq1/rq3 model data, summary markdown
-│   │   ├── CHI/
-│   │   ├── DEN/
-│   │   ├── DFW/
-│   │   ├── LA/
-│   │   ├── MEM/
-│   │   ├── MIA/
-│   │   ├── PHX/
-│   │   └── SEA/
-│   └── models/                  # Trained ML model artifacts
-├── figures/                     # Diagnostic plots organized by metro
+│   ├── final/                   # Pipeline output: per-metro CSVs + RQ4 panel products + manifests
+│   └── processed/               # Analysis output per metro: cleaned data, model data,
+│       ├── ATL/                 #   analysis_summary and rq4_summary markdown reports
+│       ├── CHI/
+│       └── ...                  # One folder per metro
+├── docs/
+│   ├── findings.md              # Cross-metro findings (RQ1–RQ4)
+│   └── archive/                 # Implemented design & plan documents
+├── figures/                     # Diagnostic and event-study plots by metro
 │   ├── ATL/
 │   ├── CHI/
 │   └── ...                      # One folder per metro
+├── scripts/
+│   ├── panel_gate.py            # Panel revision gate (ZORI snapshot-replace, LODES append-only)
+│   └── rebuild_gate.py          # Cross-sectional rebuild drift gate
 ├── src/
 │   ├── pipelines/               # ETL pipeline modules
 │   │   ├── config.py            # Metro definitions, API keys, constants
@@ -186,29 +211,28 @@ housing-commute-analysis/
 │   │   ├── osm.py               # OpenStreetMap transit stop density
 │   │   ├── lodes.py             # LEHD LODES employment features
 │   │   ├── panel.py             # RQ4 panel data products (build_panel_flow)
+│   │   ├── manifest.py          # Provenance manifests (sha256, vintages, schema)
+│   │   ├── schema.py            # Output schema definition & validation
 │   │   ├── spatial.py           # Spatial joins & ZCTA filtering
 │   │   └── utils.py             # HTTP retry utilities
-│   ├── models/                  # Statistical analysis modules
-│   │   ├── data_loader.py       # Data loading & validation (Polars)
-│   │   ├── preprocessing.py     # Z-scores, feature engineering, income segments
-│   │   ├── models.py            # OLS regression, VIF, cross-validation, ANOVA
-│   │   ├── results.py           # Typed dataclass containers for RQ results
-│   │   ├── rq1_housing_commute_tradeoff.py  # RQ1: rent ~ commute regression
-│   │   ├── rq2_equity_analysis.py           # RQ2: equity & clustering
-│   │   ├── rq3_aci_analysis.py              # RQ3: ACI index & quantile regression
-│   │   ├── visualization.py     # Matplotlib diagnostic plots
-│   │   └── reporting.py         # Markdown table & summary generation
-│   └── dashboard/               # Interactive dashboard (WIP)
-└── tests/                       # pytest unit tests
-    ├── conftest.py              # Shared fixtures (sample DataFrames, numpy arrays)
-    ├── test_models.py           # OLS, VIF, CV-RMSE tests
-    ├── test_preprocessing.py    # Z-score, income segment tests
-    ├── test_data_loader.py      # Load & validation tests
-    ├── test_demographics.py     # Demographic computation tests
-    ├── test_config.py           # Pipeline config tests
-    ├── test_acs.py              # ACS feature computation tests
-    ├── test_utils.py            # HTTP utility tests
-    ├── test_reporting.py        # Markdown output tests
+│   └── models/                  # Statistical analysis modules
+│       ├── data_loader.py       # Data loading & validation (Polars)
+│       ├── preprocessing.py     # Z-scores, feature engineering, income segments
+│       ├── models.py            # OLS regression, VIF, cross-validation, ANOVA
+│       ├── results.py           # Typed dataclass containers for RQ results
+│       ├── rq1_housing_commute_tradeoff.py  # RQ1: rent ~ commute regression
+│       ├── rq2_equity_analysis.py           # RQ2: equity & clustering
+│       ├── rq3_aci_analysis.py              # RQ3: ACI index & quantile regression
+│       ├── panel_fe.py          # Within-FE estimator, clustered SEs, wild cluster bootstrap
+│       ├── rq4_rent_dynamics.py # RQ4: ZORI panel structural break, event study, robustness
+│       ├── visualization.py     # Matplotlib diagnostic plots
+│       └── reporting.py         # Markdown table & summary generation
+└── tests/                       # pytest suite — 24 modules, 288 tests, covering
+    ├── conftest.py              #   pipelines, models, gates, schema, and reporting
+    ├── test_panel_fe.py         # Within-FE estimator vs. statsmodels reference
+    ├── test_rq4.py              # RQ4 spec construction & reporting
+    ├── test_panel_gate.py       # Panel revision-gate semantics
+    ├── ...
     └── fixtures/                # Test fixture data files
 ```
 
@@ -247,6 +271,10 @@ graph LR
     RES["results.py"] --> RQ1
     RES --> RQ2
     RES --> RQ3
+    DL --> RQ4["rq4_rent_<br/>dynamics.py"]
+    FE["panel_fe.py"] --> RQ4
+    RES --> RQ4
+    RQ4 --> R
 ```
 
 ---
@@ -296,10 +324,7 @@ uv run pytest -m "not slow and not network"
 |----------|----------|-------------|
 | `CENSUS_API_KEY` | Yes | Census Bureau API key for ACS data retrieval. [Get one free](https://api.census.gov/data/key_signup.html). |
 | `METRO` | No | Metro area key for pipeline runs (default: `phoenix`). See [Available Metro Areas](#available-metro-areas). |
-| `N_CLUSTERS` | No | Number of K-Means clusters for RQ2 equity analysis (default: `4`). |
 | `RANDOM_STATE` | No | Random seed for reproducibility (default: `42`). |
-| `DASHBOARD_PORT` | No | Port for the Dash dashboard (default: `8050`). |
-| `DASHBOARD_DEBUG` | No | Enable Dash debug mode (default: `True`). |
 
 ---
 
@@ -349,7 +374,7 @@ make analyze
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--metro` | Metro code (**required**): PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA | — |
+| `--metro` | Metro code (or use `--all`): PHX, LA, DFW, MEM, DEN, ATL, CHI, SEA, MIA | — |
 | `--raw-dir` | Directory containing pipeline output CSVs | `data/final` |
 | `--out-dir` | Output directory for processed data and reports | `data/processed` |
 | `--fig-dir` | Output directory for figures | `figures` |
@@ -410,7 +435,7 @@ Each final ZCTA CSV contains 35 columns across six categories:
 | `distance_to_cbd_km` | Km from ZCTA centroid to nearest metro CBD point (dual-CBD for DFW) | Derived (config CBD points) |
 | `job_accessibility` | Gravity index: Σ jobs·exp(−d/10 km) over metro tracts | LEHD LODES + TIGER |
 | **Demographics** | | |
-| `total_pop`, `pop_density` | Population and density (per km²) | ACS B01001 |
+| `total_pop`, `pop_density` | Population and density (per km²) | ACS B03002 |
 | `pct_white`, `pct_black`, `pct_asian`, `pct_hispanic`, `pct_other` | Race/ethnicity | ACS B03002 |
 | `median_income` | Median household income ($) | ACS B19013 |
 | `income_segment` | Income tercile (low/medium/high) | Derived |
@@ -440,7 +465,7 @@ For each metro area, the analysis generates:
 - **Methodology:** OLS regression with HC3 robust standard errors, comparing linear vs. quadratic specifications. Model selected by AIC; validated with 3-fold CV-RMSE and VIF diagnostics.
 - **Outputs:**
   - `data/processed/{METRO}/rq1_model_data_{metro}.csv` — model input data
-  - `figures/{METRO}/rq1_{metro}_*.png` — four diagnostic plots (residuals, Q-Q, predicted vs. actual, partial regression)
+  - `figures/{METRO}/rq1_{metro}_*.png` — four diagnostic plots (observed-vs-fitted scatter, residuals-vs-fitted, Q-Q, residual histogram)
 
 ### RQ2: Equity Analysis
 
@@ -456,7 +481,16 @@ For each metro area, the analysis generates:
   - `data/processed/{METRO}/rq3_aci_data_{metro}.csv` — ACI scores per ZCTA
   - Tier summary and quantile regression coefficients
 
-**Summary report:** `data/processed/{METRO}/analysis_summary_{metro}.md`
+### RQ4: COVID and the Commute Gradient
+
+Runs automatically when the metro's [panel data products](#panel-data-products-rq4) are present in `--raw-dir` (skipped with a log message otherwise).
+
+- **Methodology:** Per-metro two-way fixed-effects (ZCTA + sample-month) on the monthly ZORI panel — log rent on interactions of three pre-COVID (2019-vintage) gradient measures with a two-phase structural break (Post1 = 2020-03…2021-12, Post2 = 2022-01+). ZCTA-clustered SEs with a conservative dof correction, single-interaction sign checks, wild cluster bootstrap (Webb weights) at ZIP3 clusters, event-time event study, time-varying-accessibility and predictive-association specs, and renter-prevalence-weighted robustness.
+- **Outputs:**
+  - `data/processed/{METRO}/rq4_summary_{METRO}.md` — full specification tables, robustness sections, and a mandatory caveats block
+  - `figures/{METRO}/rq4_{metro}_event_study.png`, `rq4_{metro}_gradient_phases.png`
+
+**Summary reports:** `data/processed/{METRO}/analysis_summary_{metro}.md` (RQ1–RQ3) and `rq4_summary_{METRO}.md` (RQ4)
 
 ---
 

@@ -1,1 +1,1 @@
-"""DAT490 Housing Affordability Analysis Package."""
+"""Housing Affordability & Commute Trade-Off Analysis package."""

@@ -13,7 +13,7 @@ panel:         ## build RQ4 panel data products for all metros (shares the fetch
 manifests:     ## (re)generate provenance manifests for existing final CSVs (offline)
 	uv run python run_pipeline.py --generate-manifests
 
-analyze:       ## run RQ1/2/3 for all metros
+analyze:       ## run RQ1-RQ4 for all metros (RQ4 runs where panel products exist)
 	uv run python run_analysis.py --all
 
 test:

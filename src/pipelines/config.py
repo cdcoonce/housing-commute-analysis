@@ -152,7 +152,7 @@ METRO_CONFIGS = {
 }
 
 # Select which metro to use (change this to switch metros)
-SELECTED_METRO = os.getenv("METRO", "phoenix")  # Can be: phoenix, memphis, los_angeles, dallas
+SELECTED_METRO = os.getenv("METRO", "phoenix")  # Any key in METRO_CONFIGS (nine metros)
 
 # Get the selected metro configuration
 _metro_config = METRO_CONFIGS.get(SELECTED_METRO, METRO_CONFIGS["phoenix"])

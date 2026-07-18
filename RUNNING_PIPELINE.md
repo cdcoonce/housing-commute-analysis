@@ -23,14 +23,19 @@ See [Building the RQ4 Panel Data Products](#building-the-rq4-panel-data-products
 
 ## Available Metro Areas
 
-The pipeline can build datasets for four metro areas:
+The pipeline can build datasets for nine metro areas (county lists live in `METRO_CONFIGS` in `src/pipelines/config.py`):
 
-| Metro Key | Metro Area | CBSA Code | Counties |
-|-----------|------------|-----------|----------|
-| `phoenix` | Phoenix-Mesa-Chandler, AZ | 38060 | Maricopa, Pinal |
-| `memphis` | Memphis, TN-MS-AR | 32820 | Shelby (TN), Fayette (TN), Crittenden (AR), DeSoto (MS) |
-| `los_angeles` | Los Angeles-Long Beach-Anaheim, CA | 31080 | Los Angeles |
-| `dallas` | Dallas-Fort Worth-Arlington, TX | 19100 | Dallas, Denton, Collin, Tarrant |
+| Metro Key | Metro Area | CBSA Code | ZIP Prefixes |
+|-----------|------------|-----------|--------------|
+| `phoenix` | Phoenix-Mesa-Chandler, AZ | 38060 | 85 |
+| `memphis` | Memphis, TN-MS-AR | 32820 | 38, 72 |
+| `los_angeles` | Los Angeles-Long Beach-Anaheim, CA | 31080 | 90, 91 |
+| `dallas` | Dallas-Fort Worth-Arlington, TX | 19100 | 75, 76 |
+| `denver` | Denver-Aurora-Lakewood, CO | 19740 | 80, 81 |
+| `atlanta` | Atlanta-Sandy Springs-Alpharetta, GA | 12060 | 30 |
+| `chicago` | Chicago-Naperville-Elgin, IL-IN-WI | 16980 | 60, 61, 62 |
+| `seattle` | Seattle-Tacoma-Bellevue, WA | 42660 | 98 |
+| `miami` | Miami-Fort Lauderdale-Pompano Beach, FL | 33100 | 33 |
 
 ## Configuration
 
@@ -40,7 +45,7 @@ Edit `src/pipelines/config.py`:
 
 ```python
 # Select which metro to use (change this to switch metros)
-SELECTED_METRO = os.getenv("METRO", "phoenix")  # Can be: phoenix, memphis, los_angeles, dallas
+SELECTED_METRO = os.getenv("METRO", "phoenix")  # Any key in METRO_CONFIGS (nine metros)
 ```
 
 Or use environment variable:
@@ -262,18 +267,18 @@ Escape hatches exist for legitimate upstream changes, and **all of them are revi
 
 ## Running All Metros
 
-To rebuild datasets for all four metros, use the `--all` flag:
+To rebuild datasets for all nine metros, use the `--all` flag:
 
 ```bash
-python run_pipeline.py --all
+uv run python run_pipeline.py --all
 ```
 
-This will sequentially process all four metros (phoenix, memphis, los_angeles, dallas) and provide a summary of successes and failures at the end.
+This will sequentially process all nine metros and provide a summary of successes and failures at the end.
 
 Alternatively, you can use a loop with environment variables:
 
 ```bash
-for metro in phoenix memphis los_angeles dallas; do
+for metro in phoenix memphis los_angeles dallas denver atlanta chicago seattle miami; do
     echo "Building $metro..."
     METRO=$metro python run_pipeline.py
 done
@@ -293,8 +298,6 @@ done
 Install:
 
 ```bash
-pip install -r requirements.txt
-# Or
 uv sync
 ```
 
@@ -383,7 +386,7 @@ echo "CENSUS_API_KEY=your_key_here" >> .env
 ### Import errors
 
 - Ensure running from project root: `python run_pipeline.py`
-- Verify all dependencies installed: `pip install -r requirements.txt`
+- Verify all dependencies installed: `uv sync`
 - Check that `src/pipelines/` directory exists with all modules
 
 ## Module Structure
@@ -441,4 +444,4 @@ python run_analysis.py --metro PHX
 
 ## Contact
 
-For questions about the pipeline, contact the DAT490 team.
+For questions about the pipeline: **Charles Coonce** — charlescoonce@gmail.com | [github.com/cdcoonce](https://github.com/cdcoonce)
