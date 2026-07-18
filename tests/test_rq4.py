@@ -1,7 +1,9 @@
-"""Tests for RQ4 (ZORI rent dynamics): results contract and panel fixtures.
+"""Tests for RQ4 (ZORI rent dynamics): results contract, fixtures, analysis.
 
 Task 16 scope: the frozen RQ4Results container and the synthetic
 sample_panel_fixtures quadruple that feeds the analysis tests (Tasks 17-19).
+Task 17 scope: analyze_rq4 Spec-A family (two-phase structural break on the
+pre-COVID gradient, vintage discipline, trims, thin-identification flagging).
 """
 from __future__ import annotations
 
@@ -12,6 +14,7 @@ import polars as pl
 import pytest
 
 from src.models.results import RQ4Results
+from src.models.rq4_rent_dynamics import analyze_rq4
 from src.pipelines.schema import (
     validate_acs_commute_2019,
     validate_lodes_panel,
@@ -20,6 +23,28 @@ from src.pipelines.schema import (
 
 BREAK_MONTH = date(2020, 3, 31)
 POST2_START = date(2022, 1, 31)
+
+
+@pytest.fixture
+def sample_panel_fixtures_thin(
+    sample_panel_fixtures: tuple[
+        pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame
+    ],
+) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """Thin-identification variant of the panel quadruple: 8 identifying ZCTAs.
+
+    All but the first 8 ZCTAs lose their pre-break rows (they become 2020-03
+    entrants), so only 8 ZCTAs are observed on both sides of the break --
+    below the UNDER_IDENTIFIED_MIN=20 threshold that must trigger the
+    under_identified flag and ZCTA-level bootstrap p-values.
+    """
+    cross, zori_panel, lodes_panel, acs2019 = sample_panel_fixtures
+    identified = sorted(set(zori_panel["ZCTA5CE"].to_list()))[:8]
+    zori_thin = zori_panel.filter(
+        (pl.col("period") >= "2020-03-01")  # ISO strings compare by date
+        | pl.col("ZCTA5CE").is_in(identified)
+    )
+    return cross, zori_thin, lodes_panel, acs2019
 
 
 def _minimal_rq4_results() -> RQ4Results:
@@ -140,3 +165,34 @@ class TestSamplePanelFixtures:
         assert set(lodes_panel["ZCTA5CE"].to_list()) == universe
         assert set(acs2019["ZCTA5CE"].to_list()) == universe
         assert len(universe) == 30
+
+
+def test_rq4_recovers_planted_donut_effect(sample_panel_fixtures) -> None:
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    d = r.gradient_models_single["distance_to_cbd_km"]
+    assert d["post1_coef"] > 0                       # planted repricing found...
+    assert d["post1_pvalue"] < 0.05                   # ...and significant
+
+
+def test_rq4_headline_uses_2019_vintage_not_2021(sample_panel_fixtures) -> None:
+    """Fixture plants DIFFERENT 2019 and 2021 commute proxies; the headline
+    interaction must load on the 2019 one (design §4: pre-treatment measurement)."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    assert r.gradient_model_joint["x_vintage"] == "2019"
+    assert "vintage2021" in r.vintage2021_robustness
+
+
+def test_rq4_endpoint_trim_and_transition_drop(sample_panel_fixtures) -> None:
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    assert r.n_post_months < zp["period"].n_unique()  # trim + drop actually removed months
+
+
+def test_rq4_flags_thin_identification(sample_panel_fixtures_thin) -> None:
+    """A fixture with 8 identifying ZCTAs must flag and carry bootstrap p."""
+    cross, zp, lp, acs = sample_panel_fixtures_thin
+    r = analyze_rq4(cross, zp, lp, acs)
+    assert "under_identified" in r.flags
+    assert "distance_to_cbd_km" in r.bootstrap_pvalues
