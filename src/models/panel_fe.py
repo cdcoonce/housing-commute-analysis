@@ -187,12 +187,48 @@ def within_fe(
     -------
     FEResult
         Coefficients, SEs, and covariance for the ``X`` block only.
+
+    Raises
+    ------
+    ValueError
+        If the unit-demeaned design ``[X | time dummies]`` is rank-deficient
+        (collinear ``X``, or a time period identified only through absorbed
+        units) -- otherwise the pinv-based fit would silently break LSDV
+        equality and the dof rescale would use the wrong K. Also if the
+        rescale denominator ``N - K - G_absorbed`` is not positive, which
+        would otherwise surface as NaN / negative-variance ``bse``; the
+        message reports the actual N, K, and G_absorbed. Degenerate
+        ``weights`` raise as documented above.
     """
     if weights is not None:
         weights = _validate_weights(weights, unit_ids)
     y_within, design_within, k_x, units = _within_design(
         y, X, unit_ids, time_ids, weights
     )
+
+    n_obs = int(y_within.size)
+    n_units = int(units.nunique())
+    k_within = design_within.shape[1]
+    # Rank guard: statsmodels falls back to pinv on singular designs, which
+    # would silently degrade LSDV equality (and make K wrong in the rescale).
+    # Strictly positive weights make WLS whitening a full-rank row scaling,
+    # so the rank of the demeaned design covers the weighted path too.
+    rank = int(np.linalg.matrix_rank(design_within))
+    if rank < k_within:
+        raise ValueError(
+            f"within design is rank-deficient: rank {rank} < {k_within} "
+            f"columns ({k_x} supplied regressor(s) + "
+            f"{k_within - k_x} time dummies, unit-demeaned); check for "
+            "collinear X or a time period observed only in singleton units"
+        )
+    dof = n_obs - k_within - n_units
+    if dof <= 0:
+        raise ValueError(
+            "degrees of freedom exhausted in the dof rescale: "
+            f"N - K - G_absorbed = {n_obs} - {k_within} - {n_units} = "
+            f"{dof} <= 0; the LSDV-matching correction is undefined on "
+            "this panel"
+        )
 
     if weights is None:
         model = sm.OLS(y_within, design_within)
@@ -202,10 +238,7 @@ def within_fe(
         cov_type="cluster", cov_kwds={"groups": np.asarray(cluster_ids)}
     )
 
-    n_obs = int(y_within.size)
-    n_units = int(units.nunique())
-    k_within = design_within.shape[1]
-    rescale = (n_obs - k_within) / (n_obs - k_within - n_units)
+    rescale = (n_obs - k_within) / dof
     cov = np.asarray(fit.cov_params())[:k_x, :k_x] * rescale
 
     return FEResult(

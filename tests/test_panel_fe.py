@@ -197,6 +197,57 @@ def test_weighted_degenerate_weights_raise_naming_units(
         within_fe(y, X, labels, time, cluster_ids=labels, weights=w)
 
 
+# ---------------------------------------------------------------------------
+# Loud guards: rank-deficient designs and exhausted dof (estimator review)
+# ---------------------------------------------------------------------------
+
+
+def test_collinear_x_raises_rank_deficiency() -> None:
+    """A collinear regressor block must raise loudly, not silently degrade
+    LSDV equality through the pinv fit and a wrong K in the dof rescale."""
+    y, X, unit, time = _synthetic_panel()
+    X_collinear = np.column_stack([X, 2.0 * X[:, 0]])
+    with pytest.raises(ValueError, match="rank-deficient"):
+        within_fe(y, X_collinear, unit, time, cluster_ids=unit)
+
+
+def test_collinear_x_raises_rank_deficiency_weighted() -> None:
+    """The weighted (WLS) path must apply the same rank guard."""
+    y, X, unit, time, w = _unbalanced_weighted_panel()
+    X_collinear = np.column_stack([X, X[:, 0] - X[:, 1]])
+    with pytest.raises(ValueError, match="rank-deficient"):
+        within_fe(y, X_collinear, unit, time, cluster_ids=unit, weights=w)
+
+
+def _tiny_exhausted_panel():
+    """2 units x 2 periods, 1 regressor: N=4, K=2 (x + one time dummy),
+    G_absorbed=2, so the rescale denominator N - K - G is exactly 0."""
+    rng = np.random.default_rng(0)
+    unit = np.array([0, 0, 1, 1])
+    time = np.array([0, 1, 0, 1])
+    x = rng.normal(size=4)[:, None]
+    y = rng.normal(size=4)
+    return y, x, unit, time
+
+
+def test_tiny_panel_exhausted_dof_raises_with_numbers() -> None:
+    """Denominator <= 0 must raise naming N, K, and G_absorbed -- previously
+    it surfaced as NaN / negative-variance bse."""
+    y, x, unit, time = _tiny_exhausted_panel()
+    with pytest.raises(ValueError, match=r"4 - 2 - 2"):
+        within_fe(y, x, unit, time, cluster_ids=unit)
+
+
+def test_tiny_panel_exhausted_dof_raises_with_numbers_weighted() -> None:
+    """Same dof guard on the weighted path."""
+    y, x, unit, time = _tiny_exhausted_panel()
+    with pytest.raises(ValueError, match=r"4 - 2 - 2"):
+        within_fe(
+            y, x, unit, time, cluster_ids=unit,
+            weights=np.array([1.0, 2.0, 3.0, 4.0]),
+        )
+
+
 def test_wild_boot_coarse_nested_clusters_ok_crossing_clusters_raise() -> None:
     """ZIP3-style clusters coarser than the unit FE are the design use case;
     clusters that split a unit break the within-transform commutation and
