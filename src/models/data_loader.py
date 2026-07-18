@@ -38,6 +38,15 @@ METRO_NAMES = {
     'MIA': 'Miami'
 }
 
+# RQ4 panel data products (design doc section 1): filename templates keyed by
+# product, formatted with the metro key used in data/final/ filenames
+# (e.g. "phoenix", "los_angeles" — the suffix of the METRO_FILES entries).
+PANEL_FILES = {
+    'zori': 'zori_panel_{metro}.csv',
+    'lodes': 'lodes_panel_{metro}.csv',
+    'acs2019': 'acs_commute_2019_{metro}.csv',
+}
+
 
 def load_and_validate_data(
     csv_path: Path,
@@ -118,3 +127,81 @@ def load_and_validate_data(
     validate_final_dataset(df, require_all_columns=False)
 
     return df
+
+
+def load_panel_data(
+    metro: str,
+    final_dir: Path
+) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """
+    Load and validate the three RQ4 panel products for one metro.
+
+    Reads zori_panel_<metro>.csv, lodes_panel_<metro>.csv, and
+    acs_commute_2019_<metro>.csv from final_dir with ZCTA5CE pinned to Utf8
+    (CSV type inference would otherwise strip leading zeros), then applies the
+    corresponding pipeline schema validator to each frame.
+
+    Parameters
+    ----------
+    metro : str
+        Metro code identifier, must be one of: PHX, LA, DFW, MEM, DEN, ATL,
+        CHI, SEA, MIA. Mapped internally to the data/final/ filename key
+        (e.g. LA -> los_angeles).
+    final_dir : Path
+        Directory containing the committed panel CSVs (normally data/final).
+
+    Returns
+    -------
+    tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]
+        (zori_panel, lodes_panel, acs2019) — validated frames with Utf8
+        ZCTA5CE columns.
+
+    Raises
+    ------
+    ValueError
+        If metro code is unknown, or any panel fails its schema validator
+        (the message names the offending file and every validator error).
+    FileNotFoundError
+        If any of the three panel files is absent — callers (run_analysis)
+        catch this to skip RQ4 on old checkouts or partial rebuilds.
+    """
+    if metro not in METRO_FILES:
+        raise ValueError(
+            f"Invalid metro code: {metro}. Must be one of {list(METRO_FILES.keys())}"
+        )
+
+    # local import mirrors load_and_validate_data (keeps schema import light)
+    from src.pipelines.schema import (
+        validate_acs_commute_2019,
+        validate_lodes_panel,
+        validate_zori_panel,
+    )
+
+    metro_key = (
+        METRO_FILES[metro]
+        .removeprefix('final_zcta_dataset_')
+        .removesuffix('.csv')
+    )
+    validators = {
+        'zori': validate_zori_panel,
+        'lodes': validate_lodes_panel,
+        'acs2019': validate_acs_commute_2019,
+    }
+
+    frames: list[pl.DataFrame] = []
+    for product, template in PANEL_FILES.items():
+        path = final_dir / template.format(metro=metro_key)
+        if not path.exists():
+            raise FileNotFoundError(f"Panel file not found: {path}")
+
+        df = pl.read_csv(path, schema_overrides={'ZCTA5CE': pl.Utf8})
+        errors = validators[product](df)
+        if errors:
+            raise ValueError(
+                f"{path.name} failed validation: " + "; ".join(errors)
+            )
+
+        logger.info(f"Loaded {path.name}: {df.shape[0]} rows")
+        frames.append(df)
+
+    return frames[0], frames[1], frames[2]
