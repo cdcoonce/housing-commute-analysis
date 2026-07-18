@@ -1,0 +1,62 @@
+{
+  "metro_key": "miami",
+  "kind": "zori_panel",
+  "metro_config": {
+    "cbsa_code": "33100",
+    "counties": [
+      [
+        "12",
+        "086"
+      ],
+      [
+        "12",
+        "011"
+      ],
+      [
+        "12",
+        "099"
+      ]
+    ],
+    "zip_prefixes": [
+      "33"
+    ],
+    "utm_zone": 32617,
+    "cbd_points": [
+      [
+        25.7743,
+        -80.1937
+      ]
+    ]
+  },
+  "provenance": "pipeline-build",
+  "git_commit": "157edb487ac8efb694c966f3f01b4f071046a614",
+  "regenerated_at_commit": null,
+  "run_timestamp_utc": "2026-07-17T14:56:36.452100+00:00",
+  "cbsa_vintage": "ACS 2024",
+  "source_urls": {
+    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
+  },
+  "output_csv": "zori_panel_miami.csv",
+  "row_count": 14338,
+  "columns": [
+    {
+      "name": "ZCTA5CE",
+      "dtype": "Int64"
+    },
+    {
+      "name": "period",
+      "dtype": "String"
+    },
+    {
+      "name": "zori",
+      "dtype": "Float64"
+    }
+  ],
+  "sha256": "0857c3cb1d1551a3f61342c13460241ba779f2b419775ecbd4abd5400cfdeb7e",
+  "period_min": "2015-01-31",
+  "period_max": "2026-06-30",
+  "n_months": 138,
+  "n_zctas": 171,
+  "pull_timestamp_utc": "2026-07-17T14:56:36.452100+00:00"
+}

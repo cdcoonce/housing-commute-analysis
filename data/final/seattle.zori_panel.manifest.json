@@ -1,0 +1,62 @@
+{
+  "metro_key": "seattle",
+  "kind": "zori_panel",
+  "metro_config": {
+    "cbsa_code": "42660",
+    "counties": [
+      [
+        "53",
+        "033"
+      ],
+      [
+        "53",
+        "053"
+      ],
+      [
+        "53",
+        "061"
+      ]
+    ],
+    "zip_prefixes": [
+      "98"
+    ],
+    "utm_zone": 32610,
+    "cbd_points": [
+      [
+        47.6038,
+        -122.3301
+      ]
+    ]
+  },
+  "provenance": "pipeline-build",
+  "git_commit": "157edb487ac8efb694c966f3f01b4f071046a614",
+  "regenerated_at_commit": null,
+  "run_timestamp_utc": "2026-07-17T14:56:36.313664+00:00",
+  "cbsa_vintage": "ACS 2024",
+  "source_urls": {
+    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
+  },
+  "output_csv": "zori_panel_seattle.csv",
+  "row_count": 10323,
+  "columns": [
+    {
+      "name": "ZCTA5CE",
+      "dtype": "Int64"
+    },
+    {
+      "name": "period",
+      "dtype": "String"
+    },
+    {
+      "name": "zori",
+      "dtype": "Float64"
+    }
+  ],
+  "sha256": "912a315a9b706edb9fb0b0991fc6c9c14ca64b6c4cffb384718c788e48d5a556",
+  "period_min": "2015-01-31",
+  "period_max": "2026-06-30",
+  "n_months": 138,
+  "n_zctas": 125,
+  "pull_timestamp_utc": "2026-07-17T14:56:36.313664+00:00"
+}

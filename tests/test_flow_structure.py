@@ -71,13 +71,42 @@ def test_cacheable_tasks_include_task_source_component() -> None:
         fetch_lodes_task,
         fetch_tracts_task,
     )
+    from src.pipelines.panel import fetch_zori_series_task
 
     task_source_type = type(TASK_SOURCE)
-    for task in (fetch_tracts_task, fetch_acs_task, fetch_demographics_task, fetch_lodes_task):
+    for task in (
+        fetch_tracts_task,
+        fetch_acs_task,
+        fetch_demographics_task,
+        fetch_lodes_task,
+        fetch_zori_series_task,
+    ):
         policies = getattr(task.cache_policy, "policies", [task.cache_policy])
         assert any(isinstance(p, task_source_type) for p in policies), (
             f"{task.name} cache_policy lacks a TASK_SOURCE component: {task.cache_policy}"
         )
+
+
+def test_zori_tasks_have_distinct_cache_keys() -> None:
+    """fetch_zori_series_task must never share a persisted result with
+    fetch_zori_task: both are URL-keyed, so with a TASK_SOURCE-free policy the
+    same url value could collide across the two task bodies. Inputs differ too
+    (zip_prefixes), but the TASK_SOURCE component is the structural guarantee.
+    """
+    from src.pipelines.build import fetch_zori_task
+    from src.pipelines.panel import fetch_zori_series_task
+
+    key_series = _cache_key(
+        fetch_zori_series_task, {"url": "x", "zip_prefixes": ("850",)}
+    )
+    key_latest = _cache_key(fetch_zori_task, {"url": "x"})
+    assert key_series != key_latest
+
+
+def test_build_panel_flow_is_a_flow() -> None:
+    from src.pipelines.panel import build_panel_flow
+
+    assert isinstance(build_panel_flow, Flow)
 
 
 def test_employment_tasks_exist() -> None:

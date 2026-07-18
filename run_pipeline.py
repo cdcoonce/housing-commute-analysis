@@ -26,6 +26,7 @@ Environment Variables:
     CENSUS_API_KEY: Census API key (optional but recommended for reliability)
 """
 import argparse
+import json
 import logging
 import os
 import sys
@@ -70,13 +71,16 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def run_single_metro(metro: str) -> tuple[bool, str]:
+def run_single_metro(metro: str, builder=build_final_dataset) -> tuple[bool, str]:
     """Run the pipeline for a single metro area.
 
     Parameters
     ----------
     metro : str
         Metro area key (e.g., 'phoenix', 'dallas', 'atlanta').
+    builder : callable
+        Flow entry point taking metro_key (default: the cross-sectional
+        build_final_dataset; --panel swaps in build_panel_flow).
 
     Returns
     -------
@@ -84,7 +88,7 @@ def run_single_metro(metro: str) -> tuple[bool, str]:
         (success, output_path or error_message)
     """
     try:
-        output_path = build_final_dataset(metro_key=metro)
+        output_path = builder(metro_key=metro)
         return True, str(output_path)
     except (ValueError, KeyError) as e:
         return False, f"Data validation error: {type(e).__name__}: {e}"
@@ -133,6 +137,44 @@ def generate_manifests_offline() -> int:
     return 0
 
 
+def _resolve_manifest_csv(manifest_path: Path, data_final: Path) -> Path:
+    """Pair a manifest with the CSV it describes.
+
+    Panel manifests (phoenix.zori_panel.manifest.json -> zori_panel_phoenix.csv)
+    do not follow the final_zcta_dataset_{stem}.csv convention, so the CSV is
+    resolved from the manifest's own output_csv field (written by both
+    build_manifest and build_panel_manifest); the naming convention remains as
+    a fallback for pre-field manifests.
+    """
+    out_csv = json.loads(manifest_path.read_text()).get("output_csv")
+    if out_csv:
+        return data_final / out_csv
+    stem = manifest_path.name.removesuffix(".manifest.json")
+    return data_final / f"final_zcta_dataset_{stem}.csv"
+
+
+def verify_manifests_offline() -> int:
+    """Offline: verify final CSVs against committed manifests (no network)."""
+    from src.pipelines.config import DATA_FINAL
+    from src.pipelines.manifest import verify_manifest
+
+    manifests = sorted(DATA_FINAL.glob("*.manifest.json"))
+    if not manifests:
+        logger.warning("No manifests found in %s — run --generate-manifests first.", DATA_FINAL)
+        return 0
+    any_drift = False
+    for mpath in manifests:
+        label = mpath.name.removesuffix(".manifest.json")
+        csv = _resolve_manifest_csv(mpath, DATA_FINAL)
+        drift = verify_manifest(csv, mpath)
+        if drift:
+            any_drift = True
+            logger.error("DRIFT %s: %s", label, "; ".join(drift))
+        else:
+            logger.info("OK %s", label)
+    return 1 if any_drift else 0
+
+
 def main():
     """Execute the data pipeline."""
     # Parse command line arguments
@@ -145,6 +187,9 @@ def main():
         action='store_true',
         help='Run pipeline for all metros sequentially (phoenix, memphis, los_angeles, dallas, denver, atlanta, chicago, seattle, miami)'
     )
+    parser.add_argument("--panel", action="store_true",
+                        help="Build the RQ4 panel data products (build_panel_flow) "
+                             "instead of the cross-sectional dataset; composes with --all")
     parser.add_argument("--generate-manifests", action="store_true",
                         help="Offline: (re)write provenance manifests for existing final CSVs")
     parser.add_argument("--verify", action="store_true",
@@ -159,24 +204,16 @@ def main():
         return generate_manifests_offline()
 
     if args.verify:
-        from src.pipelines.config import DATA_FINAL
-        from src.pipelines.manifest import verify_manifest
+        return verify_manifests_offline()
 
-        manifests = sorted(DATA_FINAL.glob("*.manifest.json"))
-        if not manifests:
-            logger.warning("No manifests found in %s — run --generate-manifests first.", DATA_FINAL)
-            return 0
-        any_drift = False
-        for mpath in manifests:
-            metro_key = mpath.stem.replace(".manifest", "")
-            csv = DATA_FINAL / f"final_zcta_dataset_{metro_key}.csv"
-            drift = verify_manifest(csv, mpath)
-            if drift:
-                any_drift = True
-                logger.error("DRIFT %s: %s", metro_key, "; ".join(drift))
-            else:
-                logger.info("OK %s", metro_key)
-        return 1 if any_drift else 0
+    # Select the flow: --panel builds the RQ4 panel data products instead of
+    # the cross-sectional dataset; no-flag behavior is unchanged.
+    if args.panel:
+        from src.pipelines.panel import build_panel_flow
+        builder = build_panel_flow
+        logger.info("Mode: RQ4 panel data products (--panel)")
+    else:
+        builder = build_final_dataset
 
     # Check if running all metros
     if args.all:
@@ -191,7 +228,7 @@ def main():
             logger.info(f"Processing: {metro}")
             logger.info("=" * 70)
             
-            success, message = run_single_metro(metro)
+            success, message = run_single_metro(metro, builder)
             results.append((metro, success, message))
             
             if success:
@@ -232,7 +269,7 @@ def main():
     
     try:
         # Run the pipeline
-        output_path = build_final_dataset(metro_key=metro)
+        output_path = builder(metro_key=metro)
         
         logger.info("\n" + "=" * 70)
         logger.info("Pipeline completed successfully!")

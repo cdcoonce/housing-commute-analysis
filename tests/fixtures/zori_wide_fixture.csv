@@ -1,0 +1,9 @@
+RegionID,SizeRank,RegionName,RegionType,StateName,State,City,Metro,CountyName,2015-01-31,2015-02-28,2020-03-31,2026-06-30
+91982,10,85001,zip,AZ,AZ,Phoenix,"Phoenix-Mesa-Chandler, AZ",Maricopa County,1500.0,1510.0,1600.0,2100.0
+91983,20,85002,zip,AZ,AZ,Phoenix,"Phoenix-Mesa-Chandler, AZ",Maricopa County,1200.0,1210.0,1300.0,1800.0
+91999,30,85003,zip,AZ,AZ,Phoenix,"Phoenix-Mesa-Chandler, AZ",Maricopa County,MA,1250.0,MA,1700.0
+92001,40,85004,zip,AZ,AZ,Phoenix,"Phoenix-Mesa-Chandler, AZ",Maricopa County,1400.0,1410.0,1450.0,
+92100,50,85101,zip,AZ,AZ,Mesa,"Phoenix-Mesa-Chandler, AZ",Maricopa County,1100.0,1105.0,1150.0,1500.0
+92101,60,85102,zip,AZ,AZ,Mesa,"Phoenix-Mesa-Chandler, AZ",Maricopa County,,,1050.0,1400.0
+61148,70,501,zip,NY,NY,Holtsville,"New York-Newark-Jersey City, NY-NJ-PA",Suffolk County,2000.0,2010.0,2050.0,2600.0
+74562,80,38103,zip,TN,TN,Memphis,"Memphis, TN-MS-AR",Shelby County,900.0,905.0,950.0,1200.0

@@ -1,0 +1,83 @@
+{
+  "metro_key": "denver",
+  "kind": "zori_panel",
+  "metro_config": {
+    "cbsa_code": "19740",
+    "counties": [
+      [
+        "08",
+        "001"
+      ],
+      [
+        "08",
+        "005"
+      ],
+      [
+        "08",
+        "013"
+      ],
+      [
+        "08",
+        "014"
+      ],
+      [
+        "08",
+        "031"
+      ],
+      [
+        "08",
+        "035"
+      ],
+      [
+        "08",
+        "039"
+      ],
+      [
+        "08",
+        "059"
+      ]
+    ],
+    "zip_prefixes": [
+      "80",
+      "81"
+    ],
+    "utm_zone": 32613,
+    "cbd_points": [
+      [
+        39.7392,
+        -104.9903
+      ]
+    ]
+  },
+  "provenance": "pipeline-build",
+  "git_commit": "157edb487ac8efb694c966f3f01b4f071046a614",
+  "regenerated_at_commit": null,
+  "run_timestamp_utc": "2026-07-17T14:56:35.914091+00:00",
+  "cbsa_vintage": "ACS 2024",
+  "source_urls": {
+    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
+  },
+  "output_csv": "zori_panel_denver.csv",
+  "row_count": 8218,
+  "columns": [
+    {
+      "name": "ZCTA5CE",
+      "dtype": "Int64"
+    },
+    {
+      "name": "period",
+      "dtype": "String"
+    },
+    {
+      "name": "zori",
+      "dtype": "Float64"
+    }
+  ],
+  "sha256": "699881b44dfb866e930d95abf2370270ac81fc88b3b0d90168329cdc9497dccf",
+  "period_min": "2015-01-31",
+  "period_max": "2026-06-30",
+  "n_months": 138,
+  "n_zctas": 90,
+  "pull_timestamp_utc": "2026-07-17T14:56:35.914091+00:00"
+}
