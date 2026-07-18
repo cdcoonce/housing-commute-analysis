@@ -1,6 +1,6 @@
 {
   "metro_key": "los_angeles",
-  "kind": "zori_panel",
+  "kind": "lodes_panel",
   "metro_config": {
     "cbsa_code": "31080",
     "counties": [
@@ -27,29 +27,39 @@
   "run_timestamp_utc": "2026-07-18T01:44:08.791599+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2015\u20132023 + xwalk)",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_los_angeles.csv",
-  "row_count": 17969,
+  "output_csv": "lodes_panel_los_angeles.csv",
+  "row_count": 2430,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "year",
+      "dtype": "Int64"
     },
     {
-      "name": "zori",
+      "name": "job_count",
+      "dtype": "Int64"
+    },
+    {
+      "name": "job_accessibility",
       "dtype": "Float64"
     }
   ],
-  "sha256": "1b7adeb3b22a550580f61024a7ac9fe264a984980f6768c651bb4647d7704c77",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 246,
-  "pull_timestamp_utc": "2026-07-18T01:44:08.791599+00:00"
+  "sha256": "cd4e02f5bcebe33321a78fd586c3d15c5466d81647f1c128a1fca565168347e9",
+  "years": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ]
 }

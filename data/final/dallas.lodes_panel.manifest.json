@@ -1,6 +1,6 @@
 {
   "metro_key": "dallas",
-  "kind": "zori_panel",
+  "kind": "lodes_panel",
   "metro_config": {
     "cbsa_code": "19100",
     "counties": [
@@ -43,29 +43,39 @@
   "run_timestamp_utc": "2026-07-18T01:45:30.870460+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2015\u20132023 + xwalk)",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_dallas.csv",
-  "row_count": 13888,
+  "output_csv": "lodes_panel_dallas.csv",
+  "row_count": 1710,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "year",
+      "dtype": "Int64"
     },
     {
-      "name": "zori",
+      "name": "job_count",
+      "dtype": "Int64"
+    },
+    {
+      "name": "job_accessibility",
       "dtype": "Float64"
     }
   ],
-  "sha256": "9f6fcf5da8f68a82bbde1d9afea8c52ed707565403877dec07ac63c677f3ebab",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 177,
-  "pull_timestamp_utc": "2026-07-18T01:45:30.870460+00:00"
+  "sha256": "2a7e707dbbd5b376ffb989839fce77ae04eb8d0a2678aee0aded4ec66eb6f319",
+  "years": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ]
 }
