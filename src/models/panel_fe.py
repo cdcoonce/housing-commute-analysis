@@ -19,6 +19,20 @@ where K counts the regressors actually present in the within regression and
 G_absorbed counts the absorbed unit-FE parameters (intercept plus unit
 dummies). That reproduces the LSDV correction (N - 1) / (N - K_LSDV) exactly,
 inflating SEs by well under 1% at this project's N. See ``DOF_NOTE``.
+
+Weighted estimation (design-doc section 4 diagnostics)
+------------------------------------------------------
+``within_fe`` optionally takes per-observation ``weights`` (RQ4 use case:
+cross-sectional, time-invariant renter counts ``renter_share x total_pop``).
+The Frisch-Waugh-Lovell projection onto the absorbed unit dummies is then the
+*weighted* projection: demeaning subtracts WEIGHTED unit means from the
+outcome and every design column (including the explicit time dummies), and
+the demeaned regression runs as WLS with the same weights. This is exactly
+equivalent to weighted LSDV (WLS on explicit unit + time dummies) — the
+whitened demeaned columns are the whitened-LSDV residuals of the unit-dummy
+block — so coefficients, the cluster-robust covariance, and the dof rescale
+all carry over unchanged. Weights must be finite and strictly positive;
+degenerate weights raise ``ValueError`` naming the offending units.
 """
 from __future__ import annotations
 
@@ -68,10 +82,39 @@ class FEResult:
     dof_note: str
 
 
-def _demean_within(values: np.ndarray, groups: pd.Series) -> np.ndarray:
-    """Subtract group means from each column of ``values``."""
+def _validate_weights(weights: np.ndarray, unit_ids: np.ndarray) -> np.ndarray:
+    """Return ``weights`` as a float array, rejecting degenerate values.
+
+    Zero, negative, and non-finite (NaN/inf) weights raise ``ValueError``
+    naming the offending unit labels so the caller can trace them to source
+    rows (ZCTAs, in the RQ4 use case).
+    """
+    w = np.asarray(weights, dtype=float)
+    bad = ~np.isfinite(w) | (w <= 0.0)
+    if bad.any():
+        offenders = sorted({str(u) for u in np.asarray(unit_ids)[bad]})
+        raise ValueError(
+            "weights must be finite and strictly positive; offending "
+            f"unit(s): {', '.join(offenders)}"
+        )
+    return w
+
+
+def _demean_within(
+    values: np.ndarray,
+    groups: pd.Series,
+    weights: np.ndarray | None = None,
+) -> np.ndarray:
+    """Subtract (optionally weighted) group means from each column of ``values``."""
     frame = pd.DataFrame(values)
-    return (frame - frame.groupby(groups).transform("mean")).to_numpy()
+    if weights is None:
+        means = frame.groupby(groups).transform("mean")
+    else:
+        w = pd.Series(weights, index=frame.index)
+        means = (
+            frame.mul(w, axis=0).groupby(groups).transform("sum")
+        ).div(w.groupby(groups).transform("sum"), axis=0)
+    return (frame - means).to_numpy()
 
 
 def _within_design(
@@ -79,12 +122,15 @@ def _within_design(
     X: np.ndarray,
     unit_ids: np.ndarray,
     time_ids: np.ndarray,
+    weights: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, int, pd.Series]:
     """Within-transform shared by the estimator and the bootstrap.
 
     Returns the unit-demeaned outcome, the unit-demeaned design
     ``[X | time dummies]`` (first period dropped), the count of supplied
-    regressors, and the unit labels as a Series.
+    regressors, and the unit labels as a Series. With ``weights``, the
+    demeaning projections use WEIGHTED unit means (the WLS Frisch-Waugh-
+    Lovell projection onto the absorbed unit dummies — see module docstring).
     """
     y = np.asarray(y, dtype=float)
     X = np.asarray(X, dtype=float)
@@ -97,8 +143,8 @@ def _within_design(
     ).to_numpy(dtype=float)
     design = np.column_stack([X, time_dummies])
 
-    y_within = _demean_within(y[:, None], units).ravel()
-    design_within = _demean_within(design, units)
+    y_within = _demean_within(y[:, None], units, weights).ravel()
+    design_within = _demean_within(design, units, weights)
     return y_within, design_within, X.shape[1], units
 
 
@@ -108,12 +154,16 @@ def within_fe(
     unit_ids: np.ndarray,
     time_ids: np.ndarray,
     cluster_ids: np.ndarray,
+    weights: np.ndarray | None = None,
 ) -> FEResult:
     """Two-way FE regression of ``y`` on ``X`` via the within transform.
 
     Time effects enter as explicit dummies (first period dropped) and both
     the outcome and the full design are demeaned within unit, so coefficients
-    equal two-way LSDV exactly on balanced *and* unbalanced panels.
+    equal two-way LSDV exactly on balanced *and* unbalanced panels. With
+    ``weights``, demeaning uses weighted unit means and the demeaned
+    regression runs as WLS — exactly weighted LSDV (module docstring); with
+    all-equal weights this reproduces the unweighted estimator exactly.
 
     Parameters
     ----------
@@ -127,15 +177,28 @@ def within_fe(
         Time-period label per observation.
     cluster_ids : np.ndarray
         Cluster label per observation for the robust covariance.
+    weights : np.ndarray, optional
+        Per-observation weights, shape (N,); must be finite and strictly
+        positive (``ValueError`` names offending units otherwise). The RQ4
+        renter-weighted robustness passes per-ZCTA time-invariant renter
+        counts.
 
     Returns
     -------
     FEResult
         Coefficients, SEs, and covariance for the ``X`` block only.
     """
-    y_within, design_within, k_x, units = _within_design(y, X, unit_ids, time_ids)
+    if weights is not None:
+        weights = _validate_weights(weights, unit_ids)
+    y_within, design_within, k_x, units = _within_design(
+        y, X, unit_ids, time_ids, weights
+    )
 
-    fit = sm.OLS(y_within, design_within).fit(
+    if weights is None:
+        model = sm.OLS(y_within, design_within)
+    else:
+        model = sm.WLS(y_within, design_within, weights=weights)
+    fit = model.fit(
         cov_type="cluster", cov_kwds={"groups": np.asarray(cluster_ids)}
     )
 

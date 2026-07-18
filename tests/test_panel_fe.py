@@ -115,6 +115,88 @@ def test_wild_boot_deterministic_under_fixed_seed() -> None:
     assert p1 == p2
 
 
+# ---------------------------------------------------------------------------
+# Renter-share-weighted within estimation (design section 4 diagnostics)
+# ---------------------------------------------------------------------------
+
+
+def _unbalanced_weighted_panel(
+    seed: int = 11,
+    n_units: int = 25,
+    n_periods: int = 18,
+    betas: tuple[float, float] = (1.5, -0.8),
+):
+    """Unbalanced synthetic panel with unit-constant (time-invariant) weights.
+
+    Every unit keeps its first two periods (no empty units); ~35% of the
+    remaining (unit, period) cells are dropped so the panel is genuinely
+    unbalanced — the regime where naive unweighted demeaning would diverge
+    from weighted LSDV.
+    """
+    rng = np.random.default_rng(seed)
+    unit = np.repeat(np.arange(n_units), n_periods)
+    time = np.tile(np.arange(n_periods), n_units)
+    keep = (rng.random(unit.size) > 0.35) | (time < 2)
+    unit, time = unit[keep], time[keep]
+
+    x1 = rng.normal(size=unit.size) + 0.5 * (unit % 5)
+    x2 = rng.normal(size=unit.size) + 0.3 * (time % 4)
+    X = np.column_stack([x1, x2])
+    a_i, g_t = rng.normal(size=n_units), rng.normal(size=n_periods)
+    y = (
+        X @ np.asarray(betas)
+        + a_i[unit]
+        + g_t[time]
+        + rng.normal(scale=0.5, size=unit.size)
+    )
+    w_unit = rng.uniform(0.5, 5.0, size=n_units)
+    return y, X, unit, time, w_unit[unit]
+
+
+def test_weighted_within_equals_weighted_lsdv_on_unbalanced_panel() -> None:
+    """LSDV oracle: weighted within-FE must equal explicit-dummy WLS
+    (cluster-robust) — coefficients to ~1e-8, SEs to ~1e-6 — on an
+    UNBALANCED panel with unit-constant weights."""
+    y, X, unit, time, w = _unbalanced_weighted_panel()
+    fe = within_fe(y, X, unit, time, cluster_ids=unit, weights=w)
+
+    dummies = np.column_stack([
+        pd.get_dummies(unit, drop_first=True).to_numpy(dtype=float),
+        pd.get_dummies(time, drop_first=True).to_numpy(dtype=float),
+    ])
+    lsdv = sm.WLS(
+        y, np.column_stack([X, dummies, np.ones_like(y)]), weights=w
+    ).fit(cov_type="cluster", cov_kwds={"groups": unit})
+
+    assert np.allclose(fe.params, np.asarray(lsdv.params)[:2], rtol=1e-8)
+    assert np.allclose(fe.bse, np.asarray(lsdv.bse)[:2], rtol=1e-6)
+
+
+def test_weighted_all_equal_weights_reproduce_unweighted_exactly() -> None:
+    """Constant weights must reproduce the unweighted estimator exactly."""
+    y, X, unit, time, _ = _unbalanced_weighted_panel(seed=4)
+    fe_unw = within_fe(y, X, unit, time, cluster_ids=unit)
+    fe_w = within_fe(
+        y, X, unit, time, cluster_ids=unit,
+        weights=np.full(y.size, 3.7),
+    )
+    assert np.allclose(fe_w.params, fe_unw.params, rtol=1e-12, atol=0.0)
+    assert np.allclose(fe_w.bse, fe_unw.bse, rtol=1e-12, atol=0.0)
+
+
+@pytest.mark.parametrize("bad_value", [0.0, -1.0, np.nan])
+def test_weighted_degenerate_weights_raise_naming_units(
+    bad_value: float,
+) -> None:
+    """Zero / negative / NaN weights raise ValueError naming the offenders."""
+    y, X, unit, time, w = _unbalanced_weighted_panel(seed=2)
+    labels = np.array([f"Z{u:05d}" for u in unit])
+    w = w.copy()
+    w[labels == "Z00007"] = bad_value
+    with pytest.raises(ValueError, match="Z00007"):
+        within_fe(y, X, labels, time, cluster_ids=labels, weights=w)
+
+
 def test_wild_boot_coarse_nested_clusters_ok_crossing_clusters_raise() -> None:
     """ZIP3-style clusters coarser than the unit FE are the design use case;
     clusters that split a unit break the within-transform commutation and

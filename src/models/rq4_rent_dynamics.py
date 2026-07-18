@@ -27,6 +27,12 @@ The 2021-vintage variant (35-column ``commute_min_proxy`` + LODES-2021
 accessibility) is demoted to a "measured-gradient" sensitivity because both
 regressors partially embed the COVID response.
 
+A renter-share-weighted variant of the joint two-phase model (design
+section 4 diagnostics: weights = ``renter_share`` x ``total_pop`` from the
+35-column file, cross-sectional hence time-invariant) is reported as
+robustness: it shifts the estimand from average covered-ZCTA repricing to
+renter-prevalence-weighted repricing.
+
 Sample: all (i, t) cells minus the endpoint trim (``ENDPOINT_TRIM_MONTHS``
 final months of the pull, which revise the most). The transition-window
 drop (2020-03..05 excluded) is CO-headline, not an afterthought: it covers
@@ -173,6 +179,8 @@ def _estimation_frame(
         "ZCTA5CE",
         "distance_to_cbd_km",
         "commute_min_proxy",
+        "renter_share",
+        "total_pop",
         pl.col("job_accessibility").log().alias("log_job_accessibility_2021"),
     )
     return (
@@ -255,20 +263,63 @@ def _coef_block(
     return out
 
 
+#: Weight spec for the renter-share-weighted robustness — the design section
+#: 4 diagnostics wording verbatim: "weights = renter_share x total_pop from
+#: the 35-column file". Cross-sectional, hence time-invariant per ZCTA.
+RENTER_WEIGHT_SPEC = (
+    "renter_share x total_pop (cross-sectional renter counts from the "
+    "35-column file; time-invariant per ZCTA)"
+)
+
+#: One-line interpretation guidance carried with the weighted model.
+RENTER_WEIGHT_ESTIMAND_NOTE = (
+    "renter-prevalence-weighted estimand: repricing as experienced by the "
+    "average renter across covered ZCTAs, versus the unweighted headline's "
+    "average covered-ZCTA repricing"
+)
+
+
+def _renter_weights(frame: pl.DataFrame) -> np.ndarray:
+    """Per-row renter weights: ``renter_share * total_pop`` (design section 4).
+
+    The weight is the ZCTA's cross-sectional renter count — time-invariant,
+    so WLS with unit dummies commutes with the weighted within transform
+    (``panel_fe.within_fe``). Zero, negative, or non-finite weights raise
+    ``ValueError`` naming the offending ZCTAs: a silently dropped or NaN
+    weight would corrupt the weighted estimand without a trace.
+    """
+    w = (
+        frame["renter_share"].cast(pl.Float64)
+        * frame["total_pop"].cast(pl.Float64)
+    ).to_numpy()
+    bad = ~np.isfinite(w) | (w <= 0.0)
+    if bad.any():
+        zctas = np.asarray(frame["ZCTA5CE"].to_list())
+        offenders = sorted(set(zctas[bad].tolist()))
+        raise ValueError(
+            "renter weights (renter_share x total_pop) must be finite and "
+            f"strictly positive; offending ZCTA(s): {', '.join(offenders)}"
+        )
+    return w
+
+
 def _fit_two_phase(
     frame: pl.DataFrame,
     x_vars: tuple[str, ...],
     x_vintage: str,
     sample: str,
+    weights: np.ndarray | None = None,
 ) -> tuple[dict[str, Any], FEResult]:
     """Joint two-phase interaction model on ``frame``.
 
     Returns the report-ready model dict and the raw ``FEResult`` (the caller
-    needs its covariance for the phase Wald tests).
+    needs its covariance for the phase Wald tests). ``weights`` (per-row,
+    aligned with ``frame``) switches the estimator to the weighted within
+    transform (renter-share-weighted robustness).
     """
     post1, post2 = _phase_masks(frame)
     y, X, units, times, _ = _design(frame, x_vars, [post1, post2])
-    fe = within_fe(y, X, units, times, cluster_ids=units)
+    fe = within_fe(y, X, units, times, cluster_ids=units, weights=weights)
     model = {
         "x_vars": list(x_vars),
         "x_vintage": x_vintage,
@@ -906,6 +957,17 @@ def analyze_rq4(
     )
     joint["transition_drop"] = joint_drop
 
+    # Renter-share-weighted robustness (design section 4 diagnostics): same
+    # sample and regressors as the headline joint model, weights = the
+    # ZCTA's cross-sectional renter count. Shifts the estimand from average
+    # covered-ZCTA repricing to renter-prevalence-weighted repricing.
+    joint_weighted, _ = _fit_two_phase(
+        frame, GRADIENT_X_2019, "2019", "full", weights=_renter_weights(frame)
+    )
+    joint_weighted["weight_spec"] = RENTER_WEIGHT_SPEC
+    joint_weighted["estimand_note"] = RENTER_WEIGHT_ESTIMAND_NOTE
+    joint["weighted_renter"] = joint_weighted
+
     singles = {
         var: _fit_single(frame, var, "2019") for var in GRADIENT_X_2019
     }
@@ -1162,7 +1224,10 @@ def _write_caveats_block(f: Any, results: RQ4Results) -> None:
         "**Estimand statement.** Unweighted ZCTA-level regression estimates "
         "the *average covered-ZCTA* repricing, not renter-weighted "
         "repricing; ZORI cells also have listing-volume-dependent "
-        "precision. Results describe the covered rental submarket only.\n\n"
+        "precision. Results describe the covered rental submarket only. "
+        "The renter-share-weighted robustness table above reports the "
+        "renter-prevalence-weighted variant of the Spec A joint model "
+        "(weights = renter_share x total_pop).\n\n"
     )
     f.write(
         "1. **ZIP ≈ ZCTA.** ZORI is published by ZIP code and matched to "
@@ -1389,6 +1454,18 @@ def report_rq4(
         "Measured-gradient sensitivity (2021-vintage regressors — "
         "never the headline)",
     )
+    weighted = joint["weighted_renter"]
+    save_markdown_table(
+        _phase_table(weighted["coefs"], ("post1", "post2")),
+        md_path,
+        "Spec A robustness — renter-share-weighted joint two-phase model "
+        "(weights = renter_share x total_pop)",
+    )
+    with open(md_path, "a", encoding="utf-8") as f:
+        f.write(
+            f"*Interpretation:* weighted = {weighted['estimand_note']}. "
+            f"Weights: {weighted['weight_spec']}.\n\n"
+        )
 
     # --- Spec C / C-med ------------------------------------------------------
     am = results.access_model
