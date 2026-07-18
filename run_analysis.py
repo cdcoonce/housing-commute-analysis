@@ -48,6 +48,13 @@ except ImportError:
     run_rq3 = None  # Explicitly set to None to prevent unbound errors
     HAS_RQ3 = False
 
+try:
+    from src.models.rq4_rent_dynamics import run_rq4  # noqa: E402
+    HAS_RQ4 = True
+except ImportError:
+    run_rq4 = None  # Explicitly set to None to prevent unbound errors
+    HAS_RQ4 = False
+
 # Logging configuration - INFO level for progress tracking
 logging.basicConfig(
     level=logging.INFO,
@@ -105,7 +112,11 @@ def _auto_shapefile(metro: str, raw_dir: Path, zcta_shp: str | None) -> Path | N
 @flow(name="analyze-metro")
 def analyze_metro_flow(metro: str, raw_dir: Path, out_base: Path, fig_base: Path,
                        zcta_shp: str | None) -> tuple[bool, str]:
-    """Run RQ1/RQ2/RQ3 for a single metro. Returns ``(success, message)``.
+    """Run RQ1/RQ2/RQ3/RQ4 for a single metro. Returns ``(success, message)``.
+
+    RQ4 additionally needs the committed panel products in ``raw_dir``
+    (zori/lodes/acs-2019); when any is absent it is skipped with a log line
+    and the metro still succeeds (RQ1-RQ3 unaffected).
 
     On failure the metro is logged and ``(False, message)`` is returned rather
     than raising, so a batch run can continue past one metro's failure. The
@@ -165,6 +176,22 @@ def analyze_metro_flow(metro: str, raw_dir: Path, out_base: Path, fig_base: Path
             run_rq3(df, out_dir, fig_dir, metro, _auto_shapefile(metro, raw_dir, zcta_shp))
         else:
             logger.info("\nRQ3: ACI Analysis - SKIPPED (module not implemented)")
+
+        # RQ4: ZORI Rent Dynamics (needs the committed panel products; an
+        # old checkout or partial rebuild without them still runs RQ1-RQ3)
+        if HAS_RQ4 and run_rq4 is not None:
+            try:
+                logger.info("\n" + "=" * 70)
+                logger.info("Running RQ4: ZORI Rent Dynamics Analysis")
+                logger.info("=" * 70)
+                run_rq4(df, out_dir, fig_dir, metro, raw_dir)
+            except FileNotFoundError as exc:
+                logger.info(
+                    "RQ4: ZORI Rent Dynamics - SKIPPED (panel files absent "
+                    "in %s: %s)", raw_dir, exc
+                )
+        else:
+            logger.info("\nRQ4: ZORI Rent Dynamics - SKIPPED (module not implemented)")
 
         logger.info("\n" + "=" * 70)
         logger.info("ANALYSIS COMPLETE")

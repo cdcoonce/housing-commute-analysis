@@ -159,3 +159,89 @@ class RQ3Results:
     tier_summary: Optional[pl.DataFrame] = None
     feature_names: list[str] = field(default_factory=list)
     df_with_aci: Optional[pl.DataFrame] = None
+
+
+@dataclass(frozen=True)
+class RQ4Results:
+    """Results from RQ4 ZORI rent-dynamics analysis (design doc section 5).
+
+    All estimation is per metro. Model dicts are the within-FE estimator
+    outputs (coefficients, cluster-robust SEs, p-values, metadata such as
+    ``x_vintage``); frames are diagnostic tables destined for the report.
+
+    Attributes
+    ----------
+    gradient_model_joint : dict[str, Any]
+        Spec A headline: two-phase (Post1/Post2) joint interaction model over
+        the three pre-COVID gradient regressors.
+    gradient_models_single : dict[str, dict[str, Any]]
+        One single-interaction model per gradient variable (sign robustness),
+        keyed by regressor name (e.g. ``distance_to_cbd_km``).
+    gradient_model_pooled : dict[str, Any]
+        Single-Post pooled summary, explicitly averaging the two phases.
+    wald_break : dict[str, Any]
+        Cluster-robust Wald tests keyed ``phase1``/``phase2``/``pooled``.
+    bootstrap_pvalues : dict[str, Any]
+        Webb wild-cluster bootstrap p-values (thin-identification metros and
+        ZIP3 coarse-cluster robustness), keyed by regressor name.
+    event_study : pl.DataFrame
+        Spec B: variable x event-time bin with coef/se/ci and per-bin
+        identifying ZCTA counts.
+    access_model : dict[str, Any]
+        Spec C: time-varying annual accessibility model (truncated 2023-12).
+    mediation : dict[str, Any]
+        Spec C-med: mediation decomposition (share of Post1 repricing running
+        through contemporaneous access), never labeled robustness.
+    chase_model_lagged : dict[str, Any]
+        Spec D: annual mean log rent on lagged log access (predictive
+        association, no causal claim).
+    chase_model_lead : dict[str, Any]
+        Spec D falsification: lead access term (significant lead = feedback).
+    chase_model_contemp : dict[str, Any]
+        Spec D robustness: contemporaneous access variant.
+    long_difference : dict[str, Any]
+        Long-difference association, keyed by window (2015-2019, 2019-2023).
+    vintage2021_robustness : dict[str, Any]
+        Measured-gradient sensitivity: 2021-vintage proxy + LODES-2021 access.
+    n_obs : int
+        Estimation-sample (i, t) cell count after trims/drops.
+    n_zctas : int
+        Distinct ZCTAs in the estimation sample.
+    n_identifying : int
+        ZCTAs observed both pre and post break (identify the interactions).
+    n_pre_months : int
+        Distinct pre-break months in the estimation sample.
+    n_post_months : int
+        Distinct post-break months after endpoint trim and transition drop.
+    coverage : dict[str, Any]
+        Panel coverage diagnostics (covered-ZCTA shares over time).
+    balanced_robustness : dict[str, Any]
+        Balanced-subpanel bound (ZCTAs in-sample by 2019-01).
+    entrant_composition : pl.DataFrame
+        Mean of each gradient x for post-2019-12 entrants vs incumbents.
+    flags : list[str]
+        Quality flags, e.g. ``under_identified`` when n_identifying < 20.
+    """
+
+    gradient_model_joint: dict[str, Any]
+    gradient_models_single: dict[str, dict[str, Any]]
+    gradient_model_pooled: dict[str, Any]
+    wald_break: dict[str, Any]
+    bootstrap_pvalues: dict[str, Any]
+    event_study: pl.DataFrame
+    access_model: dict[str, Any]
+    mediation: dict[str, Any]
+    chase_model_lagged: dict[str, Any]
+    chase_model_lead: dict[str, Any]
+    chase_model_contemp: dict[str, Any]
+    long_difference: dict[str, Any]
+    vintage2021_robustness: dict[str, Any]
+    n_obs: int
+    n_zctas: int
+    n_identifying: int
+    n_pre_months: int
+    n_post_months: int
+    coverage: dict[str, Any]
+    balanced_robustness: dict[str, Any]
+    entrant_composition: pl.DataFrame
+    flags: list[str]
