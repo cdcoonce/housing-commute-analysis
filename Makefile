@@ -1,4 +1,4 @@
-.PHONY: setup pipeline panel manifests analyze test lint verify-data all clean
+.PHONY: setup pipeline panel manifests analyze test lint gate verify-data all clean
 METROS := phoenix memphis los_angeles dallas denver atlanta chicago seattle miami
 
 setup:
@@ -21,6 +21,8 @@ test:
 
 lint:
 	uv run ruff check src/ tests/
+
+gate: lint test  ## afk executor + human gate — same targets CI runs
 
 verify-data:   ## offline checksum/schema drift check
 	uv run python run_pipeline.py --verify

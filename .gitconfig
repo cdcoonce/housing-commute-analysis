@@ -1,0 +1,16 @@
+# afk fleet git conventions — version-controlled, shared by every clone.
+#
+# Wired into a clone's local config via `make setup` (which adds an
+# `include.path` pointing here), or automatically by the afk executor during
+# its cycle preflight. Once wired, edits below propagate to everyone on the
+# next `git pull` — no re-run needed.
+#
+# Put DECLARATIVE git settings here (they auto-propagate). Imperative setup
+# belongs in the runner (afk's `--setup-repo` / `make setup`), not here.
+
+[fetch]
+	# Auto-prune local remote-tracking refs whose upstream branch was deleted
+	# (e.g. PR delete-on-merge). Without this, `git branch -r` accumulates
+	# phantom branches that look like live work. Removes only regenerable ref
+	# pointers — never local branches, commits, or tags.
+	prune = true

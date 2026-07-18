@@ -1,0 +1,25 @@
+# AFK config — housing-commute-analysis (enrolled 2026-07-18).
+# F1 default: produce + drain promoted slices to draft PRs; human merges.
+# auto_promote stays OFF — this repo mixes code with committed data products,
+# and afk's binary test gate verifies CODE correctness, not DATA correctness
+# ("data is not software"). Scope executor work to test-gate-verifiable changes;
+# panel/data rebuilds stay human-driven behind scripts/panel_gate.py.
+#
+# THE GATE MIRRORS CI BY CONSTRUCTION: `make gate` = lint + test, the same
+# targets a human and CI use. CI additionally enforces coverage >= 70% on PRs.
+test_command = "make gate"
+permission_mode = "acceptEdits"
+agent_prompt = """Implement the linked GitHub issue using test-driven development \
+(red-green-refactor). Keep changes minimal and scoped to the issue's acceptance \
+criteria. Match the surrounding code style. Never modify committed data products \
+(data/final/, data/processed/) or gate scripts (scripts/panel_gate.py, \
+scripts/rebuild_gate.py) unless the issue explicitly says so."""
+
+[caps]
+max_retries = 2
+timeout_seconds = 1800
+
+# Scheduled --cycle: read-only producers + decomposer (picks up decompose:ready
+# parents like #18). Proposals stay human-gated (`proposed`).
+[cycle]
+producers = ["scout", "harvest", "decompose"]

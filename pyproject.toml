@@ -35,6 +35,7 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = [".afk", ".git", ".venv"]
 markers = [
     "slow: marks tests as slow (deselect with -m 'not slow')",
     "network: marks tests requiring network access (deselect with -m 'not network')",
@@ -42,6 +43,9 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.ruff]
+exclude = [".afk", ".venv"]
 
 [tool.coverage.run]
 # Omit modules that require network access, real census data, or full pipeline execution.
