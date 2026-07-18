@@ -243,11 +243,14 @@ def _b08303_payload(nested: bool) -> list[list[str]]:
 
 
 class _FakeResponse:
-    def __init__(self, payload=None, status_code: int = 200) -> None:
+    def __init__(self, payload=None, status_code: int = 200, text: str = "") -> None:
         self._payload = payload
         self.status_code = status_code
+        self.text = text
 
     def json(self):
+        if self._payload is None:
+            raise requests.exceptions.JSONDecodeError("Expecting value", self.text or "", 0)
         return self._payload
 
     def raise_for_status(self) -> None:
@@ -352,3 +355,34 @@ class TestFetchAcsCommuteZcta:
             fetch_acs_commute_zcta("X", 2019)
         with pytest.raises(ValueError, match="Invalid ACS year"):
             fetch_acs_commute_zcta("04", 2020)
+
+
+class TestFetchAcsCommuteZctaNonJson:
+    """Census serves error pages (e.g. Missing Key) as HTTP 200 with an HTML
+    body — the fetch must treat a non-JSON nested body like a nesting
+    rejection, and fail legibly when the fallback body is non-JSON too."""
+
+    _HTML = "\n<html><title>Missing Key</title></html>"
+
+    def test_non_json_nested_body_falls_back_to_national(self, monkeypatch) -> None:
+        session = _FakeSession([
+            _FakeResponse(text=self._HTML),
+            _FakeResponse(_b08303_payload(nested=False)),
+        ])
+        monkeypatch.setattr(acs, "_get_session", lambda: session)
+
+        out = fetch_acs_commute_zcta("04", 2019)
+
+        assert len(session.calls) == 2
+        assert "in" not in session.calls[1]["params"]
+        assert not out.empty
+
+    def test_non_json_fallback_body_raises_legibly(self, monkeypatch) -> None:
+        session = _FakeSession([
+            _FakeResponse(text=self._HTML),
+            _FakeResponse(text=self._HTML),
+        ])
+        monkeypatch.setattr(acs, "_get_session", lambda: session)
+
+        with pytest.raises(ValueError, match="Missing Key"):
+            fetch_acs_commute_zcta("04", 2019)

@@ -300,6 +300,19 @@ def compute_acs_features(acs_df: pd.DataFrame) -> pd.DataFrame:
     return features
 
 
+def _try_parse_census_json(response) -> list | None:
+    """Parse a Census API response body, returning None when it is not JSON.
+
+    The API serves error pages (Missing Key, transient outages) as HTTP 200
+    with an HTML body; callers treat None as "this query form did not work"
+    rather than crashing on the parse.
+    """
+    try:
+        return response.json()
+    except ValueError:  # json.JSONDecodeError / requests JSONDecodeError
+        return None
+
+
 def fetch_acs_commute_zcta(
     state_fips: str,
     year: int,
@@ -355,13 +368,22 @@ def fetch_acs_commute_zcta(
         params={**base_params, "in": f"state:{state_fips}"},
         timeout=120,
     )
-    if response.status_code == 400:
-        # State-nesting rejected: national-pull fallback (design
-        # "Data availability"); metro filtering happens downstream.
+    json_data = None
+    if response.status_code != 400:
+        response.raise_for_status()
+        json_data = _try_parse_census_json(response)
+    if json_data is None:
+        # State-nesting rejected (HTTP 400) or a non-JSON body served as 200
+        # (Census returns HTML error pages — e.g. Missing Key — with 2xx):
+        # national-pull fallback (design "Data availability"); metro filtering
+        # happens downstream.
         response = session.get(url, params=base_params, timeout=120)
-    response.raise_for_status()
-
-    json_data = response.json()
+        response.raise_for_status()
+        json_data = _try_parse_census_json(response)
+        if json_data is None:
+            raise ValueError(
+                f"Census API returned non-JSON for {url}: {response.text[:200]!r}"
+            )
     header, data_rows = json_data[0], json_data[1:]
 
     ttw = pd.DataFrame(data_rows, columns=header)
