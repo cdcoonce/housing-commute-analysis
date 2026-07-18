@@ -66,21 +66,30 @@ Beyond Spec A, the module runs (design section 4):
   not chasing), a contemporaneous variant, and long differences
   (2015->2019, 2019->2023). Written up as association, never causal.
 
-No I/O in this module's ``analyze_rq4`` — pure computation on the frames
-the caller loaded (``load_panel_data`` + the 35-column cross-section).
+Module shape mirrors RQ1 (design section 5): ``analyze_rq4`` is pure
+computation on the frames the caller loaded (``load_panel_data`` + the
+35-column cross-section); ``report_rq4`` is the I/O half (markdown
+``rq4_summary_<metro>.md`` with the mandatory caveats block, plus the
+event-study and phase-coefficient figures); ``run_rq4`` composes the two,
+loading the panel products itself so ``run_analysis`` can catch
+``FileNotFoundError`` and skip RQ4 on old checkouts.
 """
 from __future__ import annotations
 
 import logging
 from datetime import date
+from pathlib import Path
 from typing import Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import statsmodels.api as sm
 from scipy import stats
 
+from .data_loader import METRO_NAMES, load_panel_data
 from .panel_fe import FEResult, wald_joint, wild_cluster_boot_p, within_fe
+from .reporting import save_markdown_table
 from .results import RQ4Results
 
 logger = logging.getLogger(__name__)
@@ -1019,3 +1028,494 @@ def analyze_rq4(
         entrant_composition=_entrant_composition(frame_all, first_seen),
         flags=flags,
     )
+
+
+# ---------------------------------------------------------------------------
+# Reporting (the I/O half) + composition
+# ---------------------------------------------------------------------------
+
+
+def _fmt(v: float | None, nd: int = 4) -> str:
+    """Fixed-decimal format, em-dash for missing values."""
+    return "—" if v is None else f"{v:.{nd}f}"
+
+
+def _fmt_p(p: float | None) -> str:
+    """p-value format matching the RQ1 report convention."""
+    if p is None:
+        return "—"
+    return "<0.0001" if p < 0.0001 else f"{p:.4f}"
+
+
+def _phase_table(
+    coefs: dict[str, dict[str, float]], phases: tuple[str, ...]
+) -> dict[str, list[str]]:
+    """Markdown-table dict for a per-variable, per-phase coefficient block."""
+    data: dict[str, list[str]] = {"Variable": list(coefs.keys())}
+    for phase in phases:
+        data[f"{phase} B"] = [
+            _fmt(c[f"{phase}_coef"]) for c in coefs.values()
+        ]
+        data[f"{phase} SE"] = [
+            _fmt(c[f"{phase}_se"]) for c in coefs.values()
+        ]
+        data[f"{phase} p"] = [
+            _fmt_p(c[f"{phase}_pvalue"]) for c in coefs.values()
+        ]
+    return data
+
+
+def _plot_event_study(event_study: pl.DataFrame, fig_path: Path) -> None:
+    """Spec B headline figure: per-variable event-time coefficient paths with
+    per-bin identifying ZCTA counts on a secondary axis (design section 4:
+    a reader must see that Denver's earliest bins rest on 10 ZIPs)."""
+    variables = event_study["variable"].unique(maintain_order=True).to_list()
+    fig, axes = plt.subplots(
+        len(variables), 1, sharex=True, figsize=(10, 3.2 * len(variables))
+    )
+    axes = np.atleast_1d(axes)
+
+    for ax, var in zip(axes, variables):
+        sub = event_study.filter(pl.col("variable") == var).sort("bin_order")
+        xs = np.arange(sub.height)
+        coefs = sub["coef"].to_numpy()
+        yerr = np.vstack([
+            coefs - sub["ci_lo"].to_numpy(),
+            sub["ci_hi"].to_numpy() - coefs,
+        ])
+
+        twin = ax.twinx()
+        twin.bar(xs, sub["n_identifying"].to_numpy(), color="0.88", width=0.8)
+        twin.set_ylabel("identifying ZCTAs", color="0.45")
+        twin.tick_params(axis="y", colors="0.45")
+        # keep the coefficient axis (and its error bars) in front of the bars
+        ax.set_zorder(twin.get_zorder() + 1)
+        ax.patch.set_visible(False)
+
+        ax.errorbar(
+            xs, coefs, yerr=yerr, fmt="o-", capsize=3, color="tab:blue"
+        )
+        ax.axhline(0.0, color="0.3", linewidth=0.8, linestyle="--")
+        base_idx = sub["bin_order"].to_list().index(0)
+        ax.axvline(base_idx, color="tab:red", linewidth=0.8, linestyle=":")
+        ax.set_title(var)
+        ax.set_ylabel("coefficient")
+        ax.set_xticks(xs)
+        ax.set_xticklabels(sub["bin"].to_list(), rotation=45)
+
+    axes[-1].set_xlabel("event-time bin (relative to 2020-03)")
+    fig.suptitle("Event study: gradient x event-time bins (base = 2019-03..2020-02)")
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=150)
+    plt.close(fig)
+
+
+def _plot_gradient_phases(
+    joint: dict[str, Any], pooled: dict[str, Any], fig_path: Path
+) -> None:
+    """Phase-coefficient figure: Post1/Post2 (joint model) and pooled Post
+    point estimates with 95% cluster-t confidence intervals per variable."""
+    x_vars = joint["x_vars"]
+    tcrit_joint = float(stats.t.ppf(0.975, joint["n_units"] - 1))
+    tcrit_pooled = float(stats.t.ppf(0.975, pooled["n_units"] - 1))
+
+    fig, axes = plt.subplots(
+        1, len(x_vars), figsize=(4.0 * len(x_vars), 4.0)
+    )
+    axes = np.atleast_1d(axes)
+    for ax, var in zip(axes, x_vars):
+        points = [
+            ("Post1", joint["coefs"][var], "post1", tcrit_joint),
+            ("Post2", joint["coefs"][var], "post2", tcrit_joint),
+            ("Pooled", pooled["coefs"][var], "post", tcrit_pooled),
+        ]
+        for i, (label, block, phase, tcrit) in enumerate(points):
+            coef = block[f"{phase}_coef"]
+            half = tcrit * block[f"{phase}_se"]
+            ax.errorbar(
+                [i], [coef], yerr=[[half], [half]], fmt="o", capsize=4,
+                color="tab:blue" if label != "Pooled" else "0.5",
+            )
+        ax.axhline(0.0, color="0.3", linewidth=0.8, linestyle="--")
+        ax.set_xticks(range(len(points)))
+        ax.set_xticklabels([p[0] for p in points])
+        ax.set_title(var, fontsize=9)
+    axes[0].set_ylabel("interaction coefficient (95% CI)")
+    fig.suptitle("Two-phase gradient repricing (pre-break = 0 reference)")
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=150)
+    plt.close(fig)
+
+
+def _write_caveats_block(f: Any, results: RQ4Results) -> None:
+    """The mandatory honesty rails (design section 4 caveats + section 6)."""
+    cov = results.coverage
+    share = cov.get("share_covered")
+    f.write("## Estimand and mandatory caveats\n\n")
+    f.write(
+        "**Estimand statement.** Unweighted ZCTA-level regression estimates "
+        "the *average covered-ZCTA* repricing, not renter-weighted "
+        "repricing; ZORI cells also have listing-volume-dependent "
+        "precision. Results describe the covered rental submarket only.\n\n"
+    )
+    f.write(
+        "1. **ZIP ≈ ZCTA.** ZORI is published by ZIP code and matched to "
+        "ZCTAs by the inherited repo convention; ZIP delivery routes and "
+        "ZCTAs disagree at the margin. The 2019 ACS commute vintage "
+        "additionally matches ZCTA-2010 codes to ZCTA-2020 codes.\n"
+    )
+    f.write(
+        "2. **Coverage bias.** ZORI requires a minimum listing volume, so "
+        "the panel over-represents larger, denser rental submarkets"
+        + (
+            f" (covered share here: {share:.0%}"
+            f" of the metro ZCTA universe)"
+            if share is not None
+            else ""
+        )
+        + "; coverage is far thinner pre-2020. The estimated repricing "
+        "gradient is for the covered-ZCTA submarket, with no claim about "
+        "uncovered ZCTAs.\n"
+    )
+    f.write(
+        "3. **Endogenous panel entry.** Panel entry correlates with the "
+        "outcome; see the entrant-composition table and the "
+        "balanced-subpanel bound.\n"
+    )
+    f.write(
+        "4. **Sorting vs pricing.** ZORI is a repeat-weighted *listing* "
+        "index: within-ZCTA composition of listed units can shift (new "
+        "construction, unit mix). \"Repricing\" here means the index "
+        "moved — an amalgam of price and composition change; no hedonic "
+        "adjustment is possible at this altitude.\n"
+    )
+    f.write(
+        "5. **No causal claim.** These estimates are not a causal effect "
+        "of COVID: every ZCTA is \"treated\" and no control group exists. "
+        "Spec A estimates within-metro *relative* repricing; the language "
+        "throughout is descriptive event-study language. Spec D is a "
+        "predictive association, never \"rents chase jobs\" as a causal "
+        "claim.\n"
+    )
+    f.write(
+        "6. **LODES universe and timing.** UI-covered + federal jobs only "
+        "(no self-employed); 2020/2021 WAC files carry block-noise and "
+        "geocoding quirks (acted on via the drop-COVID-years robustness); "
+        "accessibility inherits the county frame's edge bias.\n\n"
+    )
+
+
+def report_rq4(
+    results: RQ4Results,
+    out_dir: Path,
+    fig_dir: Path,
+    metro: str,
+) -> None:
+    """Write RQ4 results to ``rq4_summary_<metro>.md`` plus figures.
+
+    The summary carries the coefficient/Wald/bootstrap tables (phase 1/2 +
+    pooled), the entrant-composition table, the Spec B/C/C-med/D sections,
+    and the mandatory caveats block (design section 4 caveats, section 6).
+    Figures: the event-study plot with per-bin identifying counts on a
+    secondary axis, and the two-phase coefficient plot.
+
+    Parameters
+    ----------
+    results : RQ4Results
+        Output from :func:`analyze_rq4`.
+    out_dir : Path
+        Markdown output directory.
+    fig_dir : Path
+        Figure output directory.
+    metro : str
+        Metro code for file naming (summary keeps the code as passed,
+        matching the plan's ``rq4_summary_PHX.md``; figures follow the
+        lower-case ``rq4_phx_*`` repo convention).
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    md_path = out_dir / f"rq4_summary_{metro}.md"
+    joint = results.gradient_model_joint
+    pooled = results.gradient_model_pooled
+
+    es_fig = fig_dir / f"rq4_{metro.lower()}_event_study.png"
+    phases_fig = fig_dir / f"rq4_{metro.lower()}_gradient_phases.png"
+    _plot_event_study(results.event_study, es_fig)
+    _plot_gradient_phases(joint, pooled, phases_fig)
+
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write(f"# RQ4: ZORI Rent Dynamics — {METRO_NAMES[metro]}\n\n")
+        f.write(
+            "Did COVID reprice the pre-existing commute gradient in the "
+            "covered rental submarket? Two-way FE structural-break "
+            "estimation on the monthly ZORI panel (design doc section 4).\n\n"
+        )
+        f.write("## Sample\n\n")
+        f.write(f"- Estimation cells (post-trim): {results.n_obs}\n")
+        f.write(f"- ZCTAs: {results.n_zctas}\n")
+        f.write(
+            f"- Identifying ZCTAs (observed pre AND post break): "
+            f"{results.n_identifying}\n"
+        )
+        f.write(
+            f"- Months: {results.n_pre_months} pre / "
+            f"{results.n_post_months} post (endpoint trim + "
+            f"transition-window drop applied)\n"
+        )
+        if results.flags:
+            f.write(f"- **Flags: {', '.join(results.flags)}**\n")
+            if "under_identified" in results.flags:
+                f.write(
+                    "  - Fewer than 20 identifying ZCTAs: conventional "
+                    "cluster t-statistics are oversized; read the "
+                    "ZCTA-level wild-bootstrap p-values beside them.\n"
+                )
+        f.write(f"\nDof convention: {joint.get('dof_note', 'n/a')}\n")
+
+    # --- Spec A: two-phase headline + co-headline transition drop ----------
+    save_markdown_table(
+        _phase_table(joint["coefs"], ("post1", "post2")),
+        md_path,
+        "Spec A — joint two-phase break (2019-vintage regressors, full sample)",
+    )
+    save_markdown_table(
+        _phase_table(joint["transition_drop"]["coefs"], ("post1", "post2")),
+        md_path,
+        "Spec A — co-headline: transition window 2020-03..05 dropped",
+    )
+    save_markdown_table(
+        _phase_table(results.gradient_models_single, ("post1", "post2")),
+        md_path,
+        "Spec A — single-interaction models (sign robustness)",
+    )
+    save_markdown_table(
+        _phase_table(pooled["coefs"], ("post",)),
+        md_path,
+        "Spec A — pooled single-Post summary (averages a non-monotone path)",
+    )
+
+    wald = results.wald_break
+    save_markdown_table(
+        {
+            "Test": list(wald.keys()),
+            "Wald stat": [_fmt(wald[k]["stat"], 2) for k in wald],
+            "df": [str(wald[k]["df"]) for k in wald],
+            "p": [_fmt_p(wald[k]["pvalue"]) for k in wald],
+        },
+        md_path,
+        "Cluster-robust Wald tests on the interaction sets",
+    )
+
+    # --- bootstrap p-values -------------------------------------------------
+    boot = results.bootstrap_pvalues
+    zip3 = boot.get("zip3", {})
+    if "note" in zip3:
+        with open(md_path, "a", encoding="utf-8") as f:
+            f.write(
+                "### Wild cluster bootstrap (Webb) p-values\n\n"
+                f"ZIP3 coarse-cluster robustness {zip3['note']}.\n\n"
+            )
+    else:
+        save_markdown_table(
+            {
+                "Variable": list(zip3.keys()),
+                "Post1 p (ZIP3 boot)": [
+                    _fmt_p(zip3[v]["post1"]) for v in zip3
+                ],
+                "Post2 p (ZIP3 boot)": [
+                    _fmt_p(zip3[v]["post2"]) for v in zip3
+                ],
+            },
+            md_path,
+            "Wild cluster bootstrap (Webb) — ZIP3 spatial robustness",
+        )
+    zcta_boot = {k: v for k, v in boot.items() if k != "zip3"}
+    if zcta_boot and "note" not in zcta_boot:
+        save_markdown_table(
+            {
+                "Variable": list(zcta_boot.keys()),
+                "Post1 p (ZCTA boot)": [
+                    _fmt_p(zcta_boot[v]["post1"]) for v in zcta_boot
+                ],
+                "Post2 p (ZCTA boot)": [
+                    _fmt_p(zcta_boot[v]["post2"]) for v in zcta_boot
+                ],
+            },
+            md_path,
+            "Wild cluster bootstrap (Webb) — ZCTA-level headline "
+            "(under-identified metro)",
+        )
+
+    # --- Spec B: event study -------------------------------------------------
+    with open(md_path, "a", encoding="utf-8") as f:
+        f.write("## Spec B — event study (headline figure)\n\n")
+        f.write(
+            f"![event study]({es_fig.name}) — per-bin identifying ZCTA "
+            "counts on the secondary axis. Flat pre-break coefficients "
+            "support the parallel-trends reading of Spec A; a drifting "
+            "pre-path demotes Spec A's coefficients to \"trend + break\".\n\n"
+        )
+        f.write(f"![gradient phases]({phases_fig.name})\n\n")
+
+    # --- diagnostics ---------------------------------------------------------
+    ec = results.entrant_composition
+    save_markdown_table(
+        {
+            "Variable": ec["variable"].to_list(),
+            "Incumbent mean": [_fmt(v, 3) for v in ec["incumbent_mean"]],
+            "Entrant mean": [_fmt(v, 3) for v in ec["entrant_mean"]],
+            "n incumbents": [str(v) for v in ec["n_incumbents"]],
+            "n entrants": [str(v) for v in ec["n_entrants"]],
+        },
+        md_path,
+        "Entrant composition (post-2019-12 entrants vs incumbents)",
+    )
+    bal = results.balanced_robustness
+    save_markdown_table(
+        _phase_table(bal["joint"]["coefs"], ("post1", "post2")),
+        md_path,
+        f"Balanced-subpanel bound ({bal['n_zctas']} ZCTAs; {bal['note']})",
+    )
+    v21 = results.vintage2021_robustness["vintage2021"]
+    save_markdown_table(
+        _phase_table(v21["coefs"], ("post1", "post2")),
+        md_path,
+        "Measured-gradient sensitivity (2021-vintage regressors — "
+        "never the headline)",
+    )
+
+    # --- Spec C / C-med ------------------------------------------------------
+    am = results.access_model
+    rob = am.get("robustness", {})
+    rows = [("headline", am)] + [(k, rob[k]) for k in sorted(rob)]
+    save_markdown_table(
+        {
+            "Model": [k for k, _ in rows],
+            "theta": [_fmt(m["theta"]) for _, m in rows],
+            "SE": [_fmt(m["se"]) for _, m in rows],
+            "p": [_fmt_p(m["pvalue"]) for _, m in rows],
+            "n obs": [str(m["n_obs"]) for _, m in rows],
+            "Note": [m["note"] for _, m in rows],
+        },
+        md_path,
+        "Spec C — time-varying annual accessibility "
+        f"(window ends {am['max_period']})",
+    )
+    med = results.mediation
+    with open(md_path, "a", encoding="utf-8") as f:
+        f.write(f"### Spec C-med — {med['label'].removesuffix(' (Spec C-med)')}\n\n")
+        f.write(
+            f"Share of the Post1 {med['headline_variable']} repricing "
+            "absorbed by contemporaneous access: "
+            f"**{_fmt(med['share_mediated'], 3)}**. {med['note']}.\n\n"
+        )
+        f.write("| Variable | Post1 (base) | Post1 (with mediator) | Share mediated |\n")
+        f.write("| --- | --- | --- | --- |\n")
+        for var in med["share_by_x"]:
+            f.write(
+                f"| {var} | {_fmt(med['post1_base'][var])} "
+                f"| {_fmt(med['post1_mediated'][var])} "
+                f"| {_fmt(med['share_by_x'][var], 3)} |\n"
+            )
+        f.write("\n")
+
+    # --- Spec D --------------------------------------------------------------
+    lag, lead, contemp = (
+        results.chase_model_lagged,
+        results.chase_model_lead,
+        results.chase_model_contemp,
+    )
+    save_markdown_table(
+        {
+            "Model": ["lagged (headline)", "lead falsification (lag term)",
+                      "lead falsification (lead term)", "contemporaneous"],
+            "phi": [
+                _fmt(lag["phi"]), _fmt(lead["phi_lag"]),
+                _fmt(lead["phi_lead"]), _fmt(contemp["phi"]),
+            ],
+            "SE": [
+                _fmt(lag["se"]), _fmt(lead["se_lag"]),
+                _fmt(lead["se_lead"]), _fmt(contemp["se"]),
+            ],
+            "p": [
+                _fmt_p(lag["pvalue"]), _fmt_p(lead["pvalue_lag"]),
+                _fmt_p(lead["pvalue_lead"]), _fmt_p(contemp["pvalue"]),
+            ],
+            "n cells": [
+                str(lag["n_cells"]), str(lead["n_cells"]),
+                str(lead["n_cells"]), str(contemp["n_cells"]),
+            ],
+        },
+        md_path,
+        "Spec D — annual predictive association (no causal claim; a "
+        "significant lead means feedback, not chasing)",
+    )
+    ld = results.long_difference
+    save_markdown_table(
+        {
+            "Window": [ld[k]["window"] for k in sorted(ld)],
+            "coef": [_fmt(ld[k].get("coef")) for k in sorted(ld)],
+            "SE": [_fmt(ld[k].get("se")) for k in sorted(ld)],
+            "p": [_fmt_p(ld[k].get("pvalue")) for k in sorted(ld)],
+            "n ZCTAs": [str(ld[k]["n_zctas"]) for k in sorted(ld)],
+            "Note": [ld[k].get("note", "") for k in sorted(ld)],
+        },
+        md_path,
+        "Spec D — long differences",
+    )
+
+    # --- coverage + mandatory caveats ---------------------------------------
+    cov = results.coverage
+    if cov.get("share_by_year"):
+        save_markdown_table(
+            {
+                "Year": [str(y) for y in cov["share_by_year"]],
+                "Covered share": [
+                    f"{s:.0%}" for s in cov["share_by_year"].values()
+                ],
+            },
+            md_path,
+            f"ZORI coverage ({cov['n_covered']}/{cov['n_universe']} ZCTAs "
+            "overall)",
+        )
+    with open(md_path, "a", encoding="utf-8") as f:
+        _write_caveats_block(f, results)
+        f.write("---\n")
+
+    logger.info("RQ4 results saved to %s", md_path)
+
+
+def run_rq4(
+    df: pl.DataFrame,
+    out_dir: Path,
+    fig_dir: Path,
+    metro: str,
+    final_dir: Path,
+) -> None:
+    """RQ4: ZORI rent-dynamics analysis (full pipeline).
+
+    Loads the three panel products from ``final_dir``, then delegates to
+    :func:`analyze_rq4` and :func:`report_rq4`.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        The metro's 35-column cross-section (already loaded by the caller).
+    out_dir : Path
+        Output directory for results.
+    fig_dir : Path
+        Figure output directory.
+    metro : str
+        Metro code for labeling outputs.
+    final_dir : Path
+        Directory holding the committed panel CSVs (normally ``data/final``).
+
+    Raises
+    ------
+    FileNotFoundError
+        When any panel file is absent — ``run_analysis`` catches this to
+        skip RQ4 (old checkout / partial rebuild) while RQ1-RQ3 run on.
+    """
+    zori_panel, lodes_panel, acs2019 = load_panel_data(metro, final_dir)
+    results = analyze_rq4(df, zori_panel, lodes_panel, acs2019)
+    report_rq4(results, out_dir, fig_dir, metro)

@@ -9,11 +9,16 @@ Spec C time-varying access (truncated at the last LODES year, no
 carry-forward), Spec C-med mediation decomposition, and Spec D annual
 predictive-association models (>= 6 months per (i, y) cell, lead
 falsification, long differences).
+Task 19 scope: run_analysis wiring — HAS_RQ4 optional import mirroring
+HAS_RQ2/HAS_RQ3, and the skip-when-panels-absent contract (log line, exit 0,
+RQ1-RQ3 unaffected). report_rq4 I/O tests live in test_reporting_output.py.
 """
 from __future__ import annotations
 
 import dataclasses
+import logging
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -353,6 +358,47 @@ def test_rq4_chase_models_lead_falsification_and_long_differences(
     assert "note" in r.long_difference["2015_2019"]
     assert np.isfinite(r.long_difference["2019_2023"]["coef"])
     assert r.long_difference["2019_2023"]["n_zctas"] > 0
+
+
+# ---------------------------------------------------------------------------
+# Task 19: run_analysis optional-import wiring + skip-when-panels-absent
+# ---------------------------------------------------------------------------
+
+
+def test_run_analysis_has_rq4_optional_import() -> None:
+    """run_analysis mirrors the HAS_RQ2/HAS_RQ3 optional-import pattern."""
+    import run_analysis
+
+    assert run_analysis.HAS_RQ4 is True
+    assert run_analysis.run_rq4 is not None
+
+
+def test_run_analysis_skips_rq4_when_panels_absent(
+    sample_zcta_csv: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A final-dir with only the 35-column CSV (old checkout / partial
+    rebuild) must skip RQ4 with a log line and still succeed (exit 0):
+    RQ1-RQ3 run unaffected and no rq4 summary is written."""
+    import run_analysis
+
+    out_base = tmp_path / "out"
+    fig_base = tmp_path / "fig"
+    with caplog.at_level(logging.INFO, logger="run_analysis"):
+        # .fn bypasses the Prefect engine; the body is the wiring under test
+        ok, msg = run_analysis.analyze_metro_flow.fn(
+            "PHX", sample_zcta_csv.parent, out_base, fig_base, None
+        )
+
+    assert ok, msg
+    skip_lines = [
+        r.message
+        for r in caplog.records
+        if "RQ4" in r.message and "skip" in r.message.lower()
+    ]
+    assert skip_lines, "no RQ4 skip log line emitted"
+    # RQ1-RQ3 outputs exist; the RQ4 summary does not
+    assert (out_base / "PHX" / "analysis_summary_phx.md").exists()
+    assert not (out_base / "PHX" / "rq4_summary_PHX.md").exists()
 
 
 def test_rq4_mediation_share_bounded_and_labeled(sample_panel_fixtures) -> None:

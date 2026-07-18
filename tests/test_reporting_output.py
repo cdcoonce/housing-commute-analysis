@@ -10,6 +10,7 @@ from src.models.reporting import save_markdown_table
 from src.models.rq1_housing_commute_tradeoff import analyze_rq1, report_rq1
 from src.models.rq2_equity_analysis import analyze_rq2, report_rq2
 from src.models.rq3_aci_analysis import analyze_rq3, report_rq3
+from src.models.rq4_rent_dynamics import analyze_rq4, report_rq4
 
 
 def _dirs(tmp_path: Path) -> tuple[Path, Path]:
@@ -44,6 +45,38 @@ def test_report_rq3_appends_to_summary(sample_zcta_df: pl.DataFrame, tmp_path: P
     report_rq1(analyze_rq1(sample_zcta_df), out, fig, "PHX")
     report_rq3(analyze_rq3(sample_zcta_df), out, fig, "PHX")
     assert (out / "analysis_summary_phx.md").exists()
+
+
+def test_report_rq4_writes_summary_with_caveats_and_figures(
+    sample_panel_fixtures, tmp_path: Path
+) -> None:
+    """report_rq4 writes rq4_summary_<metro>.md with the mandatory honesty
+    rails (design section 4 caveats + section 6) and the event-study figure."""
+    out, fig = _dirs(tmp_path)
+    cross, zp, lp, acs = sample_panel_fixtures
+    report_rq4(analyze_rq4(cross, zp, lp, acs), out, fig, "PHX")
+
+    md = out / "rq4_summary_PHX.md"
+    assert md.exists()
+    text = md.read_text()
+
+    # mandatory caveats block — grep anchors from plan Task 19
+    assert "not a causal" in text
+    assert "covered-ZCTA" in text
+    assert "listing" in text
+    # the estimand statement and the remaining caveat families
+    assert "ZCTA" in text and "ZIP" in text  # ZIP~ZCTA convention named
+    assert "sorting" in text.lower() or "composition" in text.lower()
+
+    # coefficient/Wald/bootstrap tables present (phase 1/2 + pooled)
+    assert "post1" in text.lower() or "phase 1" in text.lower()
+    assert "Wald" in text
+    assert "bootstrap" in text.lower()
+    assert "Entrant" in text or "entrant" in text
+
+    # figures: event study (with per-bin identifying counts) + phase coefs
+    assert (fig / "rq4_phx_event_study.png").exists()
+    assert (fig / "rq4_phx_gradient_phases.png").exists()
 
 
 def test_save_markdown_table_writes_heading(tmp_path: Path) -> None:
