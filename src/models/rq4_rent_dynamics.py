@@ -886,6 +886,12 @@ def analyze_rq4(
         Spec C access model, Spec C-med mediation, and Spec D chase models
         with long differences.
     """
+    # The 35-column loader infers ZCTA5CE as i64 while the panel loaders pin
+    # Utf8 — normalize the cross-section key (zero-padded 5-char string) so
+    # the joins below never mix dtypes.
+    cross_df = cross_df.with_columns(
+        pl.col("ZCTA5CE").cast(pl.Utf8).str.zfill(5)
+    )
     frame_all = _estimation_frame(cross_df, zori_panel, lodes_panel, acs2019_df)
     frame = _endpoint_trim(frame_all)
     frame_headline = _drop_transition(frame)

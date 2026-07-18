@@ -192,6 +192,19 @@ def test_rq4_recovers_planted_donut_effect(sample_panel_fixtures) -> None:
     assert d["post1_pvalue"] < 0.05                   # ...and significant
 
 
+def test_rq4_accepts_integer_zcta_cross_section(sample_panel_fixtures) -> None:
+    """The real 35-column loader (``load_and_validate_data``) infers ZCTA5CE
+    as i64, while the panel loaders pin Utf8. analyze_rq4 must normalize the
+    cross-section key (zero-padded 5-char string) instead of crashing the
+    join. Smoke-revealed on the first real PHX run (plan Task 20)."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    cross_int = cross.with_columns(pl.col("ZCTA5CE").cast(pl.Int64))
+    r_int = analyze_rq4(cross_int, zp, lp, acs)
+    r_str = analyze_rq4(cross, zp, lp, acs)
+    assert r_int.n_obs == r_str.n_obs
+    assert r_int.n_zctas == r_str.n_zctas
+
+
 def test_rq4_headline_uses_2019_vintage_not_2021(sample_panel_fixtures) -> None:
     """Fixture plants DIFFERENT 2019 and 2021 commute proxies; the headline
     interaction must load on the 2019 one (design §4: pre-treatment measurement)."""
