@@ -13,7 +13,13 @@ METRO=dallas python run_pipeline.py
 
 # Run pipeline for all metros sequentially
 python run_pipeline.py --all
+
+# Build the RQ4 panel data products instead (composes with --all)
+python run_pipeline.py --panel
+python run_pipeline.py --panel --all
 ```
+
+See [Building the RQ4 Panel Data Products](#building-the-rq4-panel-data-products---panel) for what `--panel` builds and how its gate works.
 
 ## Available Metro Areas
 
@@ -181,6 +187,79 @@ Columns are listed in output order (the `column_order` list in `src/pipelines/bu
 | `job_accessibility` | Gravity index: Σ jobs·exp(−d/10 km) over metro tracts | LEHD LODES + TIGER |
 | `period` | ZORI data month (YYYY-MM-DD) | Zillow ZORI |
 
+## Building the RQ4 Panel Data Products (`--panel`)
+
+`--panel` swaps in a separate Prefect flow (`build_panel_flow` in `src/pipelines/panel.py`) that builds the three committed RQ4 panel files per metro instead of the cross-sectional dataset. The default (no-flag) behavior is unchanged, and the two flows share the cacheable geometry fetch tasks.
+
+```bash
+# Panel products for the default metro (phoenix)
+uv run python run_pipeline.py --panel
+
+# For a specific metro
+METRO=atlanta uv run python run_pipeline.py --panel
+
+# For all nine metros (equivalent: make panel)
+uv run python run_pipeline.py --panel --all
+```
+
+**Prerequisite:** the metro's committed `final_zcta_dataset_<metro>.csv` must exist — the panel's ZCTA universe is the committed 35-column dataset's ZCTA set (ID membership, never geometric CBSA filtering), and the flow raises `FileNotFoundError` if it is absent. Build the cross-sectional dataset first.
+
+### Panel Outputs
+
+Three CSVs per metro in `data/final/`, each validated against its schema before write and paired with a provenance manifest (`<metro>.zori_panel.manifest.json`, `<metro>.lodes_panel.manifest.json`, `<metro>.acs_commute_2019.manifest.json`) that `run_pipeline.py --verify` checks offline.
+
+- `zori_panel_<metro>.csv` — `[ZCTA5CE, period, zori]`: the full monthly ZORI history from Zillow's smoothed **non-seasonally-adjusted** ZIP series (`Zip_zori_uc_sfrcondomfr_sm_month.csv`, `ZORI_PANEL_CSV_URL` in `config.py`). The committed vintage spans 2015-01-31 through 2026-06-30 (138 months). Missing cells are absent rows, never nulls.
+- `lodes_panel_<metro>.csv` — `[ZCTA5CE, year, job_count, job_accessibility]`: the full ZCTA × year grid for 2015–2023 (`LODES_PANEL_YEARS`), with the same gravity accessibility formula as the cross-sectional column.
+- `acs_commute_2019_<metro>.csv` — `[ZCTA5CE, commute_min_proxy_2019, ttw_total_2019]`: the frozen pre-COVID commute vintage from ACS 5-year 2015–2019 B08303 at ZCTA altitude.
+
+Row counts from the committed `data/final/` files:
+
+| Metro | `zori_panel` rows | `lodes_panel` rows | `acs_commute_2019` rows |
+|-------|------------------:|-------------------:|------------------------:|
+| `atlanta` | 12,137 | 1,053 | 117 |
+| `chicago` | 9,950 | 2,619 | 289 |
+| `dallas` | 13,888 | 1,710 | 186 |
+| `denver` | 8,218 | 927 | 103 |
+| `los_angeles` | 17,969 | 2,430 | 267 |
+| `memphis` | 2,661 | 468 | 51 |
+| `miami` | 14,338 | 1,620 | 180 |
+| `phoenix` | 13,289 | 1,350 | 148 |
+| `seattle` | 10,323 | 1,350 | 149 |
+| **Total** | **102,773** | **13,527** | **1,490** |
+
+`zori_panel` counts move with the Zillow vintage (ZIPs enter as markets clear Zillow's listing threshold, and thin markets are occasionally retracted). `lodes_panel` is exactly metro ZCTAs × 9 years. `acs_commute_2019` covers the committed ZCTAs present in the 2019 ACS ZCTA release, which can be slightly fewer than the metro's ZCTA count (e.g., Chicago 289 of 291).
+
+### Panel Gate and Escape Hatches
+
+`scripts/panel_gate.py` compares regenerated panels in `data/final/` against a committed baseline copy, with different semantics per product (Zillow revises history between pulls; LODES8 files and the 2019 ACS release are immutable):
+
+- **ZORI — snapshot-replace:** each rebuild replaces the committed panel wholesale with one coherent Zillow vintage. The gate checks schema (never waivable), no lost months, ZCTA churn ≤ 5%, lost cells ≤ 1% over the intersection ZCTA set, and reports revision stats (count, median, p99, max of |Δ|/baseline) — failing only if > 1% of overlapping cells revise beyond 5% or any single cell revises beyond 25%.
+- **LODES — append-only:** `job_count` must be byte-identical on existing `(ZCTA5CE, year)` cells (**no escape hatch** — a change means an upstream reissue to investigate); `job_accessibility` is compared at float-noise tolerance (`FLOAT_NOISE_RTOL = 1e-12`) with the max relative delta always reported; new years may append at the tail only. Sanity: `job_accessibility > 0` and, per year, Spearman ρ(access, CBD distance) < 0.
+- **ACS 2019 — frozen vintage:** `ttw_total_2019` byte-identical, `commute_min_proxy_2019` within float-noise tolerance, ZCTA set unchanged in both directions. **No escape hatch** — a change means our query or midpoints changed.
+
+Procedure for a deliberate panel rebuild:
+
+```bash
+# 1. Snapshot the committed baselines
+mkdir -p /tmp/panel_baseline
+cp data/final/zori_panel_*.csv data/final/lodes_panel_*.csv \
+   data/final/acs_commute_2019_*.csv /tmp/panel_baseline/
+
+# 2. Regenerate the panels
+uv run python run_pipeline.py --panel --all
+
+# 3. Gate the regenerated files against the baseline
+uv run python scripts/panel_gate.py /tmp/panel_baseline
+```
+
+Escape hatches exist for legitimate upstream changes, and **all of them are review-only**: the PR that uses one must quote the gate's output (waived lines included) so a human reviews exactly what was waived.
+
+| Flag | Waives |
+|------|--------|
+| `--accept-revisions` | The ZORI revision-tolerance check only |
+| `--accept-structural` | ZORI structural checks (lost months / churn / lost cells) for a deliberate rebaseline (e.g., Zillow retracts or truncates history) — never the schema check |
+| `--accept-access-drift` | The LODES `job_accessibility` float-tolerance check, for the geometry-vintage-change case |
+
 ## Running All Metros
 
 To rebuild datasets for all four metros, use the `--all` flag:
@@ -318,6 +397,7 @@ The pipeline is organized into focused modules:
 - **`demographics.py`** - Demographic data processing
 - **`zori.py`** - Zillow rent index fetching
 - **`osm.py`** - OpenStreetMap transit stop queries
+- **`panel.py`** - RQ4 panel data products (`build_panel_flow`, run via `--panel`)
 - **`spatial.py`** - Spatial operations (joins, filtering)
 - **`utils.py`** - Shared utility functions
 

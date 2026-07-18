@@ -169,6 +169,40 @@ Output: /path/to/DAT490/data/final/final_zcta_dataset_phoenix.csv
    - Create income segments (quartile-based)
    - Write CSV to `data/final/`
 
+### Panel Flow (RQ4 — `panel.py`)
+
+`run_pipeline.py --panel` runs `build_panel_flow` — a separate Prefect flow (the cross-sectional build path above is untouched) that writes the three RQ4 panel products per metro: `zori_panel_<metro>.csv`, `lodes_panel_<metro>.csv`, and `acs_commute_2019_<metro>.csv`. Steps:
+
+1. **Committed-universe scoping** (`committed_zcta_frame`)
+   - The metro's ZCTA universe is the ZCTA5CE set of the committed `final_zcta_dataset_<metro>.csv` — ID membership, never geometric CBSA filtering, so out-of-dataset ZIPs cannot enter the panel
+   - Raises `FileNotFoundError` if the 35-column dataset is absent (build it first)
+
+2. **ZORI monthly series** (`zori.fetch_zori_series`)
+   - Fetches the full monthly history from the smoothed **non-seasonally-adjusted** ZIP series (`ZORI_PANEL_CSV_URL` in `config.py` → `Zip_zori_uc_sfrcondomfr_sm_month.csv`), filtered to the metro's ZIP prefixes
+   - Renamed/filtered to the committed ZCTA set and stable-sorted by `(ZCTA5CE, period)` into `zori_panel_<metro>.csv`; missing cells are absent rows, never nulls
+
+3. **Geometries** (shared `build.py` tasks + `committed_zcta_geometries`)
+   - ZCTA and tract geometries come from the same cacheable tasks as the cross-sectional build (warm cache after a dataset build), then are ID-filtered to the committed universe
+   - Raises if any committed ZCTA has no geometry — the grid never shrinks silently
+
+4. **LODES per-state panel** (`lodes.fetch_state_lodes_panel`, per state, submitted concurrently)
+   - Downloads each state's block→ZCTA/tract crosswalk once, then that state's WAC files for every year in `LODES_PANEL_YEARS` (2015–2023)
+   - An HTTP error (including a 404 on a single state-year) propagates — a missing file is a loud failure, never a silent zero-fill
+   - `lodes_panel_task` then builds the full ZCTA × year grid: `job_count` (0-filled only for ZCTAs absent from a successfully fetched WAC year, i.e. genuinely zero jobs) and gravity `job_accessibility` (`job_accessibility_by_year`, same formula/decay as the cross-sectional column)
+
+5. **ACS 2019 commute vintage** (`acs.fetch_acs_commute_zcta`)
+   - B08303 at ZCTA altitude for the frozen ACS 5-year 2015–2019 release (state-nested query, with a national-pull-then-filter fallback), proxy computed with the shared `TTW_MIDPOINTS`
+   - Filtered to the committed ZCTA set into `acs_commute_2019_<metro>.csv` (`commute_min_proxy_2019`, `ttw_total_2019`)
+
+6. **Validators** (`schema.validate_zori_panel` / `validate_lodes_panel` / `validate_acs_commute_2019`)
+   - Every product is validated against its schema before write; any violation raises, so an invalid panel never lands
+
+7. **Manifests** (`manifest.build_panel_manifest`)
+   - Each CSV is paired with `<metro>.zori_panel.manifest.json` (adds `pull_timestamp_utc`, `period_min`/`period_max`, `n_months`, `n_zctas`), `<metro>.lodes_panel.manifest.json` (adds the explicit `years` list), and `<metro>.acs_commute_2019.manifest.json`
+   - `run_pipeline.py --verify` re-checks every manifest offline against its CSV
+
+Committed rebuilds are gated by `scripts/panel_gate.py` (snapshot-replace with bounded revision reporting for ZORI; append-only for LODES; frozen vintage for ACS 2019) — see `RUNNING_PIPELINE.md` for the procedure and escape hatches.
+
 ## Data Sources
 
 ### 1. Census TIGER/Line Shapefiles
@@ -232,7 +266,7 @@ https://api.census.gov/data/2021/acs/acs5?get=VARIABLES&for=tract:*&in=state:04+
 **Coverage**: Monthly rent index by ZIP code  
 **File Format**: Public CSV (no API key needed)
 
-**URL**:
+**URL** (cross-sectional build, `ZORI_ZIP_CSV_URL`):
 
 ```text
 https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_sa_month.csv
@@ -246,6 +280,8 @@ https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr
 - Values: Typical observed monthly rent in dollars
 
 **Pipeline Usage**: Extracts most recent month for each ZIP code
+
+**Panel flow uses a different file**: the RQ4 ZORI panel (`--panel`) is built from the smoothed **non-seasonally-adjusted** series (`ZORI_PANEL_CSV_URL` → `Zip_zori_uc_sfrcondomfr_sm_month.csv`, same schema) and keeps the full monthly history rather than the latest month. Zillow re-estimates SA factors over the full sample each release, so the SA file's pre-2020 values embed post-2020 data — unusable for the 2020 structural-break estimation.
 
 ### 4. OpenStreetMap (OSM)
 

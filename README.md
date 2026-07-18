@@ -27,6 +27,7 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
   - [Reproducibility](#reproducibility)
 - [Available Metro Areas](#available-metro-areas)
 - [Pipeline Output Schema](#pipeline-output-schema)
+  - [Panel Data Products (RQ4)](#panel-data-products-rq4)
 - [Analysis Output](#analysis-output)
   - [RQ1: Housing-Commute Trade-Off](#rq1-housing-commute-trade-off)
   - [RQ2: Equity Analysis](#rq2-equity-analysis)
@@ -39,22 +40,25 @@ A **data engineering and statistical analysis pipeline** that quantifies the rel
 
 ## Overview
 
-This project investigates how commute distance and transit access influence housing affordability at the **ZCTA (ZIP Code Tabulation Area)** level. It combines a reproducible data pipeline with rigorous statistical analysis to answer three research questions across nine metro areas.
+This project investigates how commute distance and transit access influence housing affordability at the **ZCTA (ZIP Code Tabulation Area)** level. It combines a reproducible data pipeline with rigorous statistical analysis to answer four research questions across nine metro areas.
 
 ### Research Questions
 
 1. **RQ1 — Housing-Commute Trade-Off:** How does average commute time influence housing affordability (rent-to-income ratio)? Uses OLS regression with linear and quadratic specifications, selecting the best model via AIC.
 2. **RQ2 — Equity Analysis:** How do housing and commute burdens vary by income segment and race? Uses interaction models, ANOVA tests, and K-Means clustering to identify inequities.
 3. **RQ3 — Affordability-Commute Index (ACI):** Can a composite index of standardized rent burden and commute time identify the most burdened areas? Uses OLS and quantile regression with optional choropleth mapping.
+4. **RQ4 — COVID and the Commute Gradient (ZORI Dynamics):** Did COVID reprice the commute gradient? Uses per-metro two-way fixed-effects estimation (ZCTA + sample-month) on the monthly ZORI panel, interacting pre-COVID (2019-vintage) gradient measures with a two-phase 2020 structural break, plus event-study and time-varying-accessibility specs. Built on the [panel data products](#panel-data-products-rq4).
 
 ### Data Sources
 
 | Source | Data | Granularity |
 |--------|------|-------------|
 | **Census ACS 5-Year** | Commute patterns, rent, income, demographics, vehicle access | Census tract → ZCTA |
-| **Zillow ZORI** | Observed Rent Index by ZIP code | ZIP code |
+| **Census ACS 5-Year 2015–2019** | Pre-COVID commute-time vintage (B08303) for the RQ4 interaction regressors | ZCTA |
+| **Zillow ZORI** | Observed Rent Index by ZIP code (latest month; smoothed, seasonally-adjusted series) | ZIP code |
+| **Zillow ZORI panel** | Full monthly rent-index history 2015-01 onward from the smoothed **non-seasonally-adjusted** (`sm_month`) series; committed via snapshot-replace, with a gate that bounds and reports Zillow's between-pull revisions | ZIP-month |
 | **OpenStreetMap** | Public transit stop locations (bus, rail, platform) | Point → ZCTA density |
-| **LEHD LODES8 (WAC 2021)** | ZCTA job density, CBD distance, gravity job accessibility | Census block → ZCTA/tract |
+| **LEHD LODES8 (WAC 2021 cross-section; WAC 2015–2023 panel)** | ZCTA job density, CBD distance, gravity job accessibility; annual job-count/accessibility panel for RQ4 | Census block → ZCTA/tract |
 | **Census TIGER/Line** | CBSA boundaries, ZCTA & tract geometries | Geographic polygons |
 
 ---
@@ -83,6 +87,7 @@ graph TD
         OSM_MOD["osm.py<br/>Transit density"]
         LODES_MOD["lodes.py<br/>Employment features"]
         SPATIAL["spatial.py<br/>Spatial joins"]
+        PANEL["panel.py<br/>RQ4 panel products"]
     end
 
     subgraph "Analysis — src/models/"
@@ -117,7 +122,12 @@ graph TD
     LODES_MOD --> BUILD
     SPATIAL --> BUILD
 
+    ZORI_MOD --> PANEL
+    LODES_MOD --> PANEL
+    ACS_MOD --> PANEL
+
     BUILD --> CSV
+    PANEL --> CSV
     CSV --> LOAD
     LOAD --> PREPROC
     PREPROC --> RQ1
@@ -175,6 +185,7 @@ housing-commute-analysis/
 │   │   ├── zori.py              # Zillow Observed Rent Index ingestion
 │   │   ├── osm.py               # OpenStreetMap transit stop density
 │   │   ├── lodes.py             # LEHD LODES employment features
+│   │   ├── panel.py             # RQ4 panel data products (build_panel_flow)
 │   │   ├── spatial.py           # Spatial joins & ZCTA filtering
 │   │   └── utils.py             # HTTP retry utilities
 │   ├── models/                  # Statistical analysis modules
@@ -307,11 +318,15 @@ METRO=atlanta uv run python run_pipeline.py
 
 # Run for all nine metros sequentially
 uv run python run_pipeline.py --all
+
+# Build the RQ4 panel data products (requires the metro's 35-column dataset)
+uv run python run_pipeline.py --panel
+uv run python run_pipeline.py --panel --all   # all nine metros (= make panel)
 ```
 
 **Processing time:** ~5–15 minutes per metro area.
 
-Pipeline output is saved to `data/final/final_zcta_dataset_{metro}.csv`.
+Pipeline output is saved to `data/final/final_zcta_dataset_{metro}.csv`. The `--panel` mode instead writes the three [RQ4 panel data products](#panel-data-products-rq4) per metro.
 
 For detailed pipeline documentation, see [RUNNING_PIPELINE.md](RUNNING_PIPELINE.md).
 
@@ -401,6 +416,18 @@ Each final ZCTA CSV contains 35 columns across six categories:
 | `income_segment` | Income tercile (low/medium/high) | Derived |
 | **Vehicle** | | |
 | `vehicle_access` | % households with 1+ vehicles | ACS B08201 |
+
+### Panel Data Products (RQ4)
+
+`run_pipeline.py --panel` (or `make panel` for all metros) builds three additional committed files per metro in `data/final/`, scoped to the ZCTAs of the metro's committed 35-column dataset and joined to it at analysis time. Across the nine metros:
+
+| File | Columns | Coverage | Gate semantics (`scripts/panel_gate.py`) |
+|------|---------|----------|------------------------------------------|
+| `zori_panel_<metro>.csv` | `ZCTA5CE`, `period`, `zori` | Monthly, 2015-01 onward (committed vintage: through 2026-06, 138 months); ~102.8k rows total | **Snapshot-replace:** each rebuild replaces the panel wholesale with one coherent Zillow vintage; the gate bounds and reports between-pull revisions |
+| `lodes_panel_<metro>.csv` | `ZCTA5CE`, `year`, `job_count`, `job_accessibility` | Annual, 2015–2023, full ZCTA × year grid; 13,527 rows total | **Append-only:** `job_count` byte-identical on existing cells, `job_accessibility` within float-noise tolerance; new years append at the tail |
+| `acs_commute_2019_<metro>.csv` | `ZCTA5CE`, `commute_min_proxy_2019`, `ttw_total_2019` | One row per ZCTA in the frozen ACS 2015–2019 release; 1,490 rows total | **Frozen vintage:** byte-identical / float-noise only, no escape hatch |
+
+The ZORI panel is built from Zillow's smoothed **non-seasonally-adjusted** ZIP series (`Zip_zori_uc_sfrcondomfr_sm_month.csv`, `ZORI_PANEL_CSV_URL` in `src/pipelines/config.py`) — not the seasonally-adjusted file the cross-sectional `zori` column uses — because Zillow re-estimates SA factors over the full sample each release, which would leak post-2020 data into pre-2020 values. Each CSV is paired with a provenance manifest (`<metro>.zori_panel.manifest.json`, etc.) checked by `run_pipeline.py --verify`. See [RUNNING_PIPELINE.md](RUNNING_PIPELINE.md) for per-metro row counts and the gate procedure.
 
 ---
 
