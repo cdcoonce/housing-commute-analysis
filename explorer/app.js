@@ -42,11 +42,8 @@ const RAMP = {
   light: ["#e3edf9", "#bcd4f0", "#8fb6e6", "#5f96da", "#3573c2", "#1a55a0"],
   dark: ["#223048", "#28466e", "#2f5d95", "#3f7ac1", "#659de0", "#9ec4f0"],
 };
-const isDark = () => {
-  const t = document.documentElement.getAttribute("data-theme");
-  if (t) return t === "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-};
+const isDark = () =>
+  document.documentElement.getAttribute("data-theme") !== "light";
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs = {}, text) => {
@@ -606,13 +603,20 @@ document.addEventListener("click", (e) => {
   renderMap();
 });
 
+/* Dark is the default look; light is the secondary option. Persisted. */
+function applyTheme(mode) {
+  document.documentElement.setAttribute("data-theme", mode);
+  $("#theme-toggle").textContent = mode === "dark" ? "☀ Light mode" : "◐ Dark mode";
+  try { localStorage.setItem("rq4-theme", mode); } catch (_) { /* private mode */ }
+}
+applyTheme((() => {
+  try { return localStorage.getItem("rq4-theme") || "dark"; } catch (_) { return "dark"; }
+})());
+
 $("#theme-toggle").addEventListener("click", () => {
-  const root = document.documentElement;
-  const cur = root.getAttribute("data-theme");
-  const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const next = cur ? (cur === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
-  root.setAttribute("data-theme", next);
-  renderMap(); // ramp fills are literal colors, not CSS vars
+  const cur = document.documentElement.getAttribute("data-theme");
+  applyTheme(cur === "dark" ? "light" : "dark");
+  if (DATA) renderMap(); // ramp fills are literal colors, not CSS vars
 });
 
 fetch("data/rq4.json")
