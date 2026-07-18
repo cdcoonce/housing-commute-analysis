@@ -76,6 +76,30 @@ NUMERIC_ACS_COLS: list[str] = [
     "vehicles_total", "vehicles_none", "vehicles_1", "vehicles_2_plus",
 ]
 
+# B08303 bin midpoints (minutes) for the commute_min_proxy weighted average.
+# Insertion order matters: compute_acs_features folds the weighted sum in this
+# order, preserving byte-identity with the previously inlined arithmetic.
+# 90+ uses a conservative 100-minute midpoint.
+TTW_MIDPOINTS: dict[str, float] = {
+    "ttw_lt5": 2.5,
+    "ttw_5_9": 7.0,
+    "ttw_10_14": 12.0,
+    "ttw_15_19": 17.0,
+    "ttw_20_24": 22.0,
+    "ttw_25_29": 27.0,
+    "ttw_30_34": 32.0,
+    "ttw_35_39": 37.0,
+    "ttw_40_44": 42.0,
+    "ttw_45_59": 52.0,
+    "ttw_60_89": 75.0,
+    "ttw_90_plus": 100.0,
+}
+
+# B08303 variables (ttw_total + the 12 bins) for the ZCTA-altitude fetch.
+_B08303_VARS: dict[str, str] = {
+    name: code for name, code in ACS_VARS.items() if code.startswith("B08303_")
+}
+
 
 def fetch_acs_for_county(
     state_fips: str, 
@@ -227,22 +251,10 @@ def compute_acs_features(acs_df: pd.DataFrame) -> pd.DataFrame:
     features["long45_share"] = (features["pct_commute_45_59"] + features["pct_commute_60_plus"]) / 100
     features["long60_share"] = features["pct_commute_60_plus"] / 100
     
-    # Estimated average commute time using midpoints of all bins:
-    # <5→2.5, 5-9→7, 10-14→12, 15-19→17, 20-24→22, 25-29→27, 30-34→32, 35-39→37, 40-44→42
-    # 45-59→52, 60-89→75, 90+→100 (conservative estimate)
-    features["commute_min_proxy"] = (
-        (features["ttw_lt5"] * 2.5) +
-        (features["ttw_5_9"] * 7) +
-        (features["ttw_10_14"] * 12) +
-        (features["ttw_15_19"] * 17) +
-        (features["ttw_20_24"] * 22) +
-        (features["ttw_25_29"] * 27) +
-        (features["ttw_30_34"] * 32) +
-        (features["ttw_35_39"] * 37) +
-        (features["ttw_40_44"] * 42) +
-        (features["ttw_45_59"] * 52) + 
-        (features["ttw_60_89"] * 75) + 
-        (features["ttw_90_plus"] * 100)
+    # Estimated average commute time using the shared TTW_MIDPOINTS bin
+    # midpoints (see the constant's definition for the minute values).
+    features["commute_min_proxy"] = sum(
+        features[col] * midpoint for col, midpoint in TTW_MIDPOINTS.items()
     ) / total_workers
     
     # Transportation mode shares (avoid division by zero)
@@ -282,7 +294,119 @@ def compute_acs_features(acs_df: pd.DataFrame) -> pd.DataFrame:
     features["pct_no_vehicle"] = (features["vehicles_none"] / vehicles_total) * 100
     
     # Inverse measure: vehicle access (percentage with 1+ vehicles)
-    features["vehicle_access"] = ((features["vehicles_1"] + features["vehicles_2_plus"]) / 
+    features["vehicle_access"] = ((features["vehicles_1"] + features["vehicles_2_plus"]) /
                                    vehicles_total) * 100
-    
+
     return features
+
+
+def _try_parse_census_json(response) -> list | None:
+    """Parse a Census API response body, returning None when it is not JSON.
+
+    The API serves error pages (Missing Key, transient outages) as HTTP 200
+    with an HTML body; callers treat None as "this query form did not work"
+    rather than crashing on the parse.
+    """
+    try:
+        return response.json()
+    except ValueError:  # json.JSONDecodeError / requests JSONDecodeError
+        return None
+
+
+def fetch_acs_commute_zcta(
+    state_fips: str,
+    year: int,
+    api_key: Optional[str] = CENSUS_API_KEY,
+) -> pd.DataFrame:
+    """Fetch B08303 (travel time to work) at ZCTA geography for one state.
+
+    Queries the state-nested form (``for=zip code tabulation area:*`` with
+    ``in=state:{state_fips}``) first. If the endpoint rejects state-nesting
+    with HTTP 400 (the ZCTA-in-state hierarchy was removed from the acs5
+    endpoint from 2020 onward), falls back to the documented national pull —
+    same variables, no ``in`` clause — and returns all ZCTAs; downstream
+    tasks filter to the metro's committed ZCTA set.
+
+    Args:
+        state_fips: Two-digit FIPS code for the state (e.g., '04' for Arizona)
+        year: ACS 5-year vintage (must be in AVAILABLE_ACS_YEARS; 2019 for
+            the pre-COVID RQ4 vintage)
+        api_key: Census API key (optional but required in practice — the
+            ZCTA-altitude query is rejected keyless)
+
+    Returns:
+        DataFrame with columns ZCTA5CE (str, zero-padded to 5),
+        commute_min_proxy (float, sum(bin_count x midpoint) / ttw_total using
+        TTW_MIDPOINTS), ttw_total (int). ZCTAs with zero workers (or
+        unparseable counts) are dropped — mirroring the division guard in
+        compute_acs_features. Stable-sorted by ZCTA5CE.
+
+    Raises:
+        ValueError: If state_fips or year is invalid
+        requests.HTTPError: If the Census API request fails (non-400, or the
+            national fallback itself fails)
+    """
+    if not state_fips or not state_fips.isdigit() or len(state_fips) != 2:
+        raise ValueError(f"Invalid state FIPS code: {state_fips}. "
+                         "Must be 2-digit numeric string (e.g., '04').")
+
+    if year not in AVAILABLE_ACS_YEARS:
+        raise ValueError(f"Invalid ACS year: {year}. "
+                         f"Must be one of {AVAILABLE_ACS_YEARS}")
+
+    url = f"https://api.census.gov/data/{year}/{ACS_DATASET}"
+    base_params = {
+        "get": ",".join(_B08303_VARS.values()),
+        "for": "zip code tabulation area:*",
+    }
+    if api_key:
+        base_params["key"] = api_key
+
+    session = _get_session()
+    response = session.get(
+        url,
+        params={**base_params, "in": f"state:{state_fips}"},
+        timeout=120,
+    )
+    json_data = None
+    if response.status_code != 400:
+        response.raise_for_status()
+        json_data = _try_parse_census_json(response)
+    if json_data is None:
+        # State-nesting rejected (HTTP 400) or a non-JSON body served as 200
+        # (Census returns HTML error pages — e.g. Missing Key — with 2xx):
+        # national-pull fallback (design "Data availability"); metro filtering
+        # happens downstream.
+        response = session.get(url, params=base_params, timeout=120)
+        response.raise_for_status()
+        json_data = _try_parse_census_json(response)
+        if json_data is None:
+            raise ValueError(
+                f"Census API returned non-JSON for {url}: {response.text[:200]!r}"
+            )
+    header, data_rows = json_data[0], json_data[1:]
+
+    ttw = pd.DataFrame(data_rows, columns=header)
+    ttw = ttw.rename(
+        columns={code: name for name, code in _B08303_VARS.items()}
+    )
+    for col in _B08303_VARS:
+        ttw[col] = pd.to_numeric(ttw[col], errors="coerce")
+
+    ttw["ZCTA5CE"] = ttw["zip code tabulation area"].astype(str).str.zfill(5)
+
+    # Zero-worker guard: replace 0 with NA so the division propagates NA
+    # (same convention as compute_acs_features), then drop those rows.
+    total_workers = ttw["ttw_total"].replace(0, pd.NA)
+    ttw["commute_min_proxy"] = sum(
+        ttw[col] * midpoint for col, midpoint in TTW_MIDPOINTS.items()
+    ) / total_workers
+
+    out = ttw.loc[
+        ttw["commute_min_proxy"].notna(),
+        ["ZCTA5CE", "commute_min_proxy", "ttw_total"],
+    ].copy()
+    out["commute_min_proxy"] = out["commute_min_proxy"].astype(float)
+    out["ttw_total"] = out["ttw_total"].astype(int)
+
+    return out.sort_values("ZCTA5CE", kind="stable", ignore_index=True)

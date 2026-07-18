@@ -99,6 +99,39 @@ def validate_final_dataset(df: pl.DataFrame, *, require_all_columns: bool = True
 # --- RQ4 panel products (additive; the 35-column contract above is untouched) ---
 
 ZORI_PANEL_COLUMNS: list[str] = ["ZCTA5CE", "period", "zori"]
+LODES_PANEL_COLUMNS: list[str] = ["ZCTA5CE", "year", "job_count", "job_accessibility"]
+ACS_COMMUTE_2019_COLUMNS: list[str] = [
+    "ZCTA5CE", "commute_min_proxy_2019", "ttw_total_2019",
+]
+
+
+def _zcta5_errors(df: pl.DataFrame) -> list[str]:
+    """Shared ZCTA5CE checks for the panel validators: Utf8 dtype (a
+    leading-zero code read without schema_overrides infers i64) and 5-digit
+    zero-padded values."""
+    if df["ZCTA5CE"].dtype != pl.Utf8:
+        return [f"ZCTA5CE must be Utf8, got {df['ZCTA5CE'].dtype}"]
+    bad_zcta = df["ZCTA5CE"].filter(
+        df["ZCTA5CE"].is_null() | ~df["ZCTA5CE"].str.contains(r"^\d{5}$")
+    )
+    if bad_zcta.len() > 0:
+        sample = bad_zcta.unique().sort().to_list()[:10]
+        return [f"ZCTA5CE has {bad_zcta.len()} non-5-digit values (first 10: {sample})"]
+    return []
+
+
+def _dup_key_errors(df: pl.DataFrame, key_cols: list[str]) -> list[str]:
+    """Duplicate-key check shared by the panel validators."""
+    keys = df.select(key_cols)
+    n_dup = keys.height - keys.unique().height
+    if n_dup > 0:
+        dup_sample = (
+            keys.filter(keys.is_duplicated()).unique().sort(key_cols).head(10).rows()
+        )
+        return [
+            f"{tuple(key_cols)} has {n_dup} duplicate key rows (first 10: {dup_sample})"
+        ]
+    return []
 
 
 def validate_zori_panel(df: pl.DataFrame) -> list[str]:
@@ -172,4 +205,124 @@ def validate_zori_panel(df: pl.DataFrame) -> list[str]:
             f"(ZCTA5CE, period) has {n_dup} duplicate key rows (first 10: {dup_sample})"
         )
 
+    return errors
+
+
+def validate_lodes_panel(df: pl.DataFrame) -> list[str]:
+    """Validate a lodes_panel_<metro> frame; return error strings (empty = valid).
+
+    Contract (design §1/§3/§5): exact columns [ZCTA5CE, year, job_count,
+    job_accessibility]; ZCTA5CE Utf8 zero-padded 5-digit; year an integer
+    within LODES_PANEL_YEARS; job_count integer (the gate byte-compares it —
+    a float dtype would break append-only identity) non-null and >= 0;
+    job_accessibility non-null and strictly > 0 (protects the log transform —
+    a zero would be a high-leverage -inf); no duplicate (ZCTA5CE, year) keys.
+    """
+    from .lodes import LODES_PANEL_YEARS  # local: keep schema import light
+
+    if list(df.columns) != LODES_PANEL_COLUMNS:
+        return [f"columns must be exactly {LODES_PANEL_COLUMNS}, got {list(df.columns)}"]
+
+    errors: list[str] = []
+    errors.extend(_zcta5_errors(df))
+
+    if not df["year"].dtype.is_integer():
+        errors.append(f"year must be an integer dtype, got {df['year'].dtype}")
+    else:
+        bad_year = df["year"].filter(
+            df["year"].is_null() | ~df["year"].is_in(list(LODES_PANEL_YEARS))
+        )
+        if bad_year.len() > 0:
+            sample = bad_year.unique().sort().to_list()[:10]
+            errors.append(
+                f"year has {bad_year.len()} values outside LODES_PANEL_YEARS "
+                f"{LODES_PANEL_YEARS[0]}-{LODES_PANEL_YEARS[-1]} (first 10: {sample})"
+            )
+
+    if not df["job_count"].dtype.is_integer():
+        errors.append(
+            f"job_count must be an integer dtype (gate byte-identity), "
+            f"got {df['job_count'].dtype}"
+        )
+    else:
+        n_null = df["job_count"].null_count()
+        if n_null > 0:
+            errors.append(f"job_count has {n_null} null cells")
+        negative = df["job_count"].drop_nulls().filter(df["job_count"].drop_nulls() < 0)
+        if negative.len() > 0:
+            errors.append(
+                f"job_count must be >= 0: {negative.len()} negative cells "
+                f"(min={negative.min()})"
+            )
+
+    if not df["job_accessibility"].dtype.is_numeric():
+        errors.append(
+            f"job_accessibility must be numeric, got {df['job_accessibility'].dtype}"
+        )
+    else:
+        n_null = df["job_accessibility"].null_count()
+        if n_null > 0:
+            errors.append(f"job_accessibility has {n_null} null cells")
+        access = df["job_accessibility"].drop_nulls()
+        nonpos = access.filter(access <= 0)
+        if nonpos.len() > 0:
+            errors.append(
+                f"job_accessibility must be > 0 (log-transform guard): "
+                f"{nonpos.len()} cells <= 0 (min={nonpos.min()})"
+            )
+
+    errors.extend(_dup_key_errors(df, ["ZCTA5CE", "year"]))
+    return errors
+
+
+def validate_acs_commute_2019(df: pl.DataFrame) -> list[str]:
+    """Validate an acs_commute_2019_<metro> frame; return error strings.
+
+    Contract (design §1/§3/§5): exact columns [ZCTA5CE, commute_min_proxy_2019,
+    ttw_total_2019]; ZCTA5CE Utf8 zero-padded 5-digit, unique; proxy non-null
+    with 0 < proxy < 180 (strict both ends); ttw_total_2019 integer, non-null,
+    > 0 (zero-worker ZCTAs are dropped upstream by the division guard).
+    """
+    if list(df.columns) != ACS_COMMUTE_2019_COLUMNS:
+        return [
+            f"columns must be exactly {ACS_COMMUTE_2019_COLUMNS}, got {list(df.columns)}"
+        ]
+
+    errors: list[str] = []
+    errors.extend(_zcta5_errors(df))
+
+    proxy = df["commute_min_proxy_2019"]
+    if not proxy.dtype.is_numeric():
+        errors.append(f"commute_min_proxy_2019 must be numeric, got {proxy.dtype}")
+    else:
+        n_null = proxy.null_count()
+        if n_null > 0:
+            errors.append(
+                f"commute_min_proxy_2019 has {n_null} null cells "
+                "(zero-worker ZCTAs must be dropped, never null)"
+            )
+        vals = proxy.drop_nulls()
+        out_of_range = vals.filter((vals <= 0) | (vals >= 180))
+        if out_of_range.len() > 0:
+            errors.append(
+                f"commute_min_proxy_2019 must satisfy 0 < proxy < 180: "
+                f"{out_of_range.len()} cells outside "
+                f"(min={vals.min()}, max={vals.max()})"
+            )
+
+    total = df["ttw_total_2019"]
+    if not total.dtype.is_integer():
+        errors.append(f"ttw_total_2019 must be an integer dtype, got {total.dtype}")
+    else:
+        n_null = total.null_count()
+        if n_null > 0:
+            errors.append(f"ttw_total_2019 has {n_null} null cells")
+        nonpos = total.drop_nulls().filter(total.drop_nulls() <= 0)
+        if nonpos.len() > 0:
+            errors.append(
+                f"ttw_total_2019 must be > 0: {nonpos.len()} cells <= 0 "
+                f"(min={nonpos.min()})"
+            )
+
+    errors.extend(_dup_key_errors(df, ["ZCTA5CE"]))
     return errors

@@ -28,6 +28,11 @@ LODES_YEAR = 2021
 LODES_VERSION = "LODES8"  # 2020 census blocks — do NOT use LODES7 (2010 blocks)
 LODES_BASE_URL = "https://lehd.ces.census.gov/data/lodes"
 
+# RQ4 annual panel window: 2015 matches the ZORI window start; 2023 is the
+# newest published LODES8 year (extend when 2024 drops — the panel gate is
+# append-only). The single-year LODES_YEAR cross-sectional path is untouched.
+LODES_PANEL_YEARS: tuple[int, ...] = tuple(range(2015, 2024))
+
 # Exponential decay length (km) for the gravity job-accessibility index.
 # The single sensitivity knob for job_accessibility; see design doc.
 GRAVITY_DECAY_KM = 10.0
@@ -71,22 +76,16 @@ def states_for_counties(counties: list[tuple[str, str]]) -> tuple[str, ...]:
     return tuple(sorted(STATE_FIPS_TO_POSTAL[f] for f in fips))
 
 
-def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
-    """One state's block-level jobs joined to ZCTA + tract via the LODES crosswalk.
+def fetch_state_xwalk(state_postal: str) -> pd.DataFrame:
+    """One state's LODES block→geography crosswalk, filtered to real ZCTAs.
 
-    Returns the slim frame [zcta, trct, jobs] aggregated to (zcta, trct) pairs.
-    Raw block rows and the (large, ~10-60 MB gz) crosswalk are NOT retained —
-    this keeps the Prefect-persisted cache result small.
+    Returns [tabblk2020, zcta, trct]. Blocks with a blank or "99999" crosswalk
+    zcta (unpopulated water/park blocks) are dropped; they carry ~0 jobs.
 
-    Blocks with a blank or "99999" crosswalk zcta (unpopulated water/park
-    blocks) are dropped; they carry ~0 jobs.
+    Uncached helper (never a Prefect-persisted result): the raw crosswalk is
+    2.7-11.4 MB gz (verified 2026-07-17) and retaining it would violate the
+    cache-size discipline. Callers join it and keep only slim aggregates.
     """
-    wac = http_csv_to_df(
-        wac_url(state_postal, year),
-        compression="gzip",
-        dtype={"w_geocode": str},
-        usecols=["w_geocode", "C000"],
-    )
     xwalk = http_csv_to_df(
         xwalk_url(state_postal),
         compression="gzip",
@@ -94,17 +93,73 @@ def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
         usecols=["tabblk2020", "zcta", "trct"],
     )
     xwalk = xwalk[xwalk["zcta"].str.fullmatch(r"\d{5}", na=False)]
-    xwalk = xwalk[xwalk["zcta"] != "99999"]
+    return xwalk[xwalk["zcta"] != "99999"]
 
+
+def _wac_zcta_tract_jobs(
+    state_postal: str, year: int, xwalk: pd.DataFrame
+) -> pd.DataFrame:
+    """One state-year WAC joined to a pre-fetched crosswalk: [zcta, trct, jobs].
+
+    HTTP errors (including a 404 on an unpublished state-year) propagate —
+    a missing state-year is a loud failure, never a silent zero-fill.
+    """
+    wac = http_csv_to_df(
+        wac_url(state_postal, year),
+        compression="gzip",
+        dtype={"w_geocode": str},
+        usecols=["w_geocode", "C000"],
+    )
     merged = wac.merge(xwalk, left_on="w_geocode", right_on="tabblk2020", how="inner")
-    out = (
+    return (
         merged.groupby(["zcta", "trct"], as_index=False)["C000"]
         .sum()
         .rename(columns={"C000": "jobs"})
     )
+
+
+def fetch_state_jobs(state_postal: str, year: int = LODES_YEAR) -> pd.DataFrame:
+    """One state's block-level jobs joined to ZCTA + tract via the LODES crosswalk.
+
+    Returns the slim frame [zcta, trct, jobs] aggregated to (zcta, trct) pairs.
+    Raw block rows and the (2.7-11.4 MB gz, verified 2026-07-17) crosswalk are
+    NOT retained — this keeps the Prefect-persisted cache result small.
+    """
+    out = _wac_zcta_tract_jobs(state_postal, year, fetch_state_xwalk(state_postal))
     logger.info(
         "LODES %s %s: %d (zcta, tract) pairs, %d jobs",
         state_postal, year, len(out), int(out["jobs"].sum()),
+    )
+    return out
+
+
+def fetch_state_lodes_panel(
+    state_postal: str, years: tuple[int, ...] = LODES_PANEL_YEARS
+) -> pd.DataFrame:
+    """One state's (zcta, tract) job counts for every year in `years`.
+
+    Downloads the state crosswalk ONCE, then joins each year's WAC file
+    against it. An HTTP error on any single year **propagates** — a missing
+    state-year must abort the panel build, never zero-fill (design §2).
+
+    Returns [year, zcta, trct, jobs], aggregated per (year, zcta, trct) and
+    stable-sorted (issue #6 ordering convention).
+    """
+    xwalk = fetch_state_xwalk(state_postal)
+    frames = []
+    for year in years:
+        year_frame = _wac_zcta_tract_jobs(state_postal, year, xwalk)
+        year_frame.insert(0, "year", int(year))
+        frames.append(year_frame)
+    out = (
+        pd.concat(frames, ignore_index=True)
+        .groupby(["year", "zcta", "trct"], as_index=False)["jobs"]
+        .sum()
+        .sort_values(["year", "zcta", "trct"], kind="stable", ignore_index=True)
+    )
+    logger.info(
+        "LODES panel %s %s-%s: %d (year, zcta, tract) rows, %d job-years",
+        state_postal, min(years), max(years), len(out), int(out["jobs"].sum()),
     )
     return out
 
@@ -205,3 +260,74 @@ def job_accessibility(
     access = (jobs[None, :] * np.exp(-d_km / decay_km)).sum(axis=1)
 
     return pd.DataFrame({"ZCTA5CE": zcta_ids, "job_accessibility": access})
+
+
+def job_accessibility_by_year(
+    zctas_gdf: gpd.GeoDataFrame,
+    tracts_gdf: gpd.GeoDataFrame,
+    lodes_panel_df: pd.DataFrame,
+    utm_zone: int,
+    decay_km: float = GRAVITY_DECAY_KM,
+) -> pd.DataFrame:
+    """Gravity job-accessibility per (ZCTA, year), vectorized across years.
+
+    The (n_zcta, n_tract) decay matrix exp(-D/decay_km) is computed ONCE and
+    multiplied against an (n_tract, n_years) jobs matrix built on the UNION
+    tract axis: a tract with jobs in only some years is 0-filled in the others
+    (never carried forward). Tract rows are stable-sorted by `trct` before the
+    reduction (issue #6 order-invariance convention).
+
+    Agreement with the single-year `job_accessibility` for a shared year holds
+    at np.allclose, NOT byte-equality: the matmul's pairwise-summation grouping
+    differs from the single-year broadcast-and-sum (design §2).
+
+    Returns [ZCTA5CE, year, job_accessibility] — ZCTAs in zctas_gdf row order
+    (matching `job_accessibility`), years ascending within each ZCTA.
+    """
+    tract_year_jobs = (
+        lodes_panel_df.groupby(["trct", "year"], as_index=False)["jobs"]
+        .sum()
+        .pivot(index="trct", columns="year", values="jobs")
+        .fillna(0.0)
+        .sort_index(kind="stable")
+        .sort_index(axis=1)
+    )
+    years = [int(y) for y in tract_year_jobs.columns]
+
+    tracts = tracts_gdf.to_crs(utm_zone).copy()
+    tracts["trct"] = tracts["GEOID"].astype(str).str.zfill(11)
+    tracts = tracts.merge(
+        tract_year_jobs.reset_index(), on="trct", how="inner"
+    ).sort_values("trct", kind="stable", ignore_index=True)
+
+    zctas = zctas_gdf.to_crs(utm_zone)
+    zcta_ids = zctas["ZCTA5CE"].astype(str).str.zfill(5)
+
+    if tracts.empty:
+        logger.warning(
+            "job_accessibility_by_year: no tracts matched LODES jobs; returning 0s"
+        )
+        return pd.DataFrame({
+            "ZCTA5CE": np.repeat(zcta_ids.to_numpy(), len(years)),
+            "year": np.tile(np.asarray(years, dtype=int), len(zctas)),
+            "job_accessibility": np.zeros(len(zctas) * len(years)),
+        })
+
+    tract_cent = tracts.geometry.centroid
+    tract_xy = np.column_stack([tract_cent.x.to_numpy(), tract_cent.y.to_numpy()])
+    jobs_by_year = tracts[years].to_numpy(dtype=float)  # (n_tract, n_years)
+
+    zcta_cent = zctas.geometry.centroid
+    zcta_xy = np.column_stack([zcta_cent.x.to_numpy(), zcta_cent.y.to_numpy()])
+
+    # Pairwise (n_zcta, n_tract) distances in km — computed once for all years
+    d_km = np.sqrt(
+        ((zcta_xy[:, None, :] - tract_xy[None, :, :]) ** 2).sum(axis=2)
+    ) / 1000.0
+    access = np.exp(-d_km / decay_km) @ jobs_by_year  # (n_zcta, n_years)
+
+    return pd.DataFrame({
+        "ZCTA5CE": np.repeat(zcta_ids.to_numpy(), len(years)),
+        "year": np.tile(np.asarray(years, dtype=int), len(zctas)),
+        "job_accessibility": access.ravel(),
+    })

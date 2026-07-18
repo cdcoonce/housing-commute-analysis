@@ -71,7 +71,11 @@ def test_cacheable_tasks_include_task_source_component() -> None:
         fetch_lodes_task,
         fetch_tracts_task,
     )
-    from src.pipelines.panel import fetch_zori_series_task
+    from src.pipelines.panel import (
+        fetch_acs_commute_zcta_task,
+        fetch_state_lodes_panel_task,
+        fetch_zori_series_task,
+    )
 
     task_source_type = type(TASK_SOURCE)
     for task in (
@@ -80,6 +84,8 @@ def test_cacheable_tasks_include_task_source_component() -> None:
         fetch_demographics_task,
         fetch_lodes_task,
         fetch_zori_series_task,
+        fetch_state_lodes_panel_task,
+        fetch_acs_commute_zcta_task,
     ):
         policies = getattr(task.cache_policy, "policies", [task.cache_policy])
         assert any(isinstance(p, task_source_type) for p in policies), (
@@ -101,6 +107,33 @@ def test_zori_tasks_have_distinct_cache_keys() -> None:
     )
     key_latest = _cache_key(fetch_zori_task, {"url": "x"})
     assert key_series != key_latest
+
+
+def test_panel_lodes_acs_tasks_have_distinct_cache_keys() -> None:
+    """The Phase-2 panel network tasks must never share a persisted result with
+    each other or with the single-year LODES / county-ACS tasks (all are
+    tuple/str/int-keyed, so a TASK_SOURCE-free policy could collide on values).
+    """
+    from src.pipelines.build import fetch_acs_task, fetch_lodes_task
+    from src.pipelines.panel import (
+        fetch_acs_commute_zcta_task,
+        fetch_state_lodes_panel_task,
+    )
+
+    keys = {
+        "lodes_panel": _cache_key(
+            fetch_state_lodes_panel_task,
+            {"state_postal": "tn", "years": (2015, 2016)},
+        ),
+        "lodes_single": _cache_key(
+            fetch_lodes_task, {"states": ("tn",), "year": 2021}
+        ),
+        "acs_zcta": _cache_key(
+            fetch_acs_commute_zcta_task, {"states": ("04",), "year": 2019}
+        ),
+        "acs_county": _cache_key(fetch_acs_task, {"counties": [("04", "013")]}),
+    }
+    assert len(set(keys.values())) == 4, f"cache keys collide: {keys}"
 
 
 def test_build_panel_flow_is_a_flow() -> None:

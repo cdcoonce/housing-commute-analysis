@@ -1,6 +1,6 @@
 {
   "metro_key": "memphis",
-  "kind": "zori_panel",
+  "kind": "lodes_panel",
   "metro_config": {
     "cbsa_code": "32820",
     "counties": [
@@ -39,29 +39,39 @@
   "run_timestamp_utc": "2026-07-18T01:43:46.250989+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "lodes": "https://lehd.ces.census.gov/data/lodes/LODES8 (WAC S000_JT00 2015\u20132023 + xwalk)",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_memphis.csv",
-  "row_count": 2661,
+  "output_csv": "lodes_panel_memphis.csv",
+  "row_count": 468,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "year",
+      "dtype": "Int64"
     },
     {
-      "name": "zori",
+      "name": "job_count",
+      "dtype": "Int64"
+    },
+    {
+      "name": "job_accessibility",
       "dtype": "Float64"
     }
   ],
-  "sha256": "f7f822db47e786da94ca2edc5d6c8d446b423edd5ad83befcca930dda3b26b5a",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 39,
-  "pull_timestamp_utc": "2026-07-18T01:43:46.250989+00:00"
+  "sha256": "956bc1aa4810c1f6c5cf70a0f9d86eb3f5226d9655d71d5f704b80e4ae2ae98b",
+  "years": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ]
 }

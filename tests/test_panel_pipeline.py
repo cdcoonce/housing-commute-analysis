@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import geopandas as gpd
 import pandas as pd
 import pytest
+from shapely.geometry import Polygon
 
 import src.pipelines.zori as zori
 
@@ -118,13 +120,118 @@ def test_committed_zcta_frame_missing_dataset_raises(monkeypatch, tmp_path) -> N
 
 
 def test_build_panel_flow_scopes_by_committed_dataset_not_geometry() -> None:
-    """Structural: the flow must not resolve the metro ZCTA set from the
-    geometric CBSA-filter tasks (out-of-dataset ZIPs would enter the panel)."""
+    """Structural: the flow must not resolve the metro ZCTA SET from the
+    geometric CBSA-filter tasks (out-of-dataset ZIPs would enter the panel).
+
+    Phase 2 nuance: fetch_state_zctas_task/fetch_tracts_task are allowed back
+    as GEOMETRY carriers (job_accessibility_by_year needs centroids), but the
+    universe must still be the committed dataset's ID set — the geometries are
+    ID-filtered via committed_zcta_geometries, never CBSA-filtered.
+    """
     import inspect
 
     from src.pipelines.panel import build_panel_flow
 
     src = inspect.getsource(build_panel_flow.fn)
     assert "committed_zcta_frame" in src
-    for geo_task in ("filter_zctas_task", "fetch_cbsa_boundary_task", "fetch_state_zctas_task"):
-        assert geo_task not in src
+    assert "committed_zcta_geometries" in src
+    for geo_scope_task in ("filter_zctas_task", "fetch_cbsa_boundary_task"):
+        assert geo_scope_task not in src
+
+
+def test_build_panel_flow_validates_all_products_before_write() -> None:
+    """Structural: an invalid panel product never lands (schema check, no hatch)."""
+    import inspect
+
+    from src.pipelines.panel import build_panel_flow
+
+    src = inspect.getsource(build_panel_flow.fn)
+    for validator in (
+        "validate_zori_panel",
+        "validate_lodes_panel",
+        "validate_acs_commute_2019",
+    ):
+        assert validator in src
+
+
+def _square(lon: float, lat: float, size: float = 0.05) -> Polygon:
+    return Polygon(
+        [(lon, lat), (lon + size, lat), (lon + size, lat + size), (lon, lat + size)]
+    )
+
+
+def _lodes_panel_inputs(zcta_ids: list[str]):
+    """Minimal offline inputs for lodes_panel_task.fn (Memphis-zone geometry)."""
+    zctas = gpd.GeoDataFrame(
+        {"ZCTA5CE": zcta_ids},
+        geometry=[_square(-90.05 + 0.1 * i, 35.1) for i in range(len(zcta_ids))],
+        crs=4326,
+    )
+    tracts = gpd.GeoDataFrame(
+        {"GEOID": ["47157000100"]}, geometry=[_square(-90.0, 35.15)], crs=4326
+    )
+    state_frames = [
+        pd.DataFrame(
+            {
+                "year": [2015, 2016],
+                "zcta": ["38103", "38103"],
+                "trct": ["47157000100", "47157000100"],
+                "jobs": [100, 120],
+            }
+        )
+    ]
+    return state_frames, zctas, tracts, 32616
+
+
+def test_lodes_panel_task_full_grid_zero_fills_absent_zctas() -> None:
+    """A metro ZCTA absent from every WAC year gets job_count=0 rows (absence =
+    zero jobs, matching employment_features_task); the output is exactly the
+    |ZCTAs| x |years| grid, stable-sorted, with int job_count and positive
+    accessibility everywhere."""
+    from src.pipelines.panel import lodes_panel_task
+
+    out = lodes_panel_task.fn(*_lodes_panel_inputs(["38103", "38104"]))
+
+    assert list(out.columns) == ["ZCTA5CE", "year", "job_count", "job_accessibility"]
+    assert len(out) == 4                                   # 2 ZCTAs x 2 years
+    assert out["job_count"].dtype.kind == "i"
+    grid = out.set_index(["ZCTA5CE", "year"])["job_count"]
+    assert grid.loc[("38103", 2015)] == 100
+    assert grid.loc[("38103", 2016)] == 120
+    assert grid.loc[("38104", 2015)] == 0                  # absent from WAC -> 0
+    assert grid.loc[("38104", 2016)] == 0
+    assert (out["job_accessibility"] > 0).all()
+    assert out.equals(
+        out.sort_values(["ZCTA5CE", "year"], kind="stable", ignore_index=True)
+    )
+
+
+def test_lodes_panel_task_rejects_duplicated_zctas() -> None:
+    """A duplicated metro ZCTA must raise loudly (memphis dup-rows regression),
+    never silently multiply or collapse grid rows."""
+    from src.pipelines.panel import lodes_panel_task
+
+    with pytest.raises(pd.errors.MergeError):
+        lodes_panel_task.fn(*_lodes_panel_inputs(["38103", "38103", "38104"]))
+
+
+def test_acs_commute_2019_task_filters_renames_sorts() -> None:
+    from src.pipelines.panel import acs_commute_2019_task
+
+    acs_df = pd.DataFrame(
+        {
+            "ZCTA5CE": ["85001", "38104", "38103"],
+            "commute_min_proxy": [20.0, 30.0, 24.5],
+            "ttw_total": [900, 800, 1500],
+        }
+    )
+    zctas_in_metro = pd.DataFrame({"ZCTA5CE": ["38104", "38103"]})
+
+    out = acs_commute_2019_task.fn(acs_df, zctas_in_metro)
+
+    assert list(out.columns) == [
+        "ZCTA5CE", "commute_min_proxy_2019", "ttw_total_2019",
+    ]
+    assert list(out["ZCTA5CE"]) == ["38103", "38104"]      # filtered + sorted
+    assert list(out["commute_min_proxy_2019"]) == [24.5, 30.0]
+    assert list(out["ttw_total_2019"]) == [1500, 800]

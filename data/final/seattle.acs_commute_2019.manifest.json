@@ -1,6 +1,6 @@
 {
   "metro_key": "seattle",
-  "kind": "zori_panel",
+  "kind": "acs_commute_2019",
   "metro_config": {
     "cbsa_code": "42660",
     "counties": [
@@ -34,29 +34,24 @@
   "run_timestamp_utc": "2026-07-18T01:48:06.693091+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "acs": "https://api.census.gov/data/2019/acs/acs5",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_seattle.csv",
-  "row_count": 10323,
+  "output_csv": "acs_commute_2019_seattle.csv",
+  "row_count": 149,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "commute_min_proxy_2019",
+      "dtype": "Float64"
     },
     {
-      "name": "zori",
-      "dtype": "Float64"
+      "name": "ttw_total_2019",
+      "dtype": "Int64"
     }
   ],
-  "sha256": "912a315a9b706edb9fb0b0991fc6c9c14ca64b6c4cffb384718c788e48d5a556",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 125,
-  "pull_timestamp_utc": "2026-07-18T01:48:06.693091+00:00"
+  "sha256": "9e0318f659c9f479a2295a6a779c0d337a00db1b89e79d473ab4d9a4a4f2e821"
 }

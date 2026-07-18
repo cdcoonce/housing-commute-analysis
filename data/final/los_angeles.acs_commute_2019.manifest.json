@@ -1,6 +1,6 @@
 {
   "metro_key": "los_angeles",
-  "kind": "zori_panel",
+  "kind": "acs_commute_2019",
   "metro_config": {
     "cbsa_code": "31080",
     "counties": [
@@ -27,29 +27,24 @@
   "run_timestamp_utc": "2026-07-18T01:44:08.791599+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "acs": "https://api.census.gov/data/2019/acs/acs5",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_los_angeles.csv",
-  "row_count": 17969,
+  "output_csv": "acs_commute_2019_los_angeles.csv",
+  "row_count": 267,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "commute_min_proxy_2019",
+      "dtype": "Float64"
     },
     {
-      "name": "zori",
-      "dtype": "Float64"
+      "name": "ttw_total_2019",
+      "dtype": "Int64"
     }
   ],
-  "sha256": "1b7adeb3b22a550580f61024a7ac9fe264a984980f6768c651bb4647d7704c77",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 246,
-  "pull_timestamp_utc": "2026-07-18T01:44:08.791599+00:00"
+  "sha256": "08b2da7d5361852a3b2565efb8cde9801507a200d00283224e5bdbc50f51ee88"
 }

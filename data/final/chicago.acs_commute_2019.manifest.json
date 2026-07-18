@@ -1,6 +1,6 @@
 {
   "metro_key": "chicago",
-  "kind": "zori_panel",
+  "kind": "acs_commute_2019",
   "metro_config": {
     "cbsa_code": "16980",
     "counties": [
@@ -48,29 +48,24 @@
   "run_timestamp_utc": "2026-07-18T01:47:29.848325+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "acs": "https://api.census.gov/data/2019/acs/acs5",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_chicago.csv",
-  "row_count": 9950,
+  "output_csv": "acs_commute_2019_chicago.csv",
+  "row_count": 289,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "commute_min_proxy_2019",
+      "dtype": "Float64"
     },
     {
-      "name": "zori",
-      "dtype": "Float64"
+      "name": "ttw_total_2019",
+      "dtype": "Int64"
     }
   ],
-  "sha256": "5a30744e6e4cb7cd0d607d46bb2b0b0fe12eff60713ed7487d6de480e1f74674",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 204,
-  "pull_timestamp_utc": "2026-07-18T01:47:29.848325+00:00"
+  "sha256": "73bc31f5961161f111d0c2c176ff2bc430d990cec33effd090594c2621fc6c24"
 }

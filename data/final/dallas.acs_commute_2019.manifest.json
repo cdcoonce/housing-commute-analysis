@@ -1,6 +1,6 @@
 {
   "metro_key": "dallas",
-  "kind": "zori_panel",
+  "kind": "acs_commute_2019",
   "metro_config": {
     "cbsa_code": "19100",
     "counties": [
@@ -43,29 +43,24 @@
   "run_timestamp_utc": "2026-07-18T01:45:30.870460+00:00",
   "cbsa_vintage": "ACS 2024",
   "source_urls": {
-    "zori": "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv",
+    "acs": "https://api.census.gov/data/2019/acs/acs5",
     "tiger": "https://tigerweb.geo.census.gov/arcgis/rest/services (CBSA/ZCTA/tract)"
   },
-  "output_csv": "zori_panel_dallas.csv",
-  "row_count": 13888,
+  "output_csv": "acs_commute_2019_dallas.csv",
+  "row_count": 186,
   "columns": [
     {
       "name": "ZCTA5CE",
       "dtype": "Int64"
     },
     {
-      "name": "period",
-      "dtype": "String"
+      "name": "commute_min_proxy_2019",
+      "dtype": "Float64"
     },
     {
-      "name": "zori",
-      "dtype": "Float64"
+      "name": "ttw_total_2019",
+      "dtype": "Int64"
     }
   ],
-  "sha256": "9f6fcf5da8f68a82bbde1d9afea8c52ed707565403877dec07ac63c677f3ebab",
-  "period_min": "2015-01-31",
-  "period_max": "2026-06-30",
-  "n_months": 138,
-  "n_zctas": 177,
-  "pull_timestamp_utc": "2026-07-18T01:45:30.870460+00:00"
+  "sha256": "875dabeb4b2373aa3e913f9553fdfddd25a162e9cf7469eb645059c911ea117e"
 }
