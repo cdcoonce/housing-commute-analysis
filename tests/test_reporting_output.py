@@ -78,6 +78,14 @@ def test_report_rq4_writes_summary_with_caveats_and_figures(
     assert (fig / "rq4_phx_event_study.png").exists()
     assert (fig / "rq4_phx_gradient_phases.png").exists()
 
+    # renter-share-weighted Spec A robustness: clearly-labeled table with the
+    # design section 4 weight spec and one-line estimand guidance, while the
+    # unweighted estimand honesty rail stays verbatim
+    assert "renter-share-weighted" in text
+    assert "renter_share" in text and "total_pop" in text
+    assert "renter-prevalence-weighted" in text
+    assert "not renter-weighted" in text  # existing estimand rail intact
+
 
 def test_save_markdown_table_writes_heading(tmp_path: Path) -> None:
     p = tmp_path / "t.md"

@@ -229,6 +229,76 @@ def test_rq4_flags_thin_identification(sample_panel_fixtures_thin) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Renter-share-weighted Spec A robustness (design section 4 diagnostics:
+# weights = renter_share x total_pop from the 35-column file)
+# ---------------------------------------------------------------------------
+
+
+def test_rq4_weighted_robustness_present_and_documented(
+    sample_panel_fixtures,
+) -> None:
+    """The joint Spec A model carries a renter-share-weighted robustness
+    entry (nested like transition_drop), with the weight spec and the
+    weighted-estimand interpretation documented on the dict."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    joint = r.gradient_model_joint
+
+    weighted = joint["weighted_renter"]
+    assert set(weighted["coefs"]) == set(GRADIENT_X_2019)
+    for var in GRADIENT_X_2019:
+        for key in ("post1_coef", "post1_se", "post1_pvalue",
+                    "post2_coef", "post2_se", "post2_pvalue"):
+            assert np.isfinite(weighted["coefs"][var][key])
+    # same estimation sample as the headline joint model
+    assert weighted["n_obs"] == joint["n_obs"]
+    assert weighted["n_units"] == joint["n_units"]
+    # weight spec follows the design section 4 wording exactly
+    assert "renter_share" in weighted["weight_spec"]
+    assert "total_pop" in weighted["weight_spec"]
+    # estimand guidance: weighted = renter-prevalence-weighted repricing
+    assert "renter" in weighted["estimand_note"].lower()
+    assert "weight" in weighted["estimand_note"].lower()
+
+
+def test_rq4_weighted_robustness_differs_from_unweighted(
+    sample_panel_fixtures,
+) -> None:
+    """With genuinely varying renter weights the weighted estimand must not
+    silently collapse to the unweighted one (a weights-ignored regression
+    would make the two blocks identical)."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    joint = r.gradient_model_joint
+    unw = [
+        joint["coefs"][v][f"{p}_coef"]
+        for v in GRADIENT_X_2019 for p in ("post1", "post2")
+    ]
+    wtd = [
+        joint["weighted_renter"]["coefs"][v][f"{p}_coef"]
+        for v in GRADIENT_X_2019 for p in ("post1", "post2")
+    ]
+    assert not np.allclose(unw, wtd, rtol=1e-10, atol=0.0)
+
+
+@pytest.mark.parametrize("bad_value", [0.0, float("nan")])
+def test_rq4_weighted_degenerate_weights_raise_naming_zcta(
+    sample_panel_fixtures, bad_value: float
+) -> None:
+    """A ZCTA with a zero/NaN renter weight must fail loudly BY NAME, not
+    silently drop or propagate NaN into the weighted fit."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    cross_bad = cross.with_columns(
+        pl.when(pl.col("ZCTA5CE") == "85001")
+        .then(pl.lit(bad_value))
+        .otherwise(pl.col("renter_share"))
+        .alias("renter_share")
+    )
+    with pytest.raises(ValueError, match="85001"):
+        analyze_rq4(cross_bad, zp, lp, acs)
+
+
+# ---------------------------------------------------------------------------
 # Task 18: event study + Specs C / C-med / D
 # ---------------------------------------------------------------------------
 
