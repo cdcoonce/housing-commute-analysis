@@ -29,6 +29,24 @@ const TCRIT = 1.96;
 let DATA = null;
 let metro = "DEN";
 let model = "joint";
+let measure = "commute";
+const GEO_CACHE = {};
+
+const MEASURES = {
+  commute: { label: "Commute time (2019)", unit: "min", key: "commute" },
+  dist: { label: "Distance to CBD", unit: "km", key: "dist" },
+  logacc: { label: "Log job accessibility (2019)", unit: "", key: "logacc" },
+};
+/* Sequential single-hue ramps, monotonic lightness (dark mode: more = lighter). */
+const RAMP = {
+  light: ["#e3edf9", "#bcd4f0", "#8fb6e6", "#5f96da", "#3573c2", "#1a55a0"],
+  dark: ["#223048", "#28466e", "#2f5d95", "#3f7ac1", "#659de0", "#9ec4f0"],
+};
+const isDark = () => {
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t) return t === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs = {}, text) => {
@@ -232,8 +250,8 @@ function renderCoefPlot() {
       /* dot: filled = significant, hollow ring = not */
       const dot = svgEl("circle", {
         cx: x(r.coef), cy, r: 5.5,
-        fill: sig ? color : "var(--surface-1)",
-        stroke: sig ? "var(--surface-1)" : "var(--deemph)",
+        fill: sig ? color : "var(--surface-page)",
+        stroke: sig ? "var(--surface-page)" : "var(--deemph)",
         "stroke-width": 2,
       });
       svg.appendChild(dot);
@@ -363,8 +381,8 @@ function esPanel(m, v) {
     }
     svg.appendChild(svgEl("circle", {
       cx: xs(i), cy: yv(r.coef), r: 3.6,
-      fill: r.bin_order === 0 ? "var(--surface-1)" : "var(--accent)",
-      stroke: r.bin_order === 0 ? "var(--zero)" : "var(--surface-1)",
+      fill: r.bin_order === 0 ? "var(--surface-page)" : "var(--accent)",
+      stroke: r.bin_order === 0 ? "var(--zero)" : "var(--surface-page)",
       "stroke-width": 1.5,
     }));
   });
@@ -429,10 +447,140 @@ function renderEsTable(m) {
   host.appendChild(wrap);
 }
 
+/* ---------------- choropleth map ---------------- */
+async function loadGeo(code) {
+  const key = code.toLowerCase();
+  if (!GEO_CACHE[key]) {
+    const r = await fetch(`data/geo_${key}.json`);
+    GEO_CACHE[key] = await r.json();
+  }
+  return GEO_CACHE[key];
+}
+
+function rampColor(t) {
+  const stops = RAMP[isDark() ? "dark" : "light"];
+  const x = Math.max(0, Math.min(1, t)) * (stops.length - 1);
+  const i = Math.min(Math.floor(x), stops.length - 2);
+  const f = x - i;
+  const hex = (h) => [1, 3, 5].map((j) => parseInt(h.slice(j, j + 2), 16));
+  const a = hex(stops[i]), b = hex(stops[i + 1]);
+  const c = a.map((v, j) => Math.round(v + (b[j] - v) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+async function renderMap() {
+  const mCode = metro;
+  const geo = await loadGeo(mCode);
+  if (metro !== mCode) return; // metro switched while loading
+  const host = $("#map");
+  host.replaceChildren();
+
+  const vals = geo.features.map((f) => f.properties[measure]).filter((v) => v != null);
+  const vmin = Math.min(...vals), vmax = Math.max(...vals);
+  const t = (v) => (vmax > vmin ? (v - vmin) / (vmax - vmin) : 0.5);
+
+  /* equirectangular fit with cos-latitude x correction */
+  let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
+  const eachCoord = (coords, cb) => {
+    if (typeof coords[0] === "number") return cb(coords);
+    for (const c of coords) eachCoord(c, cb);
+  };
+  for (const f of geo.features) eachCoord(f.geometry.coordinates, ([lon, lat]) => {
+    if (lon < minLon) minLon = lon; if (lon > maxLon) maxLon = lon;
+    if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+  });
+  const cosLat = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+  const W = 720, H = 560, pad = 10;
+  const spanX = (maxLon - minLon) * cosLat, spanY = maxLat - minLat;
+  const scale = Math.min((W - 2 * pad) / spanX, (H - 2 * pad) / spanY);
+  const ox = (W - spanX * scale) / 2, oy = (H - spanY * scale) / 2;
+  const px = (lon) => ox + (lon - minLon) * cosLat * scale;
+  const py = (lat) => H - oy - (lat - minLat) * scale;
+
+  const svg = svgEl("svg", { class: "map-svg", viewBox: `0 0 ${W} ${H}`, role: "img",
+    "aria-label": `${DATA.metros[metro].name} ZCTA map, ${MEASURES[measure].label}` });
+
+  /* hatch pattern for uncovered ZCTAs */
+  const defs = svgEl("defs");
+  const pat = svgEl("pattern", { id: "hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  pat.appendChild(svgEl("rect", { width: 6, height: 6, fill: "var(--surface-muted)" }));
+  pat.appendChild(svgEl("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "var(--border-inactive)", "stroke-width": 2 }));
+  defs.appendChild(pat);
+  svg.appendChild(defs);
+
+  const ringToPath = (ring) => ring.map((c, i) => `${i ? "L" : "M"}${px(c[0]).toFixed(1)},${py(c[1]).toFixed(1)}`).join("") + "Z";
+  for (const f of geo.features) {
+    const p = f.properties;
+    const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+    const d = polys.map((poly) => poly.map(ringToPath).join("")).join("");
+    const v = p[measure];
+    const fill = p.covered && v != null ? rampColor(t(v)) : "url(#hatch)";
+    const path = svgEl("path", {
+      d, fill, stroke: "var(--surface-page)", "stroke-width": 0.7, "fill-rule": "evenodd",
+    });
+    path.addEventListener("mousemove", (e) => showTip(
+      `<b>ZCTA ${p.z}</b> · ${p.covered ? "covered" : "not in the ZORI panel"}<br>` +
+      `Commute 2019: <b>${p.commute ?? "—"}</b> min<br>` +
+      `CBD distance: <b>${p.dist ?? "—"}</b> km<br>` +
+      `Log job access: <b>${p.logacc ?? "—"}</b>`,
+      e.clientX, e.clientY));
+    path.addEventListener("mouseleave", hideTip);
+    svg.appendChild(path);
+  }
+  host.appendChild(svg);
+
+  /* side legend */
+  const side = $("#map-side");
+  side.replaceChildren();
+  const mm = MEASURES[measure];
+  side.appendChild(el("h3", {}, mm.label + (mm.unit ? ` (${mm.unit})` : "")));
+  const ramp = el("span", { class: "ramp", role: "img", "aria-label": "color ramp low to high" });
+  ramp.style.background = `linear-gradient(90deg, ${RAMP[isDark() ? "dark" : "light"].join(",")})`;
+  side.appendChild(ramp);
+  const rl = el("div", { class: "ramp-labels" });
+  rl.appendChild(el("span", {}, fmt(vmin, measure === "logacc" ? 1 : 0)));
+  rl.appendChild(el("span", {}, fmt(vmax, measure === "logacc" ? 1 : 0)));
+  side.appendChild(rl);
+  const nCov = geo.features.filter((f) => f.properties.covered).length;
+  const hk = el("div", { class: "hatch-key" });
+  const sw = el("span", { class: "sw" });
+  sw.style.background = "repeating-linear-gradient(45deg, transparent 0 3px, var(--border-inactive) 3px 5px)";
+  hk.appendChild(sw);
+  hk.appendChild(el("span", {}, `uncovered (${geo.features.length - nCov} of ${geo.features.length} ZCTAs)`));
+  side.appendChild(hk);
+  side.appendChild(el("p", {}, "Geometry: Census cartographic boundaries (1:500k, simplified). Values shown for covered areas; hatched areas sit outside every estimate."));
+
+  renderMapTable(geo);
+}
+
+function renderMapTable(geo) {
+  const host = $("#map-table");
+  host.replaceChildren();
+  const wrap = el("div", { class: "twrap" });
+  const table = el("table");
+  const head = el("tr");
+  for (const h of ["ZCTA", "Covered", "Commute 2019 (min)", "CBD distance (km)", "Log job access"]) head.appendChild(el("th", {}, h));
+  table.appendChild(head);
+  const feats = [...geo.features].sort((a, b) => a.properties.z.localeCompare(b.properties.z));
+  for (const f of feats) {
+    const p = f.properties;
+    const tr = el("tr");
+    tr.appendChild(el("td", {}, p.z));
+    tr.appendChild(el("td", {}, p.covered ? "yes" : "no"));
+    tr.appendChild(el("td", {}, p.commute == null ? "—" : String(p.commute)));
+    tr.appendChild(el("td", {}, p.dist == null ? "—" : String(p.dist)));
+    tr.appendChild(el("td", {}, p.logacc == null ? "—" : String(p.logacc)));
+    table.appendChild(tr);
+  }
+  wrap.appendChild(table);
+  host.appendChild(wrap);
+}
+
 /* ---------------- shell ---------------- */
 function renderAll() {
   renderSwitcher();
   renderVerdict();
+  renderMap();
   renderCoefPlot();
   renderEventStudy();
 }
@@ -447,12 +595,24 @@ document.addEventListener("click", (e) => {
   renderCoefPlot();
 });
 
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".measure-chip");
+  if (!b) return;
+  measure = b.dataset.measure;
+  document.querySelectorAll(".measure-chip").forEach((c) => {
+    c.classList.toggle("is-on", c === b);
+    c.setAttribute("aria-checked", String(c === b));
+  });
+  renderMap();
+});
+
 $("#theme-toggle").addEventListener("click", () => {
   const root = document.documentElement;
   const cur = root.getAttribute("data-theme");
   const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const next = cur ? (cur === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
   root.setAttribute("data-theme", next);
+  renderMap(); // ramp fills are literal colors, not CSS vars
 });
 
 fetch("data/rq4.json")

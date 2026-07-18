@@ -35,6 +35,27 @@
   <section class="panel">
     <div class="panel-head">
       <div>
+        <h2>The gradients on the ground</h2>
+        <p class="sub">Every ZCTA in the metro, colored by the pre-COVID gradient measure the regressions
+        interact with the break. Hatched areas never clear Zillow's listing-volume threshold — they are
+        outside the covered rental submarket and outside every estimate on this page.</p>
+      </div>
+      <div class="controls" role="radiogroup" aria-label="Map measure" id="measure-switch">
+        <button class="chip sm measure-chip is-on" data-measure="commute" type="button">Commute time</button>
+        <button class="chip sm measure-chip" data-measure="dist" type="button">Distance to CBD</button>
+        <button class="chip sm measure-chip" data-measure="logacc" type="button">Job accessibility</button>
+      </div>
+    </div>
+    <div class="map-wrap">
+      <div id="map" aria-live="polite"></div>
+      <aside class="map-side" id="map-side"></aside>
+    </div>
+    <details class="tableview"><summary>View as table</summary><div id="map-table"></div></details>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
         <h2>Two-phase repricing of the gradient</h2>
         <p class="sub">Interaction of each pre-COVID (2019-vintage) gradient measure with the disruption phase
         (Post1, 2020-03…2021-12) and the return-to-office phase (Post2, 2022-01+), on log rent with
