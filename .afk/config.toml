@@ -19,7 +19,14 @@ scripts/rebuild_gate.py) unless the issue explicitly says so."""
 max_retries = 2
 timeout_seconds = 1800
 
+# Required since the driver's model-alias validation: default_tier resolves to
+# 'cheap', so model.cheap must be set. Mirrors orbit-wars/claude-workflow.
+[model]
+cheap = "sonnet"
+frontier = "opus"
+default_tier = "cheap"
+
 # Scheduled --cycle: read-only producers + decomposer (picks up decompose:ready
 # parents like #18). Proposals stay human-gated (`proposed`).
 [cycle]
-producers = ["scout", "harvest", "decompose"]
+producers = ["scout", "harvest", "expand"]
