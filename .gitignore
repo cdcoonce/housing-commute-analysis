@@ -88,3 +88,10 @@ cache/
 *.bak
 *.tmp
 
+
+# afk runtime state (machine-local). config.toml is the tracked repo-level afk
+# config; everything below is per-machine scratch regenerated on every run.
+# Mirrors afk-agent-system's root .gitignore convention.
+.afk/worktrees/
+.afk/transcripts/
+.afk/conductor/
