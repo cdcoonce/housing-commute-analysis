@@ -176,10 +176,3 @@ ZORI_ZIP_CSV_URL = "https://files.zillowstatic.com/research/public_csvs/zori/Zip
 # (look-ahead at the break we estimate) — see design doc §4 "Index choice".
 # Verified live 2026-07-17 (~9.8 MB).
 ZORI_PANEL_CSV_URL = "https://files.zillowstatic.com/research/public_csvs/zori/Zip_zori_uc_sfrcondomfr_sm_month.csv"
-
-# Overpass transit feature filters (OpenStreetMap)
-OSM_TRANSIT_NODE_FILTER = '["public_transport"~"platform|stop|station"]'
-OSM_TRANSIT_FALLBACK = '["highway"="bus_stop"]'
-
-# Output filename (includes metro name)
-FINAL_ZCTA_OUT = DATA_FINAL / f"final_zcta_dataset_{SELECTED_METRO}.csv"
