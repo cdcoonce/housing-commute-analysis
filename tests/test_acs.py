@@ -229,16 +229,28 @@ _ZCTA_COUNTS = {
 }
 
 
-def _b08303_payload(nested: bool) -> list[list[str]]:
-    """Fake Census API JSON: header row + one row per ZCTA (string cells)."""
+def _b08303_payload(
+    nested: bool, sentinels: dict[str, dict[str, int]] | None = None
+) -> list[list[str]]:
+    """Fake Census API JSON: header row + one row per ZCTA (string cells).
+
+    ``sentinels`` optionally overrides raw cell values per ZCTA, keyed by
+    ZCTA5 string mapping a ``_B08303_VARS`` column name to the raw value to
+    substitute (e.g. a negative Census jam code). Default None is a no-op.
+    """
     geo_cols = ["state", "zip code tabulation area"] if nested else [
         "zip code tabulation area"
     ]
     header = _B08303_CODES + geo_cols
+    col_names = list(acs._B08303_VARS.keys())
     rows = []
     for zcta, counts in _ZCTA_COUNTS.items():
+        values = list(counts)
+        overrides = (sentinels or {}).get(zcta, {})
+        for col_name, raw_value in overrides.items():
+            values[col_names.index(col_name)] = raw_value
         geo = ["04", zcta] if nested else [zcta]
-        rows.append([str(c) for c in counts] + geo)
+        rows.append([str(c) for c in values] + geo)
     return [header] + rows
 
 
@@ -320,6 +332,43 @@ class TestFetchAcsCommuteZcta:
 
         assert "85002" not in set(out["ZCTA5CE"])
         assert out["commute_min_proxy"].notna().all()
+
+    def test_negative_sentinel_bin_and_total_dropped(self, monkeypatch) -> None:
+        """A negative Census jam value in a B08303 bin, or in ttw_total
+        itself, must drop that ZCTA rather than flow into commute_min_proxy
+        (issue #101) — mirrors the negative-guard in compute_acs_features."""
+        sentinels = {
+            "85001": {"ttw_45_59": -666666666},  # bin sentinel
+            "601": {"ttw_total": -666666666},  # ttw_total sentinel
+            "85002": {"ttw_total": 20, "ttw_lt5": 20},  # clean (was zero-worker)
+        }
+        session = _FakeSession(
+            [_FakeResponse(_b08303_payload(nested=True, sentinels=sentinels))]
+        )
+        monkeypatch.setattr(acs, "_get_session", lambda: session)
+
+        out = fetch_acs_commute_zcta("04", 2019)
+
+        zctas = set(out["ZCTA5CE"])
+        assert "85001" not in zctas
+        assert "00601" not in zctas
+        assert "85002" in zctas
+        assert out["commute_min_proxy"].notna().all()
+
+    def test_negative_sentinel_non_literal_jam_value_dropped(
+        self, monkeypatch
+    ) -> None:
+        """The guard must be a negativity range test, not an equality check
+        against -666666666 — Census uses several negative jam values."""
+        sentinels = {"85001": {"ttw_20_24": -999999999}}
+        session = _FakeSession(
+            [_FakeResponse(_b08303_payload(nested=True, sentinels=sentinels))]
+        )
+        monkeypatch.setattr(acs, "_get_session", lambda: session)
+
+        out = fetch_acs_commute_zcta("04", 2019)
+
+        assert "85001" not in set(out["ZCTA5CE"])
 
     def test_national_fallback_when_state_nesting_rejected(
         self, monkeypatch

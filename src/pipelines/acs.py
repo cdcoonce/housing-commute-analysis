@@ -337,9 +337,11 @@ def fetch_acs_commute_zcta(
     Returns:
         DataFrame with columns ZCTA5CE (str, zero-padded to 5),
         commute_min_proxy (float, sum(bin_count x midpoint) / ttw_total using
-        TTW_MIDPOINTS), ttw_total (int). ZCTAs with zero workers (or
-        unparseable counts) are dropped — mirroring the division guard in
-        compute_acs_features. Stable-sorted by ZCTA5CE.
+        TTW_MIDPOINTS), ttw_total (int). ZCTAs with zero workers, with any
+        negative B08303 value (Census jam/annotation codes, e.g.
+        -666666666), or with unparseable counts are dropped — mirroring the
+        negative-guard and division guard in compute_acs_features.
+        Stable-sorted by ZCTA5CE.
 
     Raises:
         ValueError: If state_fips or year is invalid
@@ -392,6 +394,10 @@ def fetch_acs_commute_zcta(
     )
     for col in _B08303_VARS:
         ttw[col] = pd.to_numeric(ttw[col], errors="coerce")
+
+    # Replace Census null codes (negative values) with NA
+    for col in _B08303_VARS:
+        ttw.loc[ttw[col] < 0, col] = pd.NA
 
     ttw["ZCTA5CE"] = ttw["zip code tabulation area"].astype(str).str.zfill(5)
 
