@@ -129,7 +129,9 @@ def zcta_transit_density(
                 if 'InsufficientResponseError' not in error_type and 'EmptyOverpassResponse' not in error_type:
                     # Only log unexpected errors, not "no data found" errors
                     if not isinstance(e, (ConnectionError, TimeoutError)):
-                        pass  # Silent failure for fallback query
+                        logger.warning(
+                            f"Error querying OSM fallback for ZCTA {zcta_row['ZCTA5CE']}: {error_type}: {e}"
+                        )
                 transit_features = gpd.GeoDataFrame(geometry=[], crs=4326)
         
         # Project to UTM for accurate spatial calculations (only if features exist)
