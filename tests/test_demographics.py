@@ -4,10 +4,12 @@ Covers demographic percentage computation and FIPS validation
 in fetch_demographics_for_county.
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from src.pipelines.demographics import (
+    aggregate_demographics_to_zcta,
     compute_demographic_percentages,
     fetch_demographics_for_county,
 )
@@ -79,6 +81,90 @@ class TestComputeDemographicPercentages:
 
         for col in pct_cols:
             assert zero_pop_row[col].iloc[0] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# aggregate_demographics_to_zcta
+# ---------------------------------------------------------------------------
+
+
+def _tract_to_zcta(geoids: list[str], zcta: str = "85001") -> pd.DataFrame:
+    """Map every tract in geoids to a single ZCTA."""
+    return pd.DataFrame({"GEOID": geoids, "ZCTA5CE": [zcta] * len(geoids)})
+
+
+def _demo_rows(geoids: list[str], total_pop: list[int], median_income: list[float]) -> pd.DataFrame:
+    """Minimal tract-level demographics input for aggregate_demographics_to_zcta.
+
+    pct_* columns are filled with 0 since these tests target median_income only.
+    """
+    n = len(geoids)
+    return pd.DataFrame({
+        "GEOID": geoids,
+        "total_pop": total_pop,
+        "pct_hispanic": [0.0] * n,
+        "pct_white": [0.0] * n,
+        "pct_black": [0.0] * n,
+        "pct_asian": [0.0] * n,
+        "pct_other": [0.0] * n,
+        "median_income": median_income,
+    })
+
+
+class TestAggregateDemographicsToZcta:
+    """Tests for population-weighted median_income aggregation (issue #80)."""
+
+    def test_null_median_income_excluded_from_denominator(self) -> None:
+        """A NaN median_income tract must not dilute the weighted mean."""
+        geoids = ["04013100100", "04013100200"]
+        demo = _demo_rows(geoids, total_pop=[1000, 1000], median_income=[100000.0, np.nan])
+        tract_map = _tract_to_zcta(geoids)
+
+        result = aggregate_demographics_to_zcta(demo, tract_map)
+
+        assert result["median_income"].iloc[0] == 100000.0
+
+    def test_sentinel_median_income_excluded(self) -> None:
+        """Census suppression sentinel -666666666 must not corrupt the weighted mean."""
+        geoids = ["04013100100", "04013100200"]
+        demo = _demo_rows(geoids, total_pop=[1000, 1000], median_income=[100000.0, -666666666])
+        tract_map = _tract_to_zcta(geoids)
+
+        result = aggregate_demographics_to_zcta(demo, tract_map)
+
+        assert result["median_income"].iloc[0] == 100000.0
+
+    def test_all_null_median_income_yields_nan(self) -> None:
+        """A ZCTA with no valid median_income observations should be NaN, not 0."""
+        geoids = ["04013100100", "04013100200"]
+        demo = _demo_rows(geoids, total_pop=[1000, 1000], median_income=[np.nan, -666666666])
+        tract_map = _tract_to_zcta(geoids)
+
+        result = aggregate_demographics_to_zcta(demo, tract_map)
+
+        assert pd.isna(result["median_income"].iloc[0])
+
+    def test_pct_hispanic_weighted_mean_unaffected(self) -> None:
+        """Percentage weighting is unchanged: null-handling is scoped to median_income only."""
+        geoids = ["04013100100", "04013100200"]
+        demo = _demo_rows(geoids, total_pop=[1000, 3000], median_income=[50000.0, 50000.0])
+        demo["pct_hispanic"] = [20.0, 60.0]
+        tract_map = _tract_to_zcta(geoids)
+
+        result = aggregate_demographics_to_zcta(demo, tract_map)
+
+        assert result["pct_hispanic"].iloc[0] == 50.0
+
+    def test_pct_hispanic_zero_pop_fallback_unchanged(self) -> None:
+        """A ZCTA whose total_pop sums to 0 keeps the pre-existing 0.0 fallback."""
+        geoids = ["04013100100", "04013100200"]
+        demo = _demo_rows(geoids, total_pop=[0, 0], median_income=[50000.0, 50000.0])
+        demo["pct_hispanic"] = [20.0, 60.0]
+        tract_map = _tract_to_zcta(geoids)
+
+        result = aggregate_demographics_to_zcta(demo, tract_map)
+
+        assert result["pct_hispanic"].iloc[0] == 0.0
 
 
 # ---------------------------------------------------------------------------

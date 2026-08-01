@@ -6,6 +6,7 @@ suitable for equity analysis and demographic segmentation.
 """
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from .config import CENSUS_API_KEY
@@ -205,16 +206,25 @@ def aggregate_demographics_to_zcta(
         .sort_values("GEOID", kind="stable", ignore_index=True)
     )
 
+    # Census encodes suppressed B19013 median_income as a large negative sentinel
+    # (-666666666). Treat it as missing so it can't drag the weighted mean negative.
+    demo_with_zcta.loc[demo_with_zcta["median_income"] < 0, "median_income"] = np.nan
+
     # For each ZCTA, calculate population-weighted averages
     # Population weighting ensures larger tracts contribute proportionally to ZCTA metrics,
     # avoiding bias from small-population tracts with extreme values
-    def weighted_mean(group: pd.DataFrame, value_col: str) -> float:
-        """Calculate population-weighted mean: sum(value_i * pop_i) / sum(pop_i)."""
+    def weighted_mean(group: pd.DataFrame, value_col: str, empty_result: float = 0.0) -> float:
+        """Calculate population-weighted mean: sum(value_i * pop_i) / sum(pop_i).
+
+        Null values are excluded from both the numerator and denominator so a
+        missing observation doesn't dilute the mean toward zero.
+        """
         weights = group["total_pop"]
         values = group[value_col]
-        # Return 0 if total population is 0 to avoid division by zero
-        return (values * weights).sum() / weights.sum() if weights.sum() > 0 else 0
-    
+        mask = values.notna()
+        valid_weight = weights[mask].sum()
+        return (values * weights).sum() / valid_weight if valid_weight > 0 else empty_result
+
     # Group by ZCTA and aggregate
     zcta_demographics = demo_with_zcta.groupby("ZCTA5CE").apply(
         lambda group: pd.Series({
@@ -224,7 +234,7 @@ def aggregate_demographics_to_zcta(
             "pct_black": weighted_mean(group, "pct_black"),
             "pct_asian": weighted_mean(group, "pct_asian"),
             "pct_other": weighted_mean(group, "pct_other"),
-            "median_income": weighted_mean(group, "median_income"),
+            "median_income": weighted_mean(group, "median_income", empty_result=float("nan")),
         }),
         include_groups=False
     ).reset_index()
