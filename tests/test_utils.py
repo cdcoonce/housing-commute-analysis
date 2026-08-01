@@ -5,10 +5,12 @@ import gzip
 from unittest.mock import MagicMock, patch
 
 import geopandas as gpd
+import pytest
+import requests
 from urllib3.util.retry import Retry
 
 import src.pipelines.utils as utils
-from src.pipelines.utils import _get_session, esri_geojson_to_gdf
+from src.pipelines.utils import _get_session, esri_geojson_to_gdf, http_json_to_dict
 
 
 def test_get_session_has_retry():
@@ -113,3 +115,98 @@ def test_http_csv_to_df_gzip_passthrough(monkeypatch) -> None:
     )
     assert df["w_geocode"][0] == "040130001001000"  # str dtype preserved leading zero
     assert df["C000"][0] == 42
+
+
+def _stub_json_response(
+    content: bytes, url: str, status_code: int = 200, content_type: str = "application/json"
+) -> requests.Response:
+    response = requests.Response()
+    response.status_code = status_code
+    response.url = url
+    response.headers["Content-Type"] = content_type
+    response._content = content
+    return response
+
+
+class _StubJsonSession:
+    def __init__(self, response: requests.Response) -> None:
+        self._response = response
+
+    def get(self, url: str, params=None, timeout: int = 180):
+        return self._response
+
+
+def test_http_json_to_dict_non_json_response_names_url_status_content_type_and_body(
+    monkeypatch,
+) -> None:
+    url = "https://example.com/api"
+    response = _stub_json_response(
+        b"<html><title>Service Unavailable</title></html>",
+        url=url,
+        status_code=200,
+        content_type="text/html",
+    )
+    monkeypatch.setattr(utils, "_get_session", lambda: _StubJsonSession(response))
+
+    with pytest.raises(requests.exceptions.JSONDecodeError) as exc_info:
+        http_json_to_dict(url)
+
+    message = str(exc_info.value)
+    assert url in message
+    assert "200" in message
+    assert "text/html" in message
+    assert "Service Unavailable" in message
+
+
+def test_http_json_to_dict_non_json_response_truncates_body(monkeypatch) -> None:
+    url = "https://example.com/api"
+    response = _stub_json_response(
+        b"x" * 5000, url=url, status_code=200, content_type="text/html"
+    )
+    monkeypatch.setattr(utils, "_get_session", lambda: _StubJsonSession(response))
+
+    with pytest.raises(requests.exceptions.JSONDecodeError) as exc_info:
+        http_json_to_dict(url)
+
+    message = str(exc_info.value)
+    assert len(message) < 1000
+    assert "x" * 5000 not in message
+
+
+def test_http_json_to_dict_non_json_response_preserves_valueerror_and_requestexception(
+    monkeypatch,
+) -> None:
+    url = "https://example.com/api"
+    response = _stub_json_response(
+        b"<html></html>", url=url, status_code=200, content_type="text/html"
+    )
+    monkeypatch.setattr(utils, "_get_session", lambda: _StubJsonSession(response))
+
+    with pytest.raises(requests.exceptions.JSONDecodeError) as exc_info:
+        http_json_to_dict(url)
+
+    assert isinstance(exc_info.value, ValueError)
+    assert isinstance(exc_info.value, requests.RequestException)
+
+
+def test_http_json_to_dict_non_json_response_sets_cause(monkeypatch) -> None:
+    url = "https://example.com/api"
+    response = _stub_json_response(
+        b"<html></html>", url=url, status_code=200, content_type="text/html"
+    )
+    monkeypatch.setattr(utils, "_get_session", lambda: _StubJsonSession(response))
+
+    with pytest.raises(requests.exceptions.JSONDecodeError) as exc_info:
+        http_json_to_dict(url)
+
+    assert isinstance(exc_info.value.__cause__, requests.exceptions.JSONDecodeError)
+
+
+def test_http_json_to_dict_valid_json_returned_unchanged(monkeypatch) -> None:
+    url = "https://example.com/api"
+    response = _stub_json_response(b'{"a": 1, "b": [2, 3]}', url=url)
+    monkeypatch.setattr(utils, "_get_session", lambda: _StubJsonSession(response))
+
+    result = http_json_to_dict(url)
+
+    assert result == {"a": 1, "b": [2, 3]}

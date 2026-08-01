@@ -115,7 +115,16 @@ def http_json_to_dict(url: str, params: dict | None = None) -> dict | list:
     """
     response = _get_session().get(url, params=params, timeout=180)
     response.raise_for_status()
-    return response.json()
+    try:
+        return response.json()
+    except requests.exceptions.JSONDecodeError as exc:
+        content_type = response.headers.get("Content-Type", "unknown")
+        body_excerpt = response.text[:200]
+        message = (
+            f"Non-JSON response from {url}: status={response.status_code}, "
+            f"content-type={content_type}, body={body_excerpt!r}"
+        )
+        raise requests.exceptions.JSONDecodeError(message, exc.doc, exc.pos) from exc
 
 
 def esri_geojson_to_gdf(url: str, params: dict) -> gpd.GeoDataFrame:
