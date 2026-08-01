@@ -27,7 +27,7 @@ def fetch_demographics_for_county(
     Args:
         state_fips: 2-digit state FIPS code (e.g., '04' for Arizona)
         county_fips: 3-digit county FIPS code (e.g., '013' for Maricopa)
-        year: ACS year to fetch (2015, 2017, 2019, or 2021). Defaults to 2021.
+        year: ACS year to fetch (2015, 2017, 2019, 2021, or 2023). Defaults to 2023.
         
     Returns:
         DataFrame with one row per census tract containing:
