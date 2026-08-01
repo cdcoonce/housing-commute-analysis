@@ -71,7 +71,7 @@ def analyze_rq3(df: pl.DataFrame) -> RQ3Results:
     )
 
     tier_summary = df.group_by('ACI_tier').agg([
-        pl.count().alias('n_zctas'),
+        pl.len().alias('n_zctas'),
         pl.col('ACI').mean().alias('mean_aci'),
         pl.col('ACI').min().alias('min_aci'),
         pl.col('ACI').max().alias('max_aci'),

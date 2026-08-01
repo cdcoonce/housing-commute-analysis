@@ -31,6 +31,14 @@ def test_analyze_rq3_quantile_keys(sample_zcta_df: pl.DataFrame) -> None:
     assert set(result.quantile_results.keys()).issubset({0.25, 0.5, 0.75})
 
 
+def test_tier_summary_n_zctas_counts_rows_per_tier(sample_zcta_df: pl.DataFrame) -> None:
+    result = analyze_rq3(sample_zcta_df)
+    ts = result.tier_summary
+    assert ts is not None
+    assert "n_zctas" in ts.columns
+    assert ts["n_zctas"].sum() == sample_zcta_df.height
+
+
 def test_rq3_includes_employment_candidates(sample_zcta_df: pl.DataFrame) -> None:
     result = analyze_rq3(sample_zcta_df)
     for name in ("job_density", "distance_to_cbd_km", "job_accessibility"):
