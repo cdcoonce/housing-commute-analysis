@@ -28,9 +28,14 @@ from src.models.results import RQ4Results
 from src.models.rq4_rent_dynamics import (
     GRADIENT_X_2019,
     MIN_MONTHS_PER_YEAR,
+    _repricing_consumed,
     analyze_rq4,
+    closing_projection,
     collapse_annual,
+    cumulative_repricing,
     event_time_bin,
+    is_significant_repricing,
+    phase_month_counts,
 )
 from src.pipelines.schema import (
     validate_acs_commute_2019,
@@ -90,6 +95,7 @@ def _minimal_rq4_results() -> RQ4Results:
         balanced_robustness={},
         entrant_composition=empty,
         flags=[],
+        repricing_consumed={},
     )
 
 
@@ -126,6 +132,7 @@ class TestRQ4ResultsContract:
             "balanced_robustness",
             "entrant_composition",
             "flags",
+            "repricing_consumed",
         }
         assert {f.name for f in dataclasses.fields(RQ4Results)} == expected
 
@@ -495,3 +502,203 @@ def test_rq4_mediation_share_bounded_and_labeled(sample_panel_fixtures) -> None:
     assert "robust" not in r.mediation["label"].lower()
     # per-variable shares for the full headline set
     assert set(r.mediation["share_by_x"]) == set(GRADIENT_X_2019)
+
+
+# ---------------------------------------------------------------------------
+# Issue #19: repricing consumed vs. the pre-COVID commute discount
+# ---------------------------------------------------------------------------
+
+
+class TestPhaseMonthCounts:
+    """Post1 is fixed at its full window; Post2 counts to the panel end."""
+
+    def test_post1_is_fixed_at_22_months(self) -> None:
+        counts = phase_month_counts(date(2026, 5, 31))
+        assert counts["post1"] == 22
+
+    def test_post2_counts_2022_01_through_panel_end_inclusive(self) -> None:
+        counts = phase_month_counts(date(2026, 5, 31))
+        assert counts["post2"] == 53  # 2022-01 .. 2026-05 inclusive
+
+    def test_post2_single_month(self) -> None:
+        counts = phase_month_counts(date(2022, 1, 31))
+        assert counts["post2"] == 1
+
+
+class TestCumulativeRepricing:
+    """Hand-computed accumulation arithmetic: phase months x coefficient."""
+
+    def test_hand_computed_accumulation(self) -> None:
+        # Denver-shaped numbers from docs/findings.md §10 Spec A.
+        phase_months = {"post1": 22, "post2": 53}
+        result = cumulative_repricing(0.0056, 0.0076, phase_months)
+        assert result == pytest.approx(0.0056 * 22 + 0.0076 * 53)
+        assert result == pytest.approx(0.5260, abs=1e-4)
+
+    def test_zero_coefficients_accumulate_to_zero(self) -> None:
+        assert cumulative_repricing(0.0, 0.0, {"post1": 22, "post2": 53}) == 0.0
+
+    def test_negative_post1_coefficient_reduces_cumulative(self) -> None:
+        phase_months = {"post1": 10, "post2": 5}
+        result = cumulative_repricing(-0.001, 0.002, phase_months)
+        assert result == pytest.approx(-0.001 * 10 + 0.002 * 5)
+        assert result == pytest.approx(0.0, abs=1e-9)
+
+
+class TestIsSignificantRepricing:
+    """Both-phase gate: Post1 AND Post2 must clear p < 0.05."""
+
+    @staticmethod
+    def _coefs(post1_pvalue: float, post2_pvalue: float) -> dict[str, float]:
+        return {
+            "post1_coef": 0.01, "post1_se": 0.001, "post1_pvalue": post1_pvalue,
+            "post2_coef": 0.01, "post2_se": 0.001, "post2_pvalue": post2_pvalue,
+        }
+
+    def test_both_significant(self) -> None:
+        assert is_significant_repricing(self._coefs(0.01, 0.02)) is True
+
+    def test_only_post1_significant(self) -> None:
+        assert is_significant_repricing(self._coefs(0.01, 0.5)) is False
+
+    def test_only_post2_significant(self) -> None:
+        assert is_significant_repricing(self._coefs(0.5, 0.01)) is False
+
+    def test_neither_significant(self) -> None:
+        assert is_significant_repricing(self._coefs(0.5, 0.6)) is False
+
+    def test_boundary_p_equals_alpha_is_not_significant(self) -> None:
+        assert is_significant_repricing(self._coefs(0.05, 0.01)) is False
+
+
+class TestClosingProjection:
+    """Naive linear projection of the closing date — never a forecast."""
+
+    def test_already_consumed_when_cumulative_exceeds_discount(self) -> None:
+        result = closing_projection(0.02, 0.03, 0.001, date(2026, 5, 31))
+        assert result["status"] == "already_consumed"
+
+    def test_already_consumed_at_exact_equality(self) -> None:
+        result = closing_projection(0.02, 0.02, 0.001, date(2026, 5, 31))
+        assert result["status"] == "already_consumed"
+
+    def test_not_closing_when_post2_rate_is_negative(self) -> None:
+        result = closing_projection(0.02, 0.01, -0.0005, date(2026, 5, 31))
+        assert result["status"] == "not_closing"
+
+    def test_not_closing_when_post2_rate_is_zero(self) -> None:
+        result = closing_projection(0.02, 0.01, 0.0, date(2026, 5, 31))
+        assert result["status"] == "not_closing"
+
+    def test_projected_close_date_hand_computed(self) -> None:
+        # remaining = 0.02 - 0.01 = 0.01; rate 0.002/month -> 5 months
+        result = closing_projection(0.02, 0.01, 0.002, date(2026, 5, 31))
+        assert result["status"] == "projected"
+        assert result["months_needed"] == pytest.approx(5.0)
+        assert result["projected_close_date"] == "2026-10-31"
+
+    def test_projected_close_date_rounds_up_fractional_months(self) -> None:
+        # remaining = 0.015; rate 0.01/month -> 1.5 months -> rounds up to 2
+        result = closing_projection(0.02, 0.005, 0.01, date(2026, 5, 31))
+        assert result["status"] == "projected"
+        assert result["months_needed"] == pytest.approx(1.5)
+        assert result["projected_close_date"] == "2026-07-31"
+
+
+class TestRepricingConsumedComposition:
+    """_repricing_consumed composes the gate, accumulation, and projection."""
+
+    @staticmethod
+    def _precovid(coef: float = -0.02) -> dict[str, float]:
+        return {"coef": coef, "se": 0.002, "pvalue": 0.001, "n_zctas": 50}
+
+    def test_insignificant_metro_reports_null_note(self) -> None:
+        coefs = {
+            "post1_coef": 0.001, "post1_se": 0.002, "post1_pvalue": 0.6,
+            "post2_coef": 0.001, "post2_se": 0.002, "post2_pvalue": 0.7,
+        }
+        result = _repricing_consumed(
+            self._precovid(), coefs, {"post1": 22, "post2": 53}, date(2026, 5, 31)
+        )
+        assert result["significant"] is False
+        assert "note" in result
+        assert "cumulative_repricing" not in result
+        assert "share_consumed" not in result
+
+    def test_significant_metro_reports_share_and_projection(self) -> None:
+        coefs = {
+            "post1_coef": 0.0056, "post1_se": 0.001, "post1_pvalue": 0.0001,
+            "post2_coef": 0.0076, "post2_se": 0.001, "post2_pvalue": 0.0001,
+        }
+        phase_months = {"post1": 22, "post2": 53}
+        result = _repricing_consumed(
+            self._precovid(coef=-1.0), coefs, phase_months, date(2026, 5, 31)
+        )
+        assert result["significant"] is True
+        expected_cumulative = cumulative_repricing(0.0056, 0.0076, phase_months)
+        assert result["cumulative_repricing"] == pytest.approx(expected_cumulative)
+        assert result["share_consumed"] == pytest.approx(expected_cumulative / 1.0)
+        assert result["projection"]["status"] == "projected"
+
+    def test_zero_precovid_gradient_yields_no_discount_note(self) -> None:
+        coefs = {
+            "post1_coef": 0.0056, "post1_se": 0.001, "post1_pvalue": 0.0001,
+            "post2_coef": 0.0076, "post2_se": 0.001, "post2_pvalue": 0.0001,
+        }
+        result = _repricing_consumed(
+            self._precovid(coef=0.0), coefs, {"post1": 22, "post2": 53},
+            date(2026, 5, 31),
+        )
+        assert result["share_consumed"] is None
+        assert result["projection"]["status"] == "no_precovid_discount"
+        # (b) still reports even when (c)/(d) are withheld
+        assert np.isfinite(result["cumulative_repricing"])
+
+    def test_positive_insignificant_precovid_gradient_yields_no_discount_note(
+        self,
+    ) -> None:
+        """A Phoenix-shaped case: the 2019 cross-sectional gradient is small,
+        positive, and insignificant (p = 0.17) — no real discount exists to
+        divide cumulative repricing into, even though commute x Post1/Post2
+        both clear the repricing significance gate."""
+        coefs = {
+            "post1_coef": 0.0037, "post1_se": 0.001, "post1_pvalue": 0.01,
+            "post2_coef": 0.0048, "post2_se": 0.001, "post2_pvalue": 0.01,
+        }
+        result = _repricing_consumed(
+            self._precovid(coef=0.005), coefs, {"post1": 22, "post2": 53},
+            date(2026, 5, 31),
+        )
+        assert result["significant"] is True
+        assert result["share_consumed"] is None
+        assert result["projection"]["status"] == "no_precovid_discount"
+
+
+def test_rq4_repricing_consumed_gate_matches_significance(
+    sample_panel_fixtures,
+) -> None:
+    """analyze_rq4's repricing_consumed field must agree with
+    is_significant_repricing on whatever the fixture's collinearity actually
+    produces for the commute regressor (the fixture only plants a
+    distance_to_cbd_km effect, not a commute one, so the outcome is not
+    hardcoded here — see plan Task 20 note)."""
+    cross, zp, lp, acs = sample_panel_fixtures
+    r = analyze_rq4(cross, zp, lp, acs)
+    rc = r.repricing_consumed
+    commute_coefs = r.gradient_model_joint["coefs"]["commute_min_proxy_2019"]
+
+    assert rc["significant"] == is_significant_repricing(commute_coefs)
+    assert "precovid_gradient" in rc
+    assert np.isfinite(rc["precovid_gradient"]["coef"])
+    assert rc["phase_months"]["post1"] == 22
+    assert rc["phase_months"]["post2"] > 0
+
+    if rc["significant"]:
+        assert np.isfinite(rc["cumulative_repricing"])
+        assert rc["share_consumed"] is None or np.isfinite(rc["share_consumed"])
+        assert rc["projection"]["status"] in {
+            "already_consumed", "not_closing", "projected",
+            "no_precovid_discount",
+        }
+    else:
+        assert "note" in rc

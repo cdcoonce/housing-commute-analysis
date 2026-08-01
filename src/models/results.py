@@ -221,6 +221,14 @@ class RQ4Results:
         Mean of each gradient x for post-2019-12 entrants vs incumbents.
     flags : list[str]
         Quality flags, e.g. ``under_identified`` when n_identifying < 20.
+    repricing_consumed : dict[str, Any]
+        Issue #19 synthesis: how much of the pre-COVID cross-sectional
+        commute discount (``precovid_gradient``) the cumulative RQ4
+        repricing (``cumulative_repricing``, ``share_consumed``) has
+        consumed, plus a naive linear closing ``projection`` — reported
+        only when the commute regressor's Post1 AND Post2 coefficients are
+        both significant (``significant``); otherwise a ``note`` explains
+        the honest null.
     """
 
     gradient_model_joint: dict[str, Any]
@@ -245,3 +253,4 @@ class RQ4Results:
     balanced_robustness: dict[str, Any]
     entrant_composition: pl.DataFrame
     flags: list[str]
+    repricing_consumed: dict[str, Any]

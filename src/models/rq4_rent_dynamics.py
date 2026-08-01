@@ -82,7 +82,9 @@ loading the panel products itself so ``run_analysis`` can catch
 """
 from __future__ import annotations
 
+import calendar
 import logging
+import math
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -155,6 +157,15 @@ GRADIENT_X_2021 = (
 
 #: Deterministic seed for every bootstrap draw in this module.
 _BOOT_SEED = 20260717
+
+#: Significance gate for the repricing-consumed synthesis (issue #19): both
+#: phases' commute x Post coefficients must clear this alpha under the
+#: conventional clustered inference before (c)/(d) are reported.
+REPRICING_SIGNIFICANCE_ALPHA = 0.05
+
+#: Headline regressor for the repricing-consumed synthesis (issue #19) — the
+#: commute gradient itself, not distance or access.
+REPRICING_VARIABLE = "commute_min_proxy_2019"
 
 
 def _estimation_frame(
@@ -467,6 +478,213 @@ def _entrant_composition(
         for var in GRADIENT_X_2019
     ]
     return pl.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Repricing vs. the pre-COVID commute discount (issue #19)
+# ---------------------------------------------------------------------------
+
+
+def _precovid_gradient(
+    zori_panel: pl.DataFrame, acs2019_df: pl.DataFrame
+) -> dict[str, Any]:
+    """Pre-COVID cross-sectional commute gradient on log ZORI (issue #19).
+
+    OLS of each covered ZCTA's mean log(ZORI) over calendar-year 2019 on the
+    pre-COVID ACS commute-minute proxy, HC1-robust SE. Covered ZCTAs only
+    (inner join on the ZORI panel's 2019 rows) — this is the pre-COVID
+    discount the cumulative RQ4 repricing (:func:`cumulative_repricing`) is
+    measured against.
+    """
+    zori_2019 = (
+        zori_panel.with_columns(
+            pl.col("period").str.to_date("%Y-%m-%d").dt.year().alias("year"),
+            pl.col("zori").log().alias("log_zori"),
+        )
+        .filter(pl.col("year") == 2019)
+        .group_by("ZCTA5CE")
+        .agg(pl.col("log_zori").mean().alias("log_zori_2019"))
+    )
+    merged = zori_2019.join(
+        acs2019_df.select("ZCTA5CE", "commute_min_proxy_2019"),
+        on="ZCTA5CE",
+        how="inner",
+    ).drop_nulls()
+    y = merged["log_zori_2019"].to_numpy()
+    x = merged["commute_min_proxy_2019"].to_numpy()
+    fit = sm.OLS(y, sm.add_constant(x)).fit(cov_type="HC1")
+    return {
+        "coef": float(fit.params[1]),
+        "se": float(fit.bse[1]),
+        "pvalue": float(fit.pvalues[1]),
+        "n_zctas": merged.height,
+    }
+
+
+def phase_month_counts(panel_end: date) -> dict[str, int]:
+    """Post1/Post2 month counts for the repricing accumulation (issue #19).
+
+    Post1 is fixed at its full ``POST1_START..POST1_END`` window (22
+    months, independent of the estimation frame); Post2 runs from
+    ``POST2_START`` through ``panel_end`` inclusive.
+    """
+    def _n_months(lo: date, hi: date) -> int:
+        return (hi.year * 12 + hi.month) - (lo.year * 12 + lo.month) + 1
+
+    return {
+        "post1": _n_months(POST1_START, POST1_END),
+        "post2": _n_months(POST2_START, panel_end),
+    }
+
+
+def cumulative_repricing(
+    post1_coef: float, post2_coef: float, phase_months: dict[str, int]
+) -> float:
+    """Cumulative repricing per commute-minute (issue #19).
+
+    The naive accumulation the issue specifies: each phase's interaction
+    coefficient is treated as a per-month rate and multiplied by that
+    phase's month count from :func:`phase_month_counts`.
+    """
+    return (
+        post1_coef * phase_months["post1"] + post2_coef * phase_months["post2"]
+    )
+
+
+def is_significant_repricing(coefs: dict[str, float]) -> bool:
+    """Both-phase significance gate (issue #19): Post1 AND Post2 clear
+    ``REPRICING_SIGNIFICANCE_ALPHA`` under the conventional clustered
+    inference. Metros that fail this gate report an honest null instead of
+    a share-consumed/projection (acceptance criterion 5)."""
+    return (
+        coefs["post1_pvalue"] < REPRICING_SIGNIFICANCE_ALPHA
+        and coefs["post2_pvalue"] < REPRICING_SIGNIFICANCE_ALPHA
+    )
+
+
+def _add_months(d: date, months: float) -> date:
+    """Month-end date ``months`` (fractional, rounded up) after ``d``."""
+    total = d.year * 12 + (d.month - 1) + math.ceil(months)
+    year, month0 = divmod(total, 12)
+    month = month0 + 1
+    return date(year, month, calendar.monthrange(year, month)[1])
+
+
+def closing_projection(
+    discount: float, cumulative: float, post2_coef: float, panel_end: date
+) -> dict[str, Any]:
+    """Naive linear projection of the closing date (issue #19) — explicitly
+    NOT a forecast: it extrapolates the Post2 rate forward from the panel
+    end date, assuming it persists unchanged, to find when cumulative
+    repricing would fully consume the pre-COVID discount magnitude.
+
+    Parameters
+    ----------
+    discount : float
+        Pre-COVID discount magnitude (``abs`` of the cross-sectional
+        gradient coefficient).
+    cumulative : float
+        Cumulative repricing consumed through ``panel_end``
+        (:func:`cumulative_repricing`).
+    post2_coef : float
+        The Post2 phase interaction coefficient — the rate assumed to
+        persist beyond the panel end.
+    panel_end : date
+        Last retained month of the estimation sample.
+    """
+    remaining = discount - cumulative
+    if remaining <= 0.0:
+        return {
+            "status": "already_consumed",
+            "note": (
+                "cumulative repricing already exceeds the pre-COVID discount "
+                "magnitude as of the panel end date; already closed, not a "
+                "future projection"
+            ),
+        }
+    if post2_coef <= 0.0:
+        return {
+            "status": "not_closing",
+            "note": (
+                "the Post2 rate does not move toward closing the discount; "
+                "no closing date is projected"
+            ),
+        }
+    months_needed = remaining / post2_coef
+    return {
+        "status": "projected",
+        "months_needed": months_needed,
+        "projected_close_date": _add_months(panel_end, months_needed).isoformat(),
+        "note": (
+            "naive linear extrapolation of the Post2 rate beyond the panel "
+            "end date — a projection, not a forecast"
+        ),
+    }
+
+
+def _repricing_consumed(
+    precovid: dict[str, Any],
+    coefs: dict[str, float],
+    phase_months: dict[str, int],
+    panel_end: date,
+) -> dict[str, Any]:
+    """Compose the pre-COVID gradient, cumulative repricing, share consumed,
+    and closing projection for the headline commute regressor (issue #19).
+
+    Two honest-null gates, matching the RQ1 threshold's double-guard style
+    (:func:`rq1_housing_commute_tradeoff.estimate_threshold`):
+
+    1. Metros whose commute x Post coefficients do not both clear the
+       significance gate report a null note instead of (b)/(c)/(d)
+       (acceptance criterion 5 — Memphis stays under-identified).
+    2. Metros whose 2019 cross-sectional gradient is not a significant
+       *negative* coefficient have no real discount to divide into —
+       dividing cumulative repricing by a near-zero or wrong-signed
+       baseline would produce a meaningless (or wildly inflated) share, so
+       (c)/(d) are withheld with a distinct null note while (b) still
+       reports.
+    """
+    result: dict[str, Any] = {
+        "precovid_gradient": precovid,
+        "phase_months": phase_months,
+        "significant": is_significant_repricing(coefs),
+    }
+    if not result["significant"]:
+        result["note"] = (
+            "no significant repricing to accumulate: commute x Post1/Post2 "
+            "are not both significant under the conventional clustered "
+            "inference"
+        )
+        return result
+
+    cumulative = cumulative_repricing(
+        coefs["post1_coef"], coefs["post2_coef"], phase_months
+    )
+    result["cumulative_repricing"] = cumulative
+
+    has_discount = (
+        precovid["coef"] < 0.0
+        and precovid["pvalue"] < REPRICING_SIGNIFICANCE_ALPHA
+    )
+    if not has_discount:
+        result["share_consumed"] = None
+        result["projection"] = {
+            "status": "no_precovid_discount",
+            "note": (
+                "no significant pre-COVID commute discount to compare "
+                "against: the 2019 cross-sectional gradient on log ZORI is "
+                "not a significant negative coefficient, so share consumed "
+                "and the closing projection are undefined"
+            ),
+        }
+        return result
+
+    discount = abs(precovid["coef"])
+    result["share_consumed"] = cumulative / discount
+    result["projection"] = closing_projection(
+        discount, cumulative, coefs["post2_coef"], panel_end
+    )
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1054,6 +1272,17 @@ def analyze_rq4(
         frame, lodes_panel
     )
 
+    # --- repricing vs. the pre-COVID commute discount (issue #19) -----------
+    precovid_gradient = _precovid_gradient(zori_panel, acs2019_df)
+    panel_end = frame["period_date"].max()
+    phase_months = phase_month_counts(panel_end)
+    repricing_consumed = _repricing_consumed(
+        precovid_gradient,
+        joint["coefs"][REPRICING_VARIABLE],
+        phase_months,
+        panel_end,
+    )
+
     # --- diagnostics + sample accounting (strictest headline sample) --------
     n_pre_months = frame_headline.filter(
         pl.col("period_date") < POST1_START
@@ -1095,6 +1324,7 @@ def analyze_rq4(
         balanced_robustness=balanced_robustness,
         entrant_composition=_entrant_composition(frame_all, first_seen),
         flags=flags,
+        repricing_consumed=repricing_consumed,
     )
 
 
@@ -1215,6 +1445,37 @@ def _plot_gradient_phases(
     plt.close(fig)
 
 
+def _plot_repricing_consumed(rc: dict[str, Any], fig_path: Path) -> None:
+    """Share-consumed figure (issue #19): pre-COVID commute discount
+    magnitude vs. cumulative repricing consumed, or an honest-null
+    annotation when the commute regressor fails the significance gate."""
+    fig, ax = plt.subplots(figsize=(5.0, 4.0))
+    if not rc["significant"]:
+        ax.text(
+            0.5, 0.5, "no significant repricing\nto accumulate",
+            ha="center", va="center", fontsize=11, transform=ax.transAxes,
+        )
+        ax.set_xticks([])
+        ax.set_yticks([])
+    else:
+        discount = abs(rc["precovid_gradient"]["coef"])
+        cumulative = abs(rc["cumulative_repricing"])
+        ax.bar(
+            ["Pre-COVID\ndiscount", "Cumulative\nrepricing"],
+            [discount, cumulative],
+            color=["0.6", "tab:blue"],
+        )
+        ax.set_ylabel("log-points per commute-minute")
+        share = rc["share_consumed"]
+        ax.set_title(
+            f"Share consumed: {share:.0%}" if share is not None
+            else "Share consumed: n/a"
+        )
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=150)
+    plt.close(fig)
+
+
 def _write_caveats_block(f: Any, results: RQ4Results) -> None:
     """The mandatory honesty rails (design section 4 caveats + section 6)."""
     cov = results.coverage
@@ -1311,8 +1572,10 @@ def report_rq4(
 
     es_fig = fig_dir / f"rq4_{metro.lower()}_event_study.png"
     phases_fig = fig_dir / f"rq4_{metro.lower()}_gradient_phases.png"
+    repricing_fig = fig_dir / f"rq4_{metro.lower()}_repricing_consumed.png"
     _plot_event_study(results.event_study, es_fig)
     _plot_gradient_phases(joint, pooled, phases_fig)
+    _plot_repricing_consumed(results.repricing_consumed, repricing_fig)
 
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(f"# RQ4: ZORI Rent Dynamics — {METRO_NAMES[metro]}\n\n")
@@ -1546,6 +1809,55 @@ def report_rq4(
         md_path,
         "Spec D — long differences",
     )
+
+    # --- repricing vs. the pre-COVID commute discount (issue #19) -----------
+    rc = results.repricing_consumed
+    pg = rc["precovid_gradient"]
+    with open(md_path, "a", encoding="utf-8") as f:
+        f.write("## Repricing vs. the pre-COVID commute discount\n\n")
+        f.write(
+            "How much of the pre-COVID cross-sectional commute discount has "
+            "the cumulative RQ4 repricing consumed? Pre-COVID discount: OLS "
+            "of each covered ZCTA's mean 2019 log ZORI on the ACS-2019 "
+            "commute-minute proxy (HC1-robust SE). Cumulative repricing: "
+            "the commute x Post1/Post2 coefficients above, each treated as "
+            "a naive per-month rate and multiplied by its phase's month "
+            f"count (Post1 fixed at {rc['phase_months']['post1']} months; "
+            f"Post2 {rc['phase_months']['post2']} months through the panel "
+            "end). Reported only when the commute x Post1 AND Post2 "
+            "coefficients are both significant under the conventional "
+            "clustered inference.\n\n"
+        )
+        f.write(
+            f"Pre-COVID gradient: {_fmt(pg['coef'])} log-points/minute "
+            f"(SE {_fmt(pg['se'])}, p {_fmt_p(pg['pvalue'])}, "
+            f"{pg['n_zctas']} covered ZCTAs, 2019 cross-section).\n\n"
+        )
+        if not rc["significant"]:
+            f.write(f"**{rc['note']}**\n\n")
+        else:
+            share = rc["share_consumed"]
+            f.write(
+                f"Cumulative repricing consumed: "
+                f"**{_fmt(rc['cumulative_repricing'])}** log-points/minute"
+                + (
+                    f" — **{share:.1%}** of the pre-COVID discount.\n\n"
+                    if share is not None
+                    else ".\n\n"
+                )
+            )
+            proj = rc["projection"]
+            if proj["status"] == "projected":
+                f.write(
+                    "Naive linear projection (NOT a forecast) if the Post2 "
+                    f"rate persists: closes around "
+                    f"**{proj['projected_close_date']}** "
+                    f"(~{proj['months_needed']:.1f} months past the panel "
+                    "end).\n\n"
+                )
+            else:
+                f.write(f"{proj['note']}.\n\n")
+        f.write(f"![repricing consumed]({repricing_fig.name})\n\n")
 
     # --- coverage + mandatory caveats ---------------------------------------
     cov = results.coverage

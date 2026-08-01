@@ -351,6 +351,34 @@ The committed panel deliberately uses the **non-seasonally-adjusted** ZORI serie
 
 The design's promised renter-share-weighted variant (weights = renter_share × total_pop, i.e. each ZCTA's cross-sectional renter count) is now shipped (2026-07-18) and reported in every metro's Spec A robustness section. It answers a different estimand — renter-prevalence-weighted repricing rather than the average covered ZCTA — and it changes no qualitative verdict: the strong metros hold or strengthen (Denver commute × Post2 0.0076 → 0.0087, Atlanta 0.0136 → 0.0140, both p < 0.0001; Phoenix strengthens on all three regressors), the nulls stay null (Memphis all-insignificant, Miami and LA commute effects remain flat), and no coefficient changes sign. The one notable movement is Chicago's commute × Post1, which attenuates to p = 0.15 under weighting while its Post2 coefficient strengthens (0.0039, p = 0.0007) — the Post2-era commute repricing there is, if anything, concentrated in renter-heavy ZCTAs.
 
+### Repricing vs. the Pre-COVID Commute Discount (issue #19)
+
+Joining §3's cross-sectional commute discount to §10's repricing rate: how much of the pre-COVID commute-minute rent discount has the RQ4 repricing consumed by mid-2026, and — if it persists — when does it close? Two numbers per metro: (a) the **pre-COVID discount**, a fresh cross-sectional regression of each covered ZCTA's mean 2019 log ZORI on the ACS-2019 commute-minute proxy (HC1-robust SE) — not the §3 rent-to-income model, but the same log-rent-on-commute logic applied to ZORI levels; and (b) **cumulative repricing**, the commute × Post1/Post2 coefficients from the Spec A table above, each treated as a naive per-month rate and multiplied by its phase's month count (Post1 fixed at 22 months; Post2 53 months, running 2022-01 through the panel end of 2026-05). Share consumed (c) = b/a; a naive linear closing-date projection (d) extrapolates the Post2 rate forward — explicitly a projection, not a forecast.
+
+Two honest-null gates apply before (b)–(d) are reported, mirroring §3's threshold double-guard (concave *and* in-range): first, commute × Post1 **and** Post2 must both be significant under the conventional clustered inference (acceptance criterion 5 — this is the same gate the Spec A table already carries); second, the pre-COVID gradient itself must be a significant *negative* coefficient, because dividing cumulative repricing by a near-zero or wrong-signed baseline produces a meaningless (or wildly inflated) ratio. A metro can clear the first gate and still fail the second — the pre-COVID discount and the post-COVID repricing are two independent draws that happen not to agree in every metro.
+
+| Metro | Pre-COVID gradient | Repricing gate (commute × Post1 & Post2) | Cumulative repricing | Share consumed | Closing projection |
+|-------|--------------------:|:-----------------------------------------:|----------------------:|----------------:|---------------------|
+| Phoenix | +0.0050 (p = 0.1672) | Passes | 0.3331 | — | no significant pre-COVID discount |
+| Los Angeles | −0.0264 (p < 0.0001) | Fails | — | — | no significant repricing to accumulate |
+| Dallas-Fort Worth | −0.0026 (p = 0.5831) | Fails | — | — | no significant repricing to accumulate |
+| Memphis † | +0.0320 (p = 0.0233) | Fails (under-identified) | — | — | no significant repricing to accumulate |
+| Denver | −0.0022 (p = 0.7522) | Passes | 0.5231 | — | no significant pre-COVID discount |
+| Atlanta | −0.0134 (p < 0.0001) | Passes | 0.8885 | 6648.2% | already consumed |
+| Chicago | −0.0355 (p < 0.0001) | Passes | 0.2908 | 818.3% | already consumed |
+| Seattle | −0.0087 (p = 0.0774) | Fails | — | — | no significant repricing to accumulate |
+| Miami | −0.0041 (p = 0.1071) | Fails | — | — | no significant repricing to accumulate |
+
+Units are log-points per commute-minute, matching the Spec A table. † Memphis is under-identified (see above); its row is for completeness only.
+
+- **Only Atlanta and Chicago clear both gates**, and in both the naive cumulative repricing overshoots the pre-COVID discount by one to two orders of magnitude (66.5× and 8.2×) rather than landing near 100%. Read this as a diagnostic of the naive per-month-rate accumulation, not a literal "the discount closed sixty-six times over": the module docstring is explicit that Post1/Post2 are dummy-interaction level shifts, not slopes, so multiplying a level shift by its phase's month count overstates any process that is actually front-loaded (a level jump early in the phase) rather than a smooth monthly drift. The honest reading is directional — repricing has moved well past the point of fully offsetting the small pre-COVID gradient in these two metros — not a precise multiple.
+- **Phoenix and Denver pass the repricing gate but fail the discount gate**: both have significant, persistent commute × Post1/Post2 repricing, but their 2019 cross-sectional commute-ZORI relationship is not itself a significant discount (Phoenix's point estimate is even the wrong sign). There is real repricing in these metros; there just isn't a well-identified pre-COVID baseline to measure it against.
+- **The other five metros (LA, DFW, Memphis, Seattle, Miami) fail the repricing gate outright** — consistent with their Spec A verdicts above (LA and DFW's repricing is access-led, not commute-led; Seattle and Miami show pre-trend drift or no effect; Memphis is under-identified) — and print the honest null rather than a fabricated share.
+- **No metro produces a live closing-date projection**: every non-null result is either already past 100% (naive terms) or has no baseline to project from. The projection machinery (tested against hand-computed fixtures) is exercised and ready, but the mid-2026 data simply does not produce a case still approaching closure under this naive treatment.
+- **Estimand caveats carry over verbatim from the Spec A discussion above**: covered-ZCTA submarket only (not the uncovered periphery), within-metro relative description (no causal claim), and "repricing" as index movement (an amalgam of price and listed-unit composition change, not a pure price effect).
+
+Each metro's figure (`rq4_<metro>_repricing_consumed.png`) is committed under `figures/<METRO>/`; the same per-metro numbers are machine-written as prose into `data/processed/<METRO>/rq4_summary_<METRO>.md`, which `run_analysis.py` regenerates (that directory is a build artifact, not committed).
+
 ### Deferred
 
 The ACS-wave longitudinal panel (re-estimating RQ1/RQ3 across ACS vintages, §8.3) remains deferred, with a re-scope trigger at the 2022–2026 5-year ACS release (~Dec 2027) per issue #8. Also deferred per design §6: LODES 2024+ appends, dynamic-panel and spatial-lag estimators, Conley spatial-HAC SEs, ZORI tier/segment variants, and network travel-time distances.
