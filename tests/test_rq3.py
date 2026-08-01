@@ -37,3 +37,19 @@ def test_rq3_still_runs_without_employment_columns(sample_zcta_df: pl.DataFrame)
     result = analyze_rq3(df)
     assert result.aci_model is not None
     assert 'job_density' not in result.feature_names
+
+
+def test_quantile_results_converged_true_on_well_conditioned_fixture(
+    sample_zcta_df: pl.DataFrame,
+) -> None:
+    result = analyze_rq3(sample_zcta_df)
+    for tau, entry in result.quantile_results.items():
+        assert entry["converged"] is True, f"tau={tau} unexpectedly failed to converge"
+
+
+def test_quantile_results_converged_false_when_iteration_cap_hit(
+    sample_zcta_df: pl.DataFrame,
+) -> None:
+    df = sample_zcta_df.drop(["job_density", "distance_to_cbd_km", "job_accessibility"])
+    result = analyze_rq3(df)
+    assert any(entry["converged"] is False for entry in result.quantile_results.values())

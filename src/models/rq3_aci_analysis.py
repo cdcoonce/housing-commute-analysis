@@ -7,6 +7,7 @@ modeling, and generates visualizations including optional choropleth maps.
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -15,6 +16,7 @@ import numpy as np
 import polars as pl
 import statsmodels.api as sm
 from statsmodels.regression.quantile_regression import QuantReg
+from statsmodels.tools.sm_exceptions import IterationLimitWarning
 
 from .data_loader import METRO_NAMES
 from .models import cv_rmse, fit_ols_robust
@@ -131,8 +133,18 @@ def analyze_rq3(df: pl.DataFrame) -> RQ3Results:
 
         for tau in [0.25, 0.5, 0.75]:
             qr_model = QuantReg(y_aci_qr, x_aci_const)
-            qr_results = qr_model.fit(q=tau, max_iter=2000)
-            quantile_results[tau] = qr_results
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", IterationLimitWarning)
+                qr_results = qr_model.fit(q=tau, max_iter=2000)
+            converged = not any(
+                issubclass(w.category, IterationLimitWarning) for w in caught
+            )
+            quantile_results[tau] = {"result": qr_results, "converged": converged}
+            if not converged:
+                logger.warning(
+                    f"Quantile regression tau={tau} did not converge "
+                    f"within max_iter=2000 iterations"
+                )
             logger.info(f"Quantile tau={tau}: Pseudo R2 = {qr_results.prsquared:.4f}")
 
     return RQ3Results(
@@ -337,10 +349,13 @@ def report_rq3(
             'Quantile (tau)': [],
             'Pseudo R2': [],
             'stops_per_km2 Coef': [],
+            'Converged': [],
         }
-        for tau, qr_res in results.quantile_results.items():
+        for tau, qr_entry in results.quantile_results.items():
+            qr_res = qr_entry['result']
             qr_data['Quantile (tau)'].append(f"{tau:.2f}")
             qr_data['Pseudo R2'].append(f"{qr_res.prsquared:.4f}")
+            qr_data['Converged'].append('Yes' if qr_entry['converged'] else 'No (max_iter reached)')
 
             if 'stops_per_km2' in results.feature_names:
                 idx = results.feature_names.index('stops_per_km2') + 1

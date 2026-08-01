@@ -142,7 +142,9 @@ class RQ3Results:
     aci_model : dict[str, Any] | None
         OLS model output from fit_ols_robust().
     quantile_results : dict[float, Any]
-        Quantile regression results keyed by tau.
+        Quantile regression results keyed by tau. Each value is a dict with
+        keys ``"result"`` (the fitted ``QuantRegResults``) and ``"converged"``
+        (bool, False if the solver hit ``max_iter`` before converging).
     cv_rmse_aci : float | None
         5-fold CV-RMSE for the ACI model.
     tier_summary : pl.DataFrame | None
