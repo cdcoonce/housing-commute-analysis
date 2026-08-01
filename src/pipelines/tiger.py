@@ -281,66 +281,6 @@ def get_state_zctas(
 
     return zcta_data
 
-def get_state_tracts(
-    state_fips: str, 
-    county_list: list[str] | None = None
-) -> gpd.GeoDataFrame:
-    """Fetch census tract boundaries for a state or specific counties.
-    
-    Census tracts are small statistical subdivisions of a county, typically
-    containing 1,200-8,000 people. When county_list is provided, fetches tracts
-    county-by-county to avoid API response size limits for large states.
-    
-    Args:
-        state_fips: Two-digit state FIPS code (e.g., '04' for Arizona)
-        county_list: Optional list of 3-digit county FIPS codes. If provided,
-                    only tracts within these counties are returned. Recommended
-                    for large states to avoid API timeouts.
-                    
-    Returns:
-        GeoDataFrame with columns: GEOID (11-digit tract ID), STATE, COUNTY,
-        NAME, geometry. Empty GeoDataFrame if no tracts found.
-        
-    Raises:
-        requests.HTTPError: If the TIGER API request fails
-        
-    Note:
-        Querying entire state without county_list may fail for populous states
-        (e.g., California, Texas) due to API response size limits.
-    """
-    if county_list:
-        # Fetch tracts county-by-county to stay within API limits
-        tract_gdfs = []
-        for county_fips in county_list:
-            params = {
-                "where": f"STATE='{state_fips}' AND COUNTY='{county_fips}'",
-                "outFields": "GEOID,STATE,COUNTY,NAME",
-                "returnGeometry": "true",
-                "f": "geojson"
-            }
-            county_tracts = esri_geojson_to_gdf(TIGER_TRACTS_URL, params)
-            if not county_tracts.empty:
-                tract_gdfs.append(county_tracts)
-        
-        # Combine all counties or return empty GeoDataFrame
-        if tract_gdfs:
-            combined = pd.concat(tract_gdfs, ignore_index=True)
-            return gpd.GeoDataFrame(combined, crs="EPSG:4326")
-        return gpd.GeoDataFrame(
-            columns=["GEOID", "STATE", "COUNTY", "NAME", "geometry"],
-            geometry="geometry",
-            crs="EPSG:4326"
-        )
-    else:
-        # Fetch entire state at once (may fail for large states)
-        params = {
-            "where": f"STATE='{state_fips}'",
-            "outFields": "GEOID,STATE,COUNTY,NAME",
-            "returnGeometry": "true",
-            "f": "geojson"
-        }
-        return esri_geojson_to_gdf(TIGER_TRACTS_URL, params)
-
 
 def get_tracts_for_counties(
     counties: list[tuple[str, str]]
