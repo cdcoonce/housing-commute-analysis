@@ -83,6 +83,18 @@ def test_report_rq4_writes_summary_with_caveats_and_figures(
     # unweighted estimand honesty rail stays verbatim
     assert "renter-share-weighted" in text
     assert "renter_share" in text and "total_pop" in text
+
+    # issue #19: repricing-vs-discount section + figure, either the
+    # significant branch or the honest-null branch depending on what the
+    # fixture's collinearity actually produces for the commute regressor
+    assert "Repricing vs. the pre-COVID commute discount" in text
+    assert "Pre-COVID gradient" in text
+    rc = analyze_rq4(cross, zp, lp, acs).repricing_consumed
+    if rc["significant"]:
+        assert "Cumulative repricing consumed" in text
+    else:
+        assert rc["note"] in text
+    assert (fig / "rq4_phx_repricing_consumed.png").exists()
     assert "renter-prevalence-weighted" in text
     assert "not renter-weighted" in text  # existing estimand rail intact
 
