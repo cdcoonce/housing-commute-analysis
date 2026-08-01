@@ -1,16 +1,14 @@
 """Visualization utilities for DAT490 analysis.
 
-This module provides functions for creating diagnostic plots,
-scatter plots, boxplots, and other visualizations.
+This module provides functions for creating diagnostic plots.
 """
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import polars as pl
 import statsmodels.api as sm
 
 logger = logging.getLogger(__name__)
@@ -180,158 +178,3 @@ def plot_diagnostics(
     plt.close()
     
     logger.info(f"Saved 4 diagnostic plots with prefix '{prefix}'")
-
-
-def plot_correlation_matrix(
-    df: pl.DataFrame,
-    columns: List[str],
-    out_path: Path,
-    title: str = "Correlation Matrix"
-) -> None:
-    """
-    Create and save a Pearson correlation matrix heatmap with diverging colormap.
-    
-    Visualizes pairwise correlations between continuous variables using a
-    red-blue diverging colormap (RdBu_r). Useful for identifying multicollinearity
-    and relationships between predictors.
-    
-    Parameters
-    ----------
-    df : pl.DataFrame
-        Input DataFrame containing numeric columns.
-    columns : List[str]
-        Column names to include in correlation matrix. Non-existent columns
-        are silently skipped with a warning.
-    out_path : Path
-        Output file path for PNG (e.g., "figures/correlation_matrix.png").
-    title : str, default="Correlation Matrix"
-        Title text displayed above heatmap.
-    
-    Returns
-    -------
-    None
-        Saves correlation heatmap to out_path as PNG (300 DPI).
-    
-    Notes
-    -----
-    - Uses Pearson correlation coefficient (measures linear relationships)
-    - Colormap ranges from -1 (blue, perfect negative) to +1 (red, perfect positive)
-    - Silently returns if no valid columns are found (logs warning)
-    """
-    # Filter to available columns
-    available_cols = [c for c in columns if c in df.columns]
-    
-    if not available_cols:
-        logger.warning("No columns available for correlation matrix")
-        return
-    
-    # Compute correlation matrix
-    corr = df.select(available_cols).to_pandas().corr()
-    
-    # Create heatmap
-    fig, ax = plt.subplots(figsize=(8, 6))
-    im = ax.imshow(corr, interpolation='nearest', cmap='RdBu_r', vmin=-1, vmax=1)
-    
-    # Set ticks and labels
-    ax.set_xticks(range(len(corr.columns)))
-    ax.set_yticks(range(len(corr.index)))
-    ax.set_xticklabels(corr.columns, rotation=45, ha='right')
-    ax.set_yticklabels(corr.index)
-    
-    # Add colorbar
-    plt.colorbar(im, ax=ax)
-    ax.set_title(title)
-    
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    logger.info(f"Saved correlation matrix to {out_path}")
-
-
-def plot_boxplots_by_group(
-    df: pl.DataFrame,
-    value_col: str,
-    group_col: str,
-    groups: List[str],
-    out_path: Path,
-    title: str,
-    ylabel: str
-) -> None:
-    """
-    Create boxplots comparing a value across groups.
-    
-    Args:
-        df: Input DataFrame
-        value_col: Column containing values to plot
-        group_col: Column containing group labels
-        groups: Ordered list of group names
-        out_path: Output file path
-        title: Plot title
-        ylabel: Y-axis label
-    """
-    # Extract data for each group
-    data = []
-    for group in groups:
-        group_data = df.filter(pl.col(group_col) == group)[value_col].to_numpy()
-        data.append(group_data)
-    
-    # Create boxplot
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.boxplot(data, tick_labels=groups)
-    ax.set_xlabel('Group')
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    logger.info(f"Saved boxplot to {out_path}")
-
-
-def plot_scatter(
-    x: np.ndarray,
-    y: np.ndarray,
-    out_path: Path,
-    xlabel: str,
-    ylabel: str,
-    title: str,
-    fit_line: bool = False
-) -> None:
-    """
-    Create a scatter plot with optional fit line.
-    
-    Args:
-        x: X values
-        y: Y values
-        out_path: Output file path
-        xlabel: X-axis label
-        ylabel: Y-axis label
-        title: Plot title
-        fit_line: Whether to add OLS fit line
-    """
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(x, y, s=10, alpha=0.6)
-    
-    if fit_line:
-        # Fit simple OLS line
-        X_fit = sm.add_constant(x)
-        model = sm.OLS(y, X_fit).fit()
-        x_range = np.linspace(np.nanmin(x), np.nanmax(x), 100)
-        X_range = sm.add_constant(x_range)
-        y_pred = model.predict(X_range)
-        ax.plot(x_range, y_pred, 'r-', linewidth=2, label='OLS Fit')
-        ax.legend()
-    
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    logger.info(f"Saved scatter plot to {out_path}")
