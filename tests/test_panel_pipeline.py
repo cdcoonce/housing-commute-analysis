@@ -119,6 +119,63 @@ def test_committed_zcta_frame_missing_dataset_raises(monkeypatch, tmp_path) -> N
         panel.committed_zcta_frame("phoenix")
 
 
+def test_committed_zcta_geometries_id_filters_to_committed_universe() -> None:
+    """Non-committed ZCTAs (even ones ordered ahead of committed ones) are
+    dropped and the surviving rows are reindexed from 0."""
+    import src.pipelines.panel as panel
+
+    zctas_all = pd.DataFrame({"ZCTA5CE": ["38103", "85001", "90001", "85002"]})
+    universe = pd.DataFrame({"ZCTA5CE": ["85001", "85002"]})
+
+    out = panel.committed_zcta_geometries(zctas_all, universe)
+
+    assert list(out["ZCTA5CE"]) == ["85001", "85002"]
+    assert list(out.index) == [0, 1]
+
+
+def test_committed_zcta_geometries_zero_pads_integer_zcta5ce() -> None:
+    """Integer ZCTA5CE from the geometry pull is normalized to zero-padded
+    strings before matching against the (already-padded) committed universe."""
+    import src.pipelines.panel as panel
+
+    zctas_all = pd.DataFrame({"ZCTA5CE": [85001, 1234]})
+    universe = pd.DataFrame({"ZCTA5CE": ["85001", "01234"]})
+
+    out = panel.committed_zcta_geometries(zctas_all, universe)
+
+    assert set(out["ZCTA5CE"]) == {"85001", "01234"}
+
+
+def test_committed_zcta_geometries_missing_geometry_raises() -> None:
+    """A committed ZCTA absent from the geometry pull raises, naming the
+    count and the first missing IDs."""
+    import src.pipelines.panel as panel
+
+    zctas_all = pd.DataFrame({"ZCTA5CE": ["85001"]})
+    universe = pd.DataFrame({"ZCTA5CE": ["85001", "85002"]})
+
+    with pytest.raises(ValueError) as excinfo:
+        panel.committed_zcta_geometries(zctas_all, universe)
+
+    message = str(excinfo.value)
+    assert "1 committed ZCTAs have no geometry" in message
+    assert "['85002']" in message
+
+
+def test_committed_zcta_geometries_does_not_mutate_caller_frame() -> None:
+    """The caller's geometry frame is copied before normalization, not
+    mutated in place."""
+    import src.pipelines.panel as panel
+
+    zctas_all = pd.DataFrame({"ZCTA5CE": [85001, 1234]})
+    universe = pd.DataFrame({"ZCTA5CE": ["85001", "01234"]})
+    snapshot = zctas_all.copy(deep=True)
+
+    panel.committed_zcta_geometries(zctas_all, universe)
+
+    assert zctas_all.equals(snapshot)
+
+
 def test_build_panel_flow_scopes_by_committed_dataset_not_geometry() -> None:
     """Structural: the flow must not resolve the metro ZCTA SET from the
     geometric CBSA-filter tasks (out-of-dataset ZIPs would enter the panel).
