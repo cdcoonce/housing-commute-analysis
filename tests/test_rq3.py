@@ -1,9 +1,14 @@
 """Tests for RQ3 ACI analysis (pure analyze half)."""
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import polars as pl
+import pytest
+from statsmodels.tools.sm_exceptions import IterationLimitWarning
 
+import src.models.rq3_aci_analysis as rq3
 from src.models.results import RQ3Results
 from src.models.rq3_aci_analysis import analyze_rq3
 
@@ -48,8 +53,34 @@ def test_quantile_results_converged_true_on_well_conditioned_fixture(
 
 
 def test_quantile_results_converged_false_when_iteration_cap_hit(
-    sample_zcta_df: pl.DataFrame,
+    monkeypatch: pytest.MonkeyPatch, sample_zcta_df: pl.DataFrame
 ) -> None:
-    df = sample_zcta_df.drop(["job_density", "distance_to_cbd_km", "job_accessibility"])
-    result = analyze_rq3(df)
-    assert any(entry["converged"] is False for entry in result.quantile_results.values())
+    """A solver that hits its iteration cap is reported as not converged.
+
+    The cap is provoked by making ``QuantReg.fit`` emit the warning
+    statsmodels raises in that situation, rather than by feeding the solver an
+    ill-conditioned fixture and hoping it fails to converge. Whether a given
+    fixture actually exhausts ``max_iter`` depends on the installed BLAS/LAPACK
+    build, so the fixture-based form passed locally and failed intermittently
+    on CI across Python versions. This form pins the behaviour under test --
+    that an ``IterationLimitWarning`` is detected and recorded -- and is
+    independent of the linear-algebra backend.
+    """
+    real_fit = rq3.QuantReg.fit
+
+    def fit_at_iteration_cap(self, *args, **kwargs):
+        warnings.warn(
+            "Maximum number of iterations (2000) reached.",
+            IterationLimitWarning,
+            stacklevel=2,
+        )
+        return real_fit(self, *args, **kwargs)
+
+    monkeypatch.setattr(rq3.QuantReg, "fit", fit_at_iteration_cap)
+
+    result = analyze_rq3(sample_zcta_df)
+
+    assert result.quantile_results, "expected quantile fits to have run"
+    assert all(
+        entry["converged"] is False for entry in result.quantile_results.values()
+    ), result.quantile_results
