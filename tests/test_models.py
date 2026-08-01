@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 
 from src.models.models import (
+    anova_by_group,
     calculate_vif,
     cv_rmse,
     fit_ols_robust,
@@ -149,3 +151,63 @@ class TestFitQuantileRegression:
 
         with pytest.raises(ValueError, match="Quantile must be in"):
             fit_quantile_regression(y, X, quantile=tau)
+
+    def test_fit_quantile_regression_happy_path(self, numpy_X_y: tuple) -> None:
+        """Should return fitted results with a constant plus one param per feature."""
+        X, y = numpy_X_y
+        result = fit_quantile_regression(y, X, quantile=0.5)
+
+        assert len(result.params) == X.shape[1] + 1
+        assert result.params[1] > 0
+
+    def test_fit_quantile_regression_mismatched_shapes(self, numpy_X_y: tuple) -> None:
+        """Should raise ValueError when X and y have different sample counts."""
+        X, y = numpy_X_y
+
+        with pytest.raises(ValueError, match="mismatch"):
+            fit_quantile_regression(y[:10], X)
+
+
+class TestAnovaByGroup:
+    """Tests for anova_by_group."""
+
+    def test_multi_group_significant(self) -> None:
+        """Clearly separated group means should yield a significant p-value."""
+        df = pl.DataFrame({
+            "value": [1.0, 2.0, 3.0, 4.0, 100.0, 101.0, 102.0, 103.0],
+            "segment": ["low", "low", "low", "low", "high", "high", "high", "high"],
+        })
+        result = anova_by_group(df, "value", "segment", ["low", "high"])
+
+        assert result.p_value < 0.05
+        assert bool(result.significant) is True
+
+    def test_null_rows_excluded(self) -> None:
+        """A null in the target column should be dropped, not propagate to nan."""
+        df = pl.DataFrame({
+            "value": [1.0, 2.0, 3.0, None, 100.0, 101.0, 102.0, 103.0],
+            "segment": ["low", "low", "low", "low", "high", "high", "high", "high"],
+        })
+        result = anova_by_group(df, "value", "segment", ["low", "high"])
+
+        assert result.p_value < 0.05
+
+    def test_multi_group_not_significant(self) -> None:
+        """Groups drawn from the same spread should not be significant."""
+        df = pl.DataFrame({
+            "value": [1.0, 2.0, 3.0, 4.0, 1.5, 2.5, 3.5, 4.5],
+            "segment": ["a", "a", "a", "a", "b", "b", "b", "b"],
+        })
+        result = anova_by_group(df, "value", "segment", ["a", "b"])
+
+        assert result.p_value > 0.05
+
+    def test_insufficient_groups(self) -> None:
+        """Fewer than two non-empty groups should short-circuit with f_stat None."""
+        df = pl.DataFrame({
+            "value": [1.0, 2.0, 3.0],
+            "segment": ["a", "a", "a"],
+        })
+        result = anova_by_group(df, "value", "segment", ["a", "b"])
+
+        assert result.f_stat is None
