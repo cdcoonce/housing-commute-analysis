@@ -111,9 +111,9 @@ def cv_rmse(X: np.ndarray, y: np.ndarray, k: int = 3) -> Tuple[float, List[float
     """
     Compute k-fold cross-validation RMSE for an OLS model using median aggregation.
 
-    Performs stratified k-fold cross-validation with shuffling for robust
-    out-of-sample performance estimation. Returns median RMSE across folds
-    to reduce sensitivity to outlier folds.
+    Performs k-fold cross-validation with shuffling for robust out-of-sample
+    performance estimation. Returns median RMSE across folds to reduce
+    sensitivity to outlier folds.
 
     Parameters
     ----------
