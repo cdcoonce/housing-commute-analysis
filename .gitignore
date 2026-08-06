@@ -95,3 +95,5 @@ cache/
 .afk/worktrees/
 .afk/transcripts/
 .afk/conductor/
+# .afk/parity/ = shadow-parity ledgers (afk#1149/#1155), local agreement history.
+.afk/parity/
