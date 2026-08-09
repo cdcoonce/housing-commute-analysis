@@ -44,7 +44,7 @@ Write implementation plans to `docs/plans/{file_name}.md` before starting non-tr
 
 ## Skills
 
-Skills live in `.claude/skills/`. Each `SKILL.md` defines an invocable skill with trigger conditions.
+Skills are provided by the `workbench@the-workshop` plugin (enabled at user scope). Each skill below defines its own trigger conditions.
 
 ### `/code-review`
 
@@ -66,7 +66,7 @@ Skills live in `.claude/skills/`. Each `SKILL.md` defines an invocable skill wit
 ### `/readme-generator`
 
 **Trigger when:** user asks to create, generate, update, or improve a README, or says "document this project".
-**References:** [.claude/skills/readme-generator/references/](.claude/skills/readme-generator/references/) — analysis methodology, mermaid guidelines, badge reference.
+**References:** analysis methodology, mermaid guidelines, and badge reference now ship with the `workbench@the-workshop` plugin.
 
 ## Project Context
 
