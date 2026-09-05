@@ -28,5 +28,12 @@ default_tier = "cheap"
 
 # Scheduled --cycle: read-only producers + decomposer (picks up decompose:ready
 # parents like #18). Proposals stay human-gated (`proposed`).
+#
+# scout MUTED 2026-09-05. auto_promote is off here by deliberate design (this repo
+# mixes code with committed data products), so nothing scout files can ever
+# self-drain: it filed 270 of the 276 open issues at ~7.5/day for 50 days while
+# ZERO issues closed after 2026-08-01, producing 10 measured duplicate clusters
+# because producers carry no memory of the open backlog. Re-enable after the
+# backlog is triaged and a promotion cadence exists. harvest and expand stay on.
 [cycle]
-producers = ["scout", "harvest", "expand"]
+producers = ["harvest", "expand"]
