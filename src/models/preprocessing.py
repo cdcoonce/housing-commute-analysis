@@ -109,11 +109,15 @@ def compute_majority_race(
     pl.DataFrame
         DataFrame with added 'majority_race' column containing categorical labels
         ('White', 'Black', 'Hispanic', 'Asian', or 'Other'). Returns unchanged
-        if fewer than 2 race columns are available.
+        if fewer than 2 race columns are available. Rows where every race
+        percentage is null receive ``None`` (no demographic data), not a
+        column-order tie-break label.
     
     Notes
     -----
-    Null values in race columns are treated as 0.0 for comparison purposes.
+    Partial nulls in race columns are treated as 0.0 for comparison purposes.
+    Rows where *all* race columns are null are labeled ``None`` so they are not
+    silently assigned the first race category via ``list.arg_max`` tie-breaking.
     The function creates 'majority_race_idx' as an intermediate column which
     is retained for debugging purposes.
     """
@@ -134,6 +138,12 @@ def compute_majority_race(
     
     logger.info(f"Computing majority race using columns: {available_race_cols}")
     
+    # Rows with no demographic data at all (before fill_null) must not get a
+    # fake majority from arg_max's first-index tie-break on an all-zero list.
+    all_race_null = pl.all_horizontal(
+        [pl.col(col).is_null() for col in available_race_cols]
+    )
+    
     # Fill nulls with 0 to handle missing data in percentage comparisons
     race_expressions = [pl.col(col).fill_null(0.0) for col in available_race_cols]
     
@@ -146,13 +156,19 @@ def compute_majority_race(
     race_names = [col.replace('pct_', '').title() for col in available_race_cols]
     
     # Build conditional expression for mapping indices to names
-    majority_expr = pl.lit('Other')  # Default if all are null or tied
+    majority_expr = pl.lit('Other')  # Default if tied among non-null-filled values
     for idx, name in enumerate(race_names):
         majority_expr = (
             pl.when(pl.col('majority_race_idx') == idx)
             .then(pl.lit(name))
             .otherwise(majority_expr)
         )
+    
+    majority_expr = (
+        pl.when(all_race_null)
+        .then(pl.lit(None).cast(pl.Utf8))
+        .otherwise(majority_expr)
+    )
     
     df = df.with_columns(majority_expr.alias('majority_race'))
     

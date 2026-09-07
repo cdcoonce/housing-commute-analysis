@@ -97,6 +97,22 @@ class TestComputeMajorityRace:
         # Row 1: nulls become 0.0, so White (0.3) wins
         assert result["majority_race"].to_list() == ["Black", "White"]
 
+    def test_compute_majority_race_all_null_row(self) -> None:
+        """Rows with every race column null must not get a fake majority label."""
+        df = pl.DataFrame({
+            "pct_white": [None, 0.6, None],
+            "pct_black": [None, 0.2, 0.4],
+            "pct_hispanic": [None, 0.1, None],
+            "pct_asian": [None, 0.1, 0.1],
+        })
+        result = compute_majority_race(df)
+
+        assert "majority_race" in result.columns
+        # Row 0: all null → None (not White via arg_max tie-break)
+        # Row 1: White wins
+        # Row 2: partial nulls → Black (0.4) wins
+        assert result["majority_race"].to_list() == [None, "White", "Black"]
+
     def test_compute_majority_race_insufficient_cols(self) -> None:
         """If fewer than 2 race columns are present the DataFrame should be returned unchanged."""
         df = pl.DataFrame({
